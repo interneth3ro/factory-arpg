@@ -35,6 +35,9 @@ Factory ARPG is developed in Godot 4.7.2. The repository is
 - Static inspection and nonexecuting validation are permitted. Report the
   checks actually performed and their scope and limits. Identify any pending
   engine, headless or graphical verification.
+- Follow the [Godot metadata policy](docs/GODOT_METADATA.md) for resource
+  changes. Check staged changes with the
+  [read-only metadata validator](tools/validate_godot_metadata.py).
 
 ## Preservation
 

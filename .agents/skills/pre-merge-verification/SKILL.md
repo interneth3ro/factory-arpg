@@ -1,6 +1,6 @@
 ---
 name: pre-merge-verification
-description: Verify an explicitly identified Factory ARPG pull request after owner runtime acceptance and before the owner's manual merge. Check acceptance against the live PR head, Godot metadata, documentation, static integrity, and preservation.
+description: Verify an explicitly identified Factory ARPG pull request after owner runtime acceptance and before the owner's manual merge. Check acceptance against the live PR head, Godot metadata, documentation, static integrity, and preservation. Mark a verified draft Ready for review after PASS.
 ---
 
 # Pre-merge verification
@@ -15,10 +15,10 @@ merge decision.
 
 1. Require a PR number or URL explicitly supplied by the owner. Retrieve live
    GitHub data and record the canonical number and URL, base and head
-   repositories and branches, current base and head SHAs, and open and merged
-   status. Require an open, unmerged PR targeting `interneth3ro/factory-arpg:main`.
-   Resolve the exact head repository and feature branch. Stop for any mismatch
-   or ambiguity.
+   repositories and branches, current base and head SHAs, and open, merged, and
+   draft status. Require an open, unmerged PR targeting
+   `interneth3ro/factory-arpg:main`. Resolve the exact head repository and feature
+   branch. Stop for any mismatch or ambiguity.
 2. Verify the primary checkout root, checked-out feature branch, matching remote,
    and local HEAD against the live PR head. Inspect staged, unstaged, and
    untracked paths and check for in-progress Git operations such as a merge or
@@ -89,13 +89,43 @@ branch, delete branches or worktrees, or perform post-merge cleanup. Never stash
 reset, delete, or overwrite unrelated work. Launching Godot requires explicit
 owner authorization under AGENTS.md.
 
+## Mark a verified draft Ready for review
+
+11. Proceed only after all required checks pass, authorized housekeeping and
+    revalidation are complete, and owner acceptance applies to the verified
+    head. Continue full verification for PRs that are already Ready for review.
+    For BLOCKED or REQUIRES OWNER REVIEW, leave GitHub draft status untouched.
+12. Immediately before the transition, fetch the live PR again. Match its
+    canonical number and URL, base and head repositories and branches, and base
+    and head SHAs to the verified PR. Require it to be open and unmerged. Stop
+    for an identity or state mismatch. A changed head requires verification of
+    the new commit. If the base changed, reassess the affected evidence and rerun
+    checks as needed for any material integration difference. Resolve any
+    acceptance uncertainty with the owner. Repeat this live check after any
+    reassessment or revalidation.
+13. If the checked PR is already Ready, record that the transition was
+    unnecessary. If it is still a draft, immediately use GitHub's Ready for
+    review operation on the canonical PR, for example `gh pr ready <PR-URL>`.
+    Keep the live check and operation adjacent. They are separate GitHub
+    requests and do not provide an atomic check of the SHAs.
+14. After the attempt, fetch the live PR again, even if the operation returned
+    an error. Confirm its identity, open and unmerged state, base and head SHAs,
+    and Ready status. Report the transition as failed if GitHub returns an
+    error or the follow-up cannot confirm that the verified PR is Ready.
+    Record the last observed GitHub state and preserve the PASS evidence for
+    the verified snapshot. If the PR changed during the operation, report the
+    discrepancy and reassess before recommending merge.
+
 ## Report
 
-Return one verdict.
+Return one verification verdict for the checked snapshot.
 
 - **PASS** when the checks are satisfactory and owner acceptance applies to the
-  verified head. Recommend it for the owner's final merge decision and report
-  any remaining GitHub merge prerequisites.
+  verified head. If the transition failed or could not be confirmed, report
+  PASS for the verified snapshot and flag the GitHub status transition as an
+  outstanding merge prerequisite. Recommend the verified PR for the owner's
+  final merge decision only after confirming its current Ready status and
+  resolving any verification discrepancies.
 - **BLOCKED** when a required check or prerequisite fails or cannot be verified,
   including ambiguous PR identity or missing acceptance.
 - **REQUIRES OWNER REVIEW** when renewed acceptance, a design decision, or another
@@ -104,6 +134,9 @@ Return one verdict.
 Include the PR number and URL, verified head SHA, base branch and checkout
 identity, owner acceptance and whether it remains valid, metadata, documentation
 and static check results, housekeeping files, outstanding findings and limits,
-and a clear merge-readiness recommendation. Identify checks that could not be
-completed on early exit. Report in the conversation unless the owner requests
-a separate file.
+and a clear merge-readiness recommendation with any remaining GitHub merge
+prerequisites. Report the final observed GitHub draft or Ready status (or that
+it could not be confirmed) and the transition outcome as performed, unnecessary
+(already Ready), blocked, or failed. Identify checks that could not be completed
+on early exit. Report in the conversation unless the owner requests a separate
+file.

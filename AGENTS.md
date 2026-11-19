@@ -17,6 +17,9 @@ Factory ARPG is developed in Godot 4.7.2. The repository is
   acceptance, and merging. Never merge a PR automatically.
 - Use [documentation sync](.agents/skills/documentation-sync/SKILL.md) before PR
   review to reconcile affected documentation on the same feature branch.
+- After the owner confirms applicable runtime acceptance, use
+  [pre-merge verification](.agents/skills/pre-merge-verification/SKILL.md) for
+  the specified PR before the owner's manual merge.
 - Use a separate Codex conversation for [post-merge cleanup](.agents/skills/post-merge-cleanup/SKILL.md)
   only when the owner explicitly requests cleanup for a specific merged PR.
   Never retire the requesting conversation's attached checkout.

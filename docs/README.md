@@ -16,6 +16,6 @@ When implementation suggests a design change, identify the affected specificatio
 
 Implementation documentation describes how the current code works. Refactors that preserve approved behavior can update implementation documentation as needed while leaving the design baseline intact.
 
-The [combat test arena](../scenes/combat/combat_test_arena.tscn) is a standalone scene for inspecting the prototype layout. Open it in the Godot editor and press F6 to run the scene. Its three placeholders are stationary, and the combat Input Map actions have no gameplay behavior yet.
+The [combat test arena](../scenes/combat/combat_test_arena.tscn) is a standalone scene. Open it in the Godot editor and press F6 to run it. The [player controller](../scenes/combat/combat_test_player.gd) uses screen-relative WASD with normalized diagonals and native 2D collision. The mouse steers the facing marker independently of movement. Within 4 pixels of the player's center in world coordinates, the marker keeps its previous heading. The Player's exported `movement_speed` defaults to a provisional 220 pixels per second. Pursuer and Heavy are stationary, and the combat Input Map actions are inactive.
 
 For implementation PRs, identify the affected documentation and use [documentation sync](../.agents/skills/documentation-sync/SKILL.md) on the same branch before review. Reconcile approved changes and keep edits focused on the PR.

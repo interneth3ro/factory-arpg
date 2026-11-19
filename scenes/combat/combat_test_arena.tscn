@@ -1,4 +1,6 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scenes/combat/combat_test_player.gd" id="1_player"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_horizontal_wall"]
 size = Vector2(996, 18)
@@ -255,6 +257,7 @@ antialiased = true
 [node name="Player" type="CharacterBody2D" parent="ArenaObjects"]
 position = Vector2(-318, 132)
 motion_mode = 1
+script = ExtResource("1_player")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ArenaObjects/Player"]
 shape = SubResource("CircleShape2D_player")

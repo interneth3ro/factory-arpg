@@ -87,7 +87,7 @@ development and confirm it using the evidence below.
    switch refusal. Leave unrelated branches alone. Recheck clean tracked state
    and inspect incoming paths and preservation again after switching.
    From the verified primary checkout on `main`, run
-   `git merge --ff-only --no-overwrite-ignore origin/main` (equal tips are a no-op). Never stash, reset
+   `git merge --ff-only origin/main` (equal tips are a no-op). Never stash, reset
    or force-update `main` to make this succeed. Case A still requires the primary
    checkout already on `main`.
 

@@ -1,6 +1,8 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scenes/combat/combat_test_player.gd" id="1_player"]
+[ext_resource type="Script" path="res://scenes/combat/player_movement_fsm.gd" id="2_movement"]
+[ext_resource type="Script" path="res://scenes/combat/player_action_fsm.gd" id="3_action"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_horizontal_wall"]
 size = Vector2(996, 18)
@@ -282,6 +284,24 @@ theme_override_constants/outline_size = 5
 text = "Player"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="MovementFSM" type="Node" parent="ArenaObjects/Player"]
+script = ExtResource("2_movement")
+
+[node name="ActionFSM" type="Node" parent="ArenaObjects/Player"]
+script = ExtResource("3_action")
+
+[node name="Diagnostics" type="CanvasLayer" parent="ArenaObjects/Player"]
+
+[node name="StateLabel" type="Label" parent="ArenaObjects/Player/Diagnostics"]
+visible = false
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 16.0
+offset_bottom = 16.0
+mouse_filter = 2
+theme_override_colors/font_outline_color = Color(0.055, 0.077, 0.092, 1)
+theme_override_constants/outline_size = 5
 
 [node name="Pursuer" type="CharacterBody2D" parent="ArenaObjects"]
 position = Vector2(12, -126)

@@ -118,7 +118,11 @@ def findings(paths, read):
         ):
             continue
         if suffix.lower() in UID_SOURCES and name + ".uid" not in paths:
-            yield "error", f"missing expected UID sidecar {name + '.uid'!r}"
+            yield "info", (
+                f"missing expected UID sidecar {name + '.uid'!r}. Review the finding "
+                "and generate the sidecar through an authorized Godot import before "
+                "final production validation."
+            )
         if suffix.lower() in IMPORT_CANDIDATES and name + ".import" not in paths:
             yield "info", f"missing {name + '.import'!r} if this asset is imported"
 

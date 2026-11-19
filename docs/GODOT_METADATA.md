@@ -40,16 +40,20 @@ the source and sidecar together to check what a commit will contain. The
 working-tree mode reads current files and includes unignored untracked files.
 It excludes deleted files and ignores untracked files under `scratch/`.
 
-The validator reports orphaned sidecars, missing expected script or shader UID
-sidecars, and import metadata whose `[deps] source_file` disagrees with its
-neighboring source path. Missing `.import` files for common asset formats are
-informational because extension alone cannot establish import intent. Unusual
-UID text or import declarations that cannot be interpreted are also
-informational. Keep/skip imports can omit `source_file`. Missing-sidecar checks
-skip hidden paths and paths under `.gdignore` in the selected snapshot.
+Orphaned sidecars and verified mismatches between an import's `[deps] source_file`
+and its neighboring source path are errors. Missing expected script or shader
+UID sidecars are informational because Godot may still need to generate them
+for newly added resources. Review each missing UID sidecar and generate it
+through an authorized Godot import before final production validation.
 
-Exit status `0` means no errors were found, `1` means the snapshot has findings
-to review, and `2` means the check could not complete or arguments were
-invalid. Resolve findings through review. The check covers a limited set of
+Missing `.import` files for common asset formats are informational because
+extension alone cannot establish import intent. Unusual UID text or import
+declarations that cannot be interpreted are also informational. Keep/skip
+imports can omit `source_file`. Missing-sidecar checks skip hidden paths and
+paths under `.gdignore` in the selected snapshot.
+
+Exit status `0` means no errors were found, even if there are informational
+findings. Status `1` means errors were found, and `2` means the check could not
+complete or arguments were invalid. The check covers a limited set of
 built-in formats and does not run Godot, validate the UID registry or resource
 references, inspect cache outputs, or change files or Git state.

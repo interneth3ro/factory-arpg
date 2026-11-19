@@ -19,6 +19,53 @@ config/icon="res://icon.svg"
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[input]
+
+move_up={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":87)]
+}
+move_down={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":83)]
+}
+move_left={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":65)]
+}
+move_right={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":68)]
+}
+basic_attack={
+"deadzone": 0.5,
+"events": [Object(InputEventMouseButton,"button_index":1)]
+}
+dodge={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"keycode":32)]
+}
+weapon_1={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"keycode":49)]
+}
+weapon_2={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"keycode":50)]
+}
+weapon_3={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"keycode":51)]
+}
+toggle_combat_debug={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"keycode":4194334)]
+}
+reset_combat_test={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"keycode":4194336)]
+}
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

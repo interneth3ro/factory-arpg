@@ -25,8 +25,10 @@ Factory ARPG is developed in Godot 4.7.2. The repository is
 
 - Keep changes small, focused and independently testable. Maintain stable,
   clearly defined interfaces and separate gameplay logic from presentation.
-- Preserve approved gameplay and narrative decisions and keep narrative
-  content independently editable when present.
+- Consult the applicable approved specifications in the
+  [documentation index](docs/README.md) before implementing related gameplay.
+  Preserve approved gameplay and narrative decisions and keep narrative content
+  independently editable when present.
 - Add abstractions, managers and tooling only when they meet a demonstrated
   need. Obtain owner approval before adding third-party plugins.
 - Obtain explicit owner authorization before launching Godot, executing scenes,

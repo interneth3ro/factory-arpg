@@ -19,6 +19,7 @@ class ActiveInterval:
 	var active_elapsed: float
 	var direction: Vector2
 	var correction: float
+	var ends_active: bool
 
 	func blade_angle(at: float) -> float:
 		var elapsed := clampf(at - tick_start, 0.0, duration)
@@ -134,14 +135,11 @@ func step(delta: float, pressed: bool, held: bool, aim: Vector2) -> float:
 				var limit := deg_to_rad(weapon.correction_speed) * spent
 				attack_direction = attack_direction.rotated(clampf(attack_direction.angle_to(aim), -limit, limit))
 		if state == State.ACTIVE and spent > 0.0:
-			var interval := ActiveInterval.new()
-			interval.attack_id = attack_count
-			interval.weapon = weapon
-			interval.tick_start = delta - remaining
+			var interval := _active_interval(delta - remaining)
 			interval.duration = spent
-			interval.active_elapsed = _phase_elapsed
 			interval.direction = initial_direction
 			interval.correction = initial_direction.angle_to(attack_direction)
+			interval.ends_active = remaining >= until_boundary
 			active_intervals.append(interval)
 		_buffer_remaining = maxf(0.0, _buffer_remaining - spent)
 		if remaining < until_boundary:
@@ -153,6 +151,9 @@ func step(delta: float, pressed: bool, held: bool, aim: Vector2) -> float:
 		match state:
 			State.WIND_UP:
 				state = State.ACTIVE
+				# Exact tick-end entry has a cue now, but no swept time yet.
+				if remaining == 0.0:
+					active_intervals.append(_active_interval(delta))
 			State.ACTIVE:
 				state = State.RECOVERY
 			State.RECOVERY:
@@ -170,6 +171,16 @@ func _start_attack(aim: Vector2) -> void:
 	_phase_elapsed = 0.0
 	_buffer_remaining = 0.0
 	attack_count += 1
+
+
+func _active_interval(offset: float) -> ActiveInterval:
+	var interval := ActiveInterval.new()
+	interval.attack_id = attack_count
+	interval.weapon = weapon
+	interval.tick_start = offset
+	interval.active_elapsed = _phase_elapsed
+	interval.direction = attack_direction
+	return interval
 
 
 func _phase_duration() -> float:

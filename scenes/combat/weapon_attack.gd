@@ -3,6 +3,11 @@ extends Resource
 enum AimMode { LOCK_AT_ACTIVE, CORRECT_ACTIVE, LOCK_DURING_WIND_UP }
 
 @export var display_name: String
+@export_group("Presentation")
+@export_range(0.0, 1.0) var feedback_weight := 0.5
+@export var swing_sound: AudioStream
+@export var impact_sound: AudioStream
+@export_group("")
 @export_range(1, 1000) var damage := 10
 @export_range(0.0, 0.2, 0.001, "suffix:s") var hitstop := 0.025
 @export_range(0.01, 0.5, 0.01, "suffix:s") var flash_duration := 0.07

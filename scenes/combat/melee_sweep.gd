@@ -25,6 +25,14 @@ func begin_tick() -> void:
 
 
 func check_motion(player: CharacterBody2D, start: Vector2, delta: float, intervals: Array[ActionFSM.ActiveInterval]) -> void:
+	# The FSM emits intervals in attack order. Finish every leg for this
+	# interval before a newer attack can replace its contact history.
+	for interval in intervals:
+		select_attack(interval.attack_id)
+		_check_motion_interval(player, start, delta, interval)
+
+
+func _check_motion_interval(player: CharacterBody2D, start: Vector2, delta: float, interval: ActionFSM.ActiveInterval) -> void:
 	var position_on_path := start
 	var time := 0.0
 	# Reconstruct the resolved slide legs. The travel/remainder ratio estimates
@@ -36,22 +44,20 @@ func check_motion(player: CharacterBody2D, start: Vector2, delta: float, interva
 		if is_zero_approx(distance):
 			continue
 		var end_time := lerpf(time, delta, travel.length() / distance)
-		_check_leg(intervals, position_on_path, position_on_path + travel, time, end_time)
+		_check_leg(interval, position_on_path, position_on_path + travel, time, end_time)
 		time = end_time
 		position_on_path += travel
-	_check_leg(intervals, position_on_path, player.global_position, time, delta)
+	_check_leg(interval, position_on_path, player.global_position, time, delta)
 
 
-func _check_leg(intervals: Array[ActionFSM.ActiveInterval], start: Vector2, finish: Vector2, from: float, until: float) -> void:
-	for interval in intervals:
-		var first := maxf(interval.tick_start, from)
-		var last := minf(interval.tick_start + interval.duration, until)
-		if last <= first:
-			continue
-		select_attack(interval.attack_id)
-		var origin := start.lerp(finish, (first - from) / (until - from))
-		var end_origin := start.lerp(finish, (last - from) / (until - from))
-		_check_interval(interval, origin, end_origin, first, last)
+func _check_leg(interval: ActionFSM.ActiveInterval, start: Vector2, finish: Vector2, from: float, until: float) -> void:
+	var first := maxf(interval.tick_start, from)
+	var last := minf(interval.tick_start + interval.duration, until)
+	if last <= first:
+		return
+	var origin := start.lerp(finish, (first - from) / (until - from))
+	var end_origin := start.lerp(finish, (last - from) / (until - from))
+	_check_interval(interval, origin, end_origin, first, last)
 
 
 func _check_interval(interval: ActionFSM.ActiveInterval, start: Vector2, finish: Vector2, first: float, last: float) -> void:

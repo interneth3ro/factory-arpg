@@ -13,6 +13,7 @@ const PHASE_COLORS := {
 @export var movement_speed: float = 220.0
 
 @onready var facing_marker: Node2D = $FacingMarker
+@onready var attack_marker: Node2D = $AttackMarker
 @onready var body_marker: Polygon2D = $Body
 @onready var movement_fsm: MovementFSM = $MovementFSM
 @onready var action_fsm: ActionFSM = $ActionFSM
@@ -21,27 +22,31 @@ const PHASE_COLORS := {
 
 func _physics_process(delta: float) -> void:
 	var movement_input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	_update_facing()
+	var facing_direction := Vector2.RIGHT.rotated(facing_marker.global_rotation)
 	if Input.is_action_just_pressed("dodge"):
-		_update_facing()
-		var facing_direction := Vector2.RIGHT.rotated(facing_marker.global_rotation)
 		if movement_fsm.request_dodge(movement_input, facing_direction):
 			action_fsm.interrupt_attack()
 	# Sample before advancing movement so the final dodge tick still discards input.
+	var movement_multiplier := 1.0
 	if not movement_fsm.is_dodging():
-		_step_actions(delta)
-	movement_fsm.step(movement_input, movement_speed, delta)
+		movement_multiplier = _step_actions(delta, facing_direction)
+	movement_fsm.step(movement_input, movement_speed, delta, movement_multiplier)
 	body_marker.color = PHASE_COLORS[action_fsm.state]
+	attack_marker.visible = action_fsm.state != ActionFSM.State.READY
+	if attack_marker.visible:
+		attack_marker.global_rotation = action_fsm.attack_direction.angle()
 	_update_state_diagnostics()
 
 
-func _step_actions(delta: float) -> void:
+func _step_actions(delta: float, aim: Vector2) -> float:
 	if Input.is_action_just_pressed("weapon_1"):
 		action_fsm.select_weapon(ActionFSM.DAGGER)
 	elif Input.is_action_just_pressed("weapon_2"):
 		action_fsm.select_weapon(ActionFSM.SWORD)
 	elif Input.is_action_just_pressed("weapon_3"):
 		action_fsm.select_weapon(ActionFSM.GREATSWORD)
-	action_fsm.step(delta, Input.is_action_just_pressed("basic_attack"), Input.is_action_pressed("basic_attack"))
+	return action_fsm.step(delta, Input.is_action_just_pressed("basic_attack"), Input.is_action_pressed("basic_attack"), aim)
 
 
 func _process(_delta: float) -> void:
@@ -69,11 +74,13 @@ func _update_state_diagnostics() -> void:
 		var dodge_status := "Available" if movement_fsm.can_dodge() else "Recovering"
 		if movement_fsm.is_dodging():
 			dodge_status = "In progress"
-		state_diagnostics.text = "Movement: %s\nAction / phase: %s\nWeapon: %s\nAttack count: %d\nDodge: %s\nInvulnerability: %s" % [
+		state_diagnostics.text = "Movement: %s\nAction / phase: %s\nWeapon: %s\nAttack count: %d\nAttack aim: %s\nOrdinary speed: %.2fx\nDodge: %s\nInvulnerability: %s" % [
 			movement_fsm.get_state_name(),
 			action_fsm.get_state_name(),
 			action_fsm.weapon.display_name,
 			action_fsm.attack_count,
+			String(ActionFSM.AimState.keys()[action_fsm.get_aim_state()]).capitalize(),
+			action_fsm.get_movement_multiplier(),
 			dodge_status,
 			"Active" if is_invulnerable() else "Inactive",
 		]

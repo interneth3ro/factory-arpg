@@ -8,3 +8,7 @@ display_name = "Greatsword"
 wind_up = 0.32
 active = 0.18
 recovery = 0.42
+wind_up_movement = 0.60
+active_movement = 0.40
+recovery_movement = 0.70
+aim_mode = 2

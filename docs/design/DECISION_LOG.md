@@ -116,6 +116,29 @@ The owner approved Option B for each decision on 2026-11-20. The supplied [PR #1
 | M73 | Advance encounter generation on reset and reject stale contacts and callbacks. |
 | M74 | Deliver the entire milestone together, with independent review and owner acceptance against PRs #13–#15. |
 
+## Combat impact and feedback decisions
+
+The owner-approved [PR #17 decision register](PR17_COMBAT_IMPACT_FEEDBACK.md#2-approved-decision-register) defines M75–M90. The specification also gives the lifecycle rules and identifies provisional tuning for owner acceptance.
+
+| ID | Approved selection | Behavior |
+| --- | --- | --- |
+| M75 | A — Combat impact and feedback | Focus PR #17 on melee combat presentation. |
+| M76 | B — Complete core feedback pass | Cover weapon impacts, enemy reactions, swing trails, and swing and impact audio. |
+| M77 | B — Directional impact bursts | Show a brief burst aligned to the incoming attack when damage is confirmed. |
+| M78 | B — Distinct silhouettes and timing | Give the dagger a narrow, quick burst, the sword a crisp medium slash and the greatsword a broad, heavier burst. Share a neutral palette. |
+| M79 | B — Contact-position impacts | Place the burst at the best-supported geometric contact point using the swing direction at contact. Any placement approximation is cosmetic. |
+| M80 | B — One impact per enemy hit | Emit one burst per distinct enemy damaged by a swing, including multi-target hits. |
+| M81 | B — Attack-phase-aware cosmetic reactions | Show normal recoil during pursuit, hold, recovery and cooldown. Reduce it during wind-up and minimize it during active strikes. Defeat takes priority. |
+| M82 | B — Archetype identity and weapon weight | Scale recoil by weapon weight. The Pursuer reacts quickly and the Heavy moves less. |
+| M83 | B — Smooth reaction restart | Redirect recoil from the current visible pose and bound the displacement to prevent drift. |
+| M84 | B — Stylized directional swing trails | Give each weapon a distinct trail on hits and misses. |
+| M85 | B — Active-phase trails with brief decay | Start trails at active entry, respect hitstop, fade in recovery and end promptly on dodge interruption. |
+| M86 | B — Geometry-aligned swing trails | Follow the weapon's reach, arc and actual blade direction, including dagger correction. |
+| M87 | B — Separate swing and impact audio | Play the weapon's swing sound at active entry and its impact sound on confirmed damage. |
+| M88 | C — Primary impact with restrained secondary hits | Play the first confirmed hit at full strength. Quieter secondary sounds may play under a small concurrency cap. All hits still receive visual feedback. |
+| M89 | B — Curated royalty-free audio assets | Store recordings locally, verify redistribution rights and document provenance, license and processing. Prefer CC0 or comparably permissive assets. |
+| M90 | B — Shared lifecycle rules with independent components | Coordinate feedback across interruption, death and reset. Reject stale and duplicate events using existing execution and encounter identities. |
+
 ## Recording future decisions
 
 Append decisions in approval order with a stable ID, descriptive title, approved selection, brief summary, and a link to the authoritative specification. Record dates only when supplied. When a decision changes, retain the earlier entry and link it to the approved replacement.

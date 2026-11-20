@@ -28,7 +28,7 @@ As of 2026-11-20, PRs #13–#16 have established the combat foundation:
 - Pursuer and Heavy enemy archetypes.
 - Player health, enemy damage, deterministic contact handling, damage diagnostics, death, and encounter reset.
 
-**PR #16 is merged and cleaned up.** PR #17 has not yet been scoped or approved. Combat impact and feedback is the leading candidate for PR #17, **not an approved milestone decision** until M75 is explicitly resolved.
+**PR #16 is merged and cleaned up.** The owner approved combat impact and feedback for PR #17 under M75. The [PR #17 specification](design/PR17_COMBAT_IMPACT_FEEDBACK.md) defines its scope through M90.
 
 ## 3. Roadmap at a glance
 
@@ -50,7 +50,7 @@ Prove that the current combat mechanics feel responsive, legible, and enjoyable 
 
 ### Proposed remaining work
 
-1. **PR #17 candidate — Combat impact and feedback.** Consider weapon-specific hit confirmation, enemy visual reactions, swing presentation, impact audio, and defeat readability. Exact scope is pending numbered design decisions and repository inspection.
+1. **PR #17 — Combat impact and feedback.** The approved scope covers weapon-specific contact bursts, cosmetic enemy recoil, swing trails, and swing and impact audio.
 2. **Combat balance and encounter evaluation.** Playtest weapon distinctions, dodge timing, enemy pressure, telegraph readability, and difficulty. Adjust only through explicit design approval where existing decisions are affected.
 3. **Optional foundation hardening.** Fix substantive reliability or usability issues found during evaluation; do not invent a mandatory additional PR.
 
@@ -191,8 +191,8 @@ Examples:
 
 ## 11. Immediate next steps
 
-1. Resolve **M75 — PR #17 Milestone Direction**. Option A (Combat Impact and Feedback) is recommended but not yet formally approved.
-2. If approved, define PR #17's exact feedback scope through sequential design decisions.
+1. The owner selected combat impact and feedback for PR #17 (M75) and approved its scope (M76–M90).
+2. Implementation awaits separate owner authorization.
 3. Complete and evaluate the combat prototype against the Phase 1 exit gate.
 4. Scope the minimal integrated factory loop and decide whether to use a separate test space or the permanent opening region.
 5. At Phase 2 exit, explicitly approve the production transition and begin building the actual game.

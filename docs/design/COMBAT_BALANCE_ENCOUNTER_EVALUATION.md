@@ -94,7 +94,7 @@ The parameter review should produce a brief baseline table and *hypotheses to ob
 
 Inspect the live arena/controls before suggesting changes. If no repeatable existing method isolates the enemies, present the owner with the smallest feasible development-only option, its exact scope, and whether it would require a separate focused maintenance PR. **Do not create scenes, controls, branches, or code without approval.** Do not launch Godot or run headless tests without explicit owner authorization.
 
-For E5, the owner approved the [standalone arena selector design (E11–E16)](COMBAT_ENCOUNTER_SELECTOR.md#2-approved-decision-register). Its implementation requires separate owner approval.
+For E5, the owner approved the [standalone arena selector design (E11–E16)](COMBAT_ENCOUNTER_SELECTOR.md#2-approved-decision-register). Use the [arena controls](../README.md#encounter-selection) after runtime acceptance of the implementation.
 
 ## 6. Observation rubric
 

@@ -1,6 +1,6 @@
 # Factory ARPG — Development-Only Encounter Selector
 
-**Status:** Owner-approved design specification; implementation not authorized\
+**Status:** Owner-approved design, implemented on the feature branch pending runtime acceptance and merge\
 **Approved:** 2026-11-20\
 **Repository:** `interneth3ro/factory-arpg` (`main`)\
 **Engine:** Godot 4.7.2\
@@ -9,7 +9,7 @@
 
 ## 1. Purpose and authority
 
-Provide repeatable Pursuer-only, Heavy-only, and combined encounters for the approved 18-attempt Phase 1 combat evaluation. The current arena has both enemy instances but no confirmed direct isolation selector. This is a development-only evaluation convenience, not a gameplay feature, balancing change, or generalized encounter-testing framework.
+Provide repeatable Pursuer-only, Heavy-only, and combined encounters for the approved 18-attempt Phase 1 combat evaluation. The arena at design approval had both enemy instances but no confirmed direct isolation selector. This is a development-only evaluation convenience, not a gameplay feature, balancing change, or generalized encounter-testing framework.
 
 Consult the current live repository before implementation planning, especially `AGENTS.md`, `docs/DEVELOPMENT_ROADMAP.md`, `docs/design/COMBAT_PROTOTYPE_V0.1.md`, `docs/design/DECISION_LOG.md`, `docs/design/COMBAT_BALANCE_ENCOUNTER_EVALUATION.md`, `docs/design/PR16_PLAYER_HEALTH_DAMAGE_DEATH.md`, `docs/design/PR17_COMBAT_IMPACT_FEEDBACK.md`, `docs/README.md`, and `docs/GODOT_METADATA.md`. Existing approved A-series and M-series gameplay decisions remain authoritative. E1–E10 govern the evaluation; E11–E16 below govern this narrowly scoped test utility. If a design conflict arises, stop for owner approval rather than silently changing behavior.
 

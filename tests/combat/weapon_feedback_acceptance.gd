@@ -41,6 +41,8 @@ func _run() -> void:
 		enemy.movement.set_physics_process(false)
 	await physics_frame
 	await physics_frame
+	await _encounter_selector(player)
+	await physics_frame
 
 	var fsm := player.action_fsm
 	var fx := player.weapon_effects
@@ -89,6 +91,182 @@ func _run() -> void:
 	arena.queue_free()
 	print("Weapon feedback acceptance: %d failures" % failures)
 	quit(1 if failures else 0)
+
+
+# Deliver the mapped key and sample the normal player input path on its physics tick.
+# The fixture drives the player manually so it can inspect the reset before combat resumes.
+func _key_tick(player: Player, key: Key) -> void:
+	var event := InputEventKey.new()
+	event.keycode = key
+	event.physical_keycode = key
+	event.pressed = true
+	Input.parse_input_event(event)
+	Input.flush_buffered_events()
+	await physics_frame
+	player._physics_process(1.0 / Engine.physics_ticks_per_second)
+	var release := event.duplicate() as InputEventKey
+	release.pressed = false
+	Input.parse_input_event(release)
+	Input.flush_buffered_events()
+
+
+func _toggle_debug() -> void:
+	# F3 uses viewport event propagation. Exercise it even with a headless display.
+	var event := InputEventKey.new()
+	event.keycode = KEY_F3
+	event.pressed = true
+	root.push_input(event)
+	event.pressed = false
+	root.push_input(event)
+
+
+func _select(player: Player, key: Key, solo: Enemy = null) -> void:
+	var generation := player.encounter_generation
+	await _key_tick(player, key)
+	_check(player.encounter_generation == generation + 1, "Exactly one fresh encounter per reset key")
+	var title := "%s only" % solo.name if solo else "Pursuer + Heavy"
+	_check(player.encounter_label.text == "Encounter: " + title and player.encounter_label.is_visible_in_tree(), "Persistent label for " + title)
+	_check(player.position == player.start_position and player.velocity == Vector2.ZERO, "Player spawn and velocity")
+	_check(player.player_health.health == player.player_health.max_health and player.player_health.history.is_empty(), "Fresh player HP")
+	_check(player.action_fsm.weapon == Action.DAGGER and player.action_fsm.state == Action.State.READY, "Starting dagger and Ready")
+	_check(player.action_fsm.hitstop_remaining == 0.0 and player.action_fsm.active_intervals.is_empty(), "No hitstop or attack samples")
+	_check(player.movement_fsm.can_dodge() and not player.is_invulnerable(), "Fresh dodge availability")
+	_check(not player.death_message.visible and not player.completion.visible and player.facing_marker.visible, "Fresh HUD")
+	_check(player.weapon_effects._bursts.is_empty() and player.weapon_effects._angles.is_empty(), "No previous impact or trail")
+	var audio := player.combat_audio
+	_check(not audio._primary.playing and not audio._secondary.playing and not audio._swing.playing, "No previous voices")
+	for enemy in player.enemies:
+		var active := solo == null or solo == enemy
+		_check(enemy.visible == active and enemy.is_encounter_active() == active, "%s participation in %s" % [enemy.name, title])
+		_check(enemy.health == enemy.max_health and enemy.position == enemy._start_position, "%s HP and spawn" % enemy.name)
+		_check(enemy.velocity == Vector2.ZERO and enemy.movement.target_position == enemy.global_position, "Parked movement")
+		_check(enemy.collision_layer == (3 if active else 0) and enemy.collision_mask == (1 if active else 0), "Solid and melee layers")
+		_check(enemy.movement._avoidance.avoidance_enabled == active, "Avoidance participation")
+		_check(enemy.attack.phase == EnemyAttack.Phase.READY and enemy.attack.execution == 0 and not enemy.attack.contacted, "Fresh attack")
+		_check(enemy._body.transform.is_equal_approx(Transform2D.IDENTITY) and enemy._body.color == enemy._body_color, "Neutral enemy artwork")
+
+
+func _complete_with_swings(player: Player, solo: Enemy = null) -> void:
+	await physics_frame # Let physics synchronize the reset poses before querying the disks.
+	var pursuer := player.enemies[0]
+	var heavy := player.enemies[1]
+	var other := heavy if solo == pursuer else pursuer
+	player.action_fsm.select_weapon(Action.GREATSWORD)
+	# Both disks are in this blade's path. Pursuer falls on the second swing and Heavy on the fourth.
+	var last_swing := 2 if solo == pursuer else 4
+	for swing in range(1, last_swing + 1):
+		_step(player, Action.GREATSWORD.wind_up + Action.GREATSWORD.active + 0.01, true)
+		if solo:
+			_check(other.health == other.max_health and not player.melee_sweep.contacts.has(other.get_instance_id()), "Inactive disk excluded from sweep")
+		if solo != heavy:
+			_check((pursuer.health == 0) == (swing >= 2), "Pursuer defeat on second swing")
+		if solo != pursuer:
+			_check((heavy.health == 0) == (swing == 4), "Heavy defeat on fourth swing")
+		_check(player.completion.visible == (swing == last_swing), "Completion requires every selected enemy")
+		_step(player, Action.GREATSWORD.recovery + Action.GREATSWORD.hitstop + 0.1)
+	var title := "%s only" % solo.name if solo else "Pursuer + Heavy"
+	_check(player.encounter_label.is_visible_in_tree() and player.encounter_label.text == "Encounter: " + title, "Label survives completion")
+
+
+func _pursue_with_inactive_peer(player: Player, active: Enemy, inactive: Enemy) -> void:
+	await physics_frame # Resume automatic processing after the manually sampled reset tick.
+	# Put the hidden peer directly in the passing lane, within detection and avoidance range.
+	active.position = player.position + Vector2(160, 0)
+	inactive.position = active.position + Vector2.LEFT * 70.0
+	var parked := inactive.position
+	_check(active.movement._passing_direction(Vector2.LEFT) == Vector2.LEFT, "Inactive peer contributes no steering bias")
+	_check(inactive.receive_hit(Action.DAGGER) == 0, "Inactive body rejects direct damage")
+	for enemy in player.enemies:
+		enemy.movement.set_physics_process(true)
+	player.set_physics_process(true)
+	for tick in range(Engine.physics_ticks_per_second * 4):
+		await physics_frame
+		if active.attack.phase == EnemyAttack.Phase.WIND_UP:
+			break
+	player.set_physics_process(false)
+	for enemy in player.enemies:
+		enemy.movement.set_physics_process(false)
+	_check(active.position.distance_to(player.position) <= active.attack.initiation_radius and active.attack.execution > 0, "Active enemy navigates through peer and starts attack")
+	_check(inactive.position == parked and inactive.attack.execution == 0 and not inactive.attack.contacted, "Inactive peer stays parked and produces no strike")
+	_check(player.player_health.health == player.player_health.max_health, "No damage before active enemy strikes")
+
+
+func _encounter_selector(player: Player) -> void:
+	var pursuer := player.enemies[0]
+	var heavy := player.enemies[1]
+	_check(pursuer.is_visible_in_tree() and heavy.is_visible_in_tree() and pursuer.is_encounter_active() and heavy.is_encounter_active(), "Both original enemies start active")
+	_check(player.encounter_label.text == "Encounter: Pursuer + Heavy" and player.encounter_label.is_visible_in_tree(), "Default combined label")
+	_toggle_debug()
+	_check(player.state_diagnostics.visible and player.encounter_label.is_visible_in_tree(), "F3 opens independently")
+
+	var injury := EnemyAttack.Contact.new()
+	injury.damage = 15
+	player.player_health.resolve(injury)
+	_step(player, Action.DAGGER.wind_up + 0.02, true)
+	var stale := player.action_fsm.active_intervals[0]
+	var old_generation := player.encounter_generation
+	_check(player.action_fsm.hitstop_remaining > 0.0 and player.weapon_effects._bursts.size() > 0, "Switch during a damaging Active interval")
+	heavy.attack.begin()
+	heavy.attack.advance_phase(heavy.attack.wind_up, 0.0, player.global_position)
+	heavy.attack.refresh()
+	player.position += Vector2.DOWN * 10.0
+	pursuer.position += Vector2.UP * 10.0
+	await _select(player, KEY_F7, pursuer)
+	player._apply_contact(pursuer, stale, Vector2.ZERO, Vector2.RIGHT)
+	_check(pursuer.health == pursuer.max_health and player.weapon_effects._bursts.is_empty(), "Old swing cannot produce damage or effects")
+	player._update_state_diagnostics()
+	_check(player.state_diagnostics.visible and player.state_diagnostics.text.contains("Heavy: Inactive"), "F3 identifies the excluded enemy")
+	await physics_frame
+	player._physics_process(1.0 / Engine.physics_ticks_per_second)
+	injury.frame = Engine.get_physics_frames()
+	injury.generation = old_generation
+	player._collect_contact(player, injury)
+	player._resolve_contacts(injury.frame, player.encounter_generation)
+	_check(player.player_health.history.is_empty(), "Old enemy contact rejected with a current frame in the new attempt")
+	await _complete_with_swings(player, pursuer)
+	await _select(player, KEY_F5, pursuer)
+	await _pursue_with_inactive_peer(player, pursuer, heavy)
+	await _key_tick(player, KEY_3)
+	_step(player, Action.GREATSWORD.wind_up * 0.95, true)
+	_check(player.action_fsm.state == Action.State.WIND_UP and player.action_fsm.get_aim_state() == Action.AimState.LOCKED, "Switch during committed greatsword wind-up")
+	await _select(player, KEY_F8, heavy)
+	await _complete_with_swings(player, heavy)
+	await _select(player, KEY_F8, heavy)
+	await _pursue_with_inactive_peer(player, heavy, pursuer)
+	await _select(player, KEY_F9)
+	await _complete_with_swings(player)
+
+	await _key_tick(player, KEY_2)
+	_check(player.action_fsm.weapon == Action.SWORD, "2 selects sword")
+	await _key_tick(player, KEY_1)
+	_check(player.action_fsm.weapon == Action.DAGGER, "1 selects dagger")
+	var before_move := player.position
+	await _key_tick(player, KEY_A)
+	_check(player.position.x < before_move.x, "A moves left")
+	Input.action_press("basic_attack")
+	await physics_frame
+	player._physics_process(1.0 / Engine.physics_ticks_per_second)
+	_check(player.action_fsm.state == Action.State.WIND_UP, "Basic attack starts a swing")
+	await _select(player, KEY_F7, pursuer)
+	await _key_tick(player, KEY_3)
+	Input.action_release("basic_attack")
+	_check(player.action_fsm.state == Action.State.READY, "Held attack requires a fresh press after selection")
+	_step(player, Action.GREATSWORD.wind_up * 0.95, true)
+	await _key_tick(player, KEY_SPACE)
+	_check(player.action_fsm.state == Action.State.READY and player.movement_fsm.is_dodging(), "Space interrupts late greatsword wind-up")
+	await _select(player, KEY_F8, heavy)
+	await _key_tick(player, KEY_SPACE)
+	player.movement_fsm.step(Vector2.ZERO, player.movement_speed, player.movement_fsm.dodge_duration)
+	_check(not player.movement_fsm.is_dodging() and not player.movement_fsm.can_dodge(), "Switch during dodge recovery")
+	await _select(player, KEY_F9)
+	await _select(player, KEY_F8, heavy)
+	injury.damage = player.player_health.max_health
+	player.player_health.resolve(injury)
+	_check(player.death_message.visible and player.encounter_label.is_visible_in_tree() and player.encounter_label.text == "Encounter: Heavy only", "Label survives death")
+	_check(not pursuer.is_encounter_active(), "Player death leaves excluded peer inactive")
+	_toggle_debug()
+	_check(not player.state_diagnostics.visible and player.encounter_label.is_visible_in_tree(), "F3 closes independently during death")
+	await _select(player, KEY_F9)
 
 
 func _moving_miss(player: Player, weapon: Weapon, fade: float) -> void:

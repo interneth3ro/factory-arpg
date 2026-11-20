@@ -134,7 +134,13 @@ func _clear_recoil() -> void:
 	_recoil_pose = Vector3.ZERO
 
 
+func is_encounter_active() -> bool:
+	return movement.state != EnemyMovement.State.INACTIVE
+
+
 func receive_hit(weapon: WeaponAttack, direction := Vector2.ZERO) -> int:
+	if not is_encounter_active():
+		return 0
 	var applied := mini(health, weapon.damage)
 	if applied <= 0:
 		return 0
@@ -158,7 +164,7 @@ func receive_hit(weapon: WeaponAttack, direction := Vector2.ZERO) -> int:
 
 
 func rest_after_player_death() -> void:
-	if health == 0:
+	if health == 0 or not is_encounter_active():
 		return
 	# Cancel combat now, then settle only the artwork from its visible pose.
 	var pose := _body.transform
@@ -177,15 +183,16 @@ func rest_after_player_death() -> void:
 	_flash.tween_property(_body, "color", _body_color, 0.20)
 
 
-func reset_encounter(generation: int) -> void:
+func reset_encounter(generation: int, participating := true) -> void:
 	_clear_recoil()
 	if _flash:
 		_flash.kill()
 		_flash = null
 	health = max_health
-	collision_layer = _solid_layers
-	collision_mask = _initial_mask
+	visible = participating
+	collision_layer = _solid_layers if participating else 0
+	collision_mask = _initial_mask if participating else 0
 	position = _start_position
-	movement.reset_encounter(generation)
+	movement.reset_encounter(generation, participating)
 	_flash_strength = 0.0
 	modulate = _initial_tint

@@ -36,11 +36,13 @@ const PHASE_COLORS := {
 @onready var weapon_effects: WeaponEffects = $WeaponEffects
 @onready var combat_audio: CombatAudio = $CombatAudio
 @onready var enemies: Array[EnemyHealth] = [$"../Pursuer", $"../Heavy"]
+@onready var encounter_label: Label = $Diagnostics/Encounter
 @onready var completion: Label = $Diagnostics/Completion
 @onready var start_position := position
 var last_damage := "None"
 var motion_trace := SlideTrace.new()
 var encounter_generation := 0
+var _solo_enemy: EnemyHealth # Null selects the combined encounter.
 var _pending: Array[EnemyAttack.Contact] = []
 var _contact_frame := -1
 var _feedback_frame := -1
@@ -56,12 +58,30 @@ func _ready() -> void:
 	player_health.health_changed.connect(_update_health_hud)
 	player_health.damaged.connect(_show_damage)
 	player_health.died.connect(_on_death)
+	_update_encounter_label()
 	_update_health_hud()
 	_update_presentation()
 
 
+func _select_encounter_from_input() -> bool:
+	if Input.is_action_just_pressed("combat_test_pursuer_only"):
+		_solo_enemy = $"../Pursuer"
+	elif Input.is_action_just_pressed("combat_test_heavy_only"):
+		_solo_enemy = $"../Heavy"
+	elif Input.is_action_just_pressed("combat_test_combined"):
+		_solo_enemy = null
+	else:
+		return false
+	return true
+
+
+func _update_encounter_label() -> void:
+	var configuration := "%s only" % _solo_enemy.name if _solo_enemy else "Pursuer + Heavy"
+	encounter_label.text = "Encounter: " + configuration
+
+
 func _physics_process(delta: float) -> void:
-	if Input.is_action_just_pressed("reset_combat_test"):
+	if Input.is_action_just_pressed("reset_combat_test") or _select_encounter_from_input():
 		_reset_encounter()
 		return
 	if player_health.health == 0:
@@ -181,6 +201,9 @@ func _update_state_diagnostics() -> void:
 		]
 
 		for enemy in enemies:
+			if not enemy.is_encounter_active():
+				state_diagnostics.text += "\n%s: Inactive" % enemy.name
+				continue
 			state_diagnostics.text += "\n%s: %d/%d HP (%s)" % [
 				enemy.name, enemy.health, enemy.max_health, "Alive" if enemy.health > 0 else "Defeated",
 			]
@@ -286,7 +309,8 @@ func _apply_contact(target: CollisionObject2D, interval: ActionFSM.ActiveInterva
 		weapon_effects.burst(point, direction, interval.weapon)
 		combat_audio.impact(interval.attack_id, interval.weapon)
 		if enemy.health == 0:
-			completion.visible = enemies.all(func(candidate: EnemyHealth) -> bool: return candidate.health == 0)
+			completion.visible = enemies.all(func(candidate: EnemyHealth) -> bool:
+				return not candidate.is_encounter_active() or candidate.health == 0)
 
 
 func _reset_encounter() -> void:
@@ -307,7 +331,7 @@ func _reset_encounter() -> void:
 	_feedback_frame = -1
 	player_health.reset_encounter()
 	for enemy in enemies:
-		enemy.reset_encounter(encounter_generation)
+		enemy.reset_encounter(encounter_generation, _solo_enemy == null or enemy == _solo_enemy)
 	position = start_position
 	motion_trace.record(self, global_position, 0.0, 0.0, 0.0)
 	facing_marker.rotation = 0.0
@@ -318,4 +342,5 @@ func _reset_encounter() -> void:
 	melee_sweep.begin_tick()
 	last_damage = "None"
 	completion.hide()
+	_update_encounter_label()
 	_update_presentation()

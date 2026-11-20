@@ -5,6 +5,9 @@
 [resource]
 script = ExtResource("1_weapon")
 display_name = "Greatsword"
+reach = 115.0
+sweep_angle = 155.0
+contact_width = 22.0
 wind_up = 0.32
 active = 0.18
 recovery = 0.42

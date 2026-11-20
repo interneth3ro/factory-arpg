@@ -3,6 +3,9 @@ extends Resource
 enum AimMode { LOCK_AT_ACTIVE, CORRECT_ACTIVE, LOCK_DURING_WIND_UP }
 
 @export var display_name: String
+@export_range(1.0, 300.0, 1.0, "suffix:px") var reach := 85.0
+@export_range(1.0, 360.0, 1.0, "suffix:deg") var sweep_angle := 110.0
+@export_range(1.0, 100.0, 1.0, "suffix:px") var contact_width := 16.0
 @export_range(0.01, 5.0, 0.01, "suffix:s") var wind_up: float = 0.1
 @export_range(0.01, 5.0, 0.01, "suffix:s") var active: float = 0.1
 @export_range(0.01, 5.0, 0.01, "suffix:s") var recovery: float = 0.2

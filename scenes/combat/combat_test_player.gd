@@ -3,6 +3,7 @@ extends CharacterBody2D
 const AIM_DEAD_ZONE_RADIUS: float = 4.0
 const MovementFSM = preload("res://scenes/combat/player_movement_fsm.gd")
 const ActionFSM = preload("res://scenes/combat/player_action_fsm.gd")
+const MeleeSweep = preload("res://scenes/combat/melee_sweep.gd")
 const PHASE_COLORS := {
 	ActionFSM.State.READY: Color(0.3, 0.82, 0.95),
 	ActionFSM.State.WIND_UP: Color(1.0, 0.72, 0.16),
@@ -18,6 +19,11 @@ const PHASE_COLORS := {
 @onready var movement_fsm: MovementFSM = $MovementFSM
 @onready var action_fsm: ActionFSM = $ActionFSM
 @onready var state_diagnostics: Label = $Diagnostics/StateLabel
+@onready var melee_sweep: MeleeSweep = $MeleeSweep
+
+
+func _ready() -> void:
+	melee_sweep.contacted.connect(_flash_target)
 
 
 func _physics_process(delta: float) -> void:
@@ -29,9 +35,15 @@ func _physics_process(delta: float) -> void:
 			action_fsm.interrupt_attack()
 	# Sample before advancing movement so the final dodge tick still discards input.
 	var movement_multiplier := 1.0
-	if not movement_fsm.is_dodging():
+	var attacking_allowed := not movement_fsm.is_dodging()
+	if attacking_allowed:
 		movement_multiplier = _step_actions(delta, facing_direction)
+	var start := global_position
 	movement_fsm.step(movement_input, movement_speed, delta, movement_multiplier)
+	melee_sweep.begin_tick()
+	if attacking_allowed and not action_fsm.active_intervals.is_empty():
+		melee_sweep.check_motion(self, start, delta, action_fsm.active_intervals)
+	melee_sweep.select_attack(action_fsm.attack_count)
 	body_marker.color = PHASE_COLORS[action_fsm.state]
 	attack_marker.visible = action_fsm.state != ActionFSM.State.READY
 	if attack_marker.visible:
@@ -66,6 +78,7 @@ func _update_facing() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_combat_debug"):
 		state_diagnostics.visible = not state_diagnostics.visible
+		melee_sweep.visible = state_diagnostics.visible
 		_update_state_diagnostics()
 
 
@@ -84,3 +97,20 @@ func _update_state_diagnostics() -> void:
 			dodge_status,
 			"Active" if is_invulnerable() else "Inactive",
 		]
+		state_diagnostics.text += "\nContacts (%d): %s\nSweep overlay: On" % [
+			melee_sweep.contacts.size(), ", ".join(melee_sweep.contacts.values()) if not melee_sweep.contacts.is_empty() else "None",
+		]
+
+
+func _flash_target(target: CollisionObject2D) -> void:
+	var body := target.get_node_or_null("Body") as Polygon2D
+	if body == null:
+		return
+	var flash := Polygon2D.new()
+	flash.polygon = body.polygon
+	flash.color = Color.WHITE
+	flash.z_index = 1
+	body.add_child(flash)
+	var tween := flash.create_tween()
+	tween.tween_property(flash, "modulate:a", 0.0, 0.12)
+	tween.tween_callback(flash.queue_free)

@@ -3,7 +3,7 @@ extends NavigationAgent2D
 const EnemyAttack = preload("res://scenes/combat/enemy_attack.gd")
 const SlideTrace = preload("res://scenes/combat/slide_trace.gd")
 
-enum State { IDLE, PURSUING, HOLDING, RETREATING, WAITING_FOR_PATH, DEFEATED, RESTING }
+enum State { IDLE, PURSUING, HOLDING, RETREATING, WAITING_FOR_PATH, DEFEATED, RESTING, INACTIVE }
 
 const ENVIRONMENT_MASK := 1 << 2
 const RETREAT_ANGLES := [0.0, 30.0, -30.0, 55.0, -55.0]
@@ -68,13 +68,14 @@ func rest() -> void:
 	_avoidance.avoidance_enabled = false
 
 
-func reset_encounter(generation: int) -> void:
+func reset_encounter(generation: int, participating := true) -> void:
 	_generation = generation
 	_attack.reset_encounter()
-	_clear_motion(State.IDLE)
+	_clear_motion(State.IDLE if participating else State.INACTIVE)
 	_reset_frame = Engine.get_physics_frames()
-	_avoidance.avoidance_enabled = true
-	NavigationServer2D.agent_set_velocity_forced(_avoidance.get_rid(), Vector2.ZERO)
+	_avoidance.avoidance_enabled = participating
+	if participating:
+		NavigationServer2D.agent_set_velocity_forced(_avoidance.get_rid(), Vector2.ZERO)
 
 
 func _clear_motion(next: State) -> void:
@@ -91,7 +92,7 @@ func _clear_motion(next: State) -> void:
 
 
 func _change_state(next: State) -> void:
-	if next in [State.IDLE, State.DEFEATED, State.HOLDING, State.RESTING]:
+	if next in [State.IDLE, State.DEFEATED, State.HOLDING, State.RESTING, State.INACTIVE]:
 		# Setting a target resets the native path result. Park at this pose
 		# until a new movement order arrives, including after an F5 teleport.
 		target_position = _body.global_position
@@ -107,7 +108,7 @@ func _has_sight() -> bool:
 
 
 func _physics_process(delta: float) -> void:
-	if state in [State.DEFEATED, State.RESTING] or Engine.get_physics_frames() == _reset_frame:
+	if state in [State.DEFEATED, State.RESTING, State.INACTIVE] or Engine.get_physics_frames() == _reset_frame:
 		return
 	_attack.start_tick()
 	_retry_in = maxf(0.0, _retry_in - delta)
@@ -377,7 +378,7 @@ func _update_blocking_normal() -> void:
 
 
 func diagnostics() -> String:
-	var engaged := state not in [State.IDLE, State.DEFEATED, State.RESTING]
+	var engaged := state not in [State.IDLE, State.DEFEATED, State.RESTING, State.INACTIVE]
 	var target := str(target_position.round()) if _has_target else "none"
 	return "%s | %s | %.0f px | %.0f px/s\n    Target %s | Path %s" % [
 		String(State.keys()[state]).capitalize(), "engaged" if engaged else "inactive",

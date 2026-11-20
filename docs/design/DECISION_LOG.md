@@ -168,6 +168,7 @@ The owner approved E11–E16 on 2026-11-20 to support the nine combinations and 
 | E14 | B — Reversible inactive enemy state | Keep both instances. Exclude inactive enemies from combat, collision, navigation, avoidance, feedback, and completion. Defeat remains a distinct state. Reactivation restores the enemy's initial state. |
 | E15 | B — Focused automated regression and owner acceptance | Exercise production behavior using existing test conventions. The owner verifies controls, isolation, completion, and lifecycle transitions at the tested implementation head. |
 | E16 | B — Retain as isolated development utility | Keep the selector in the standalone arena for future regression checks. Its scope ends at that arena. |
+| Decision 17 | A — Heavy-only selector on F10 | Supersedes E13's Heavy-only binding after owner playtesting identified the editor's F8 Stop shortcut. Use F10 for Heavy only in the focused running arena. See the [current controls](COMBAT_ENCOUNTER_SELECTOR.md#3-configuration-and-controls). |
 
 ## Recording future decisions
 

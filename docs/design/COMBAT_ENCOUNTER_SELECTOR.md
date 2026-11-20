@@ -1,6 +1,6 @@
 # Factory ARPG — Development-Only Encounter Selector
 
-**Status:** Owner-approved design specification; implementation not authorized\
+**Status:** Owner-approved design, implemented on the feature branch pending runtime acceptance and merge\
 **Approved:** 2026-11-20\
 **Repository:** `interneth3ro/factory-arpg` (`main`)\
 **Engine:** Godot 4.7.2\
@@ -9,7 +9,7 @@
 
 ## 1. Purpose and authority
 
-Provide repeatable Pursuer-only, Heavy-only, and combined encounters for the approved 18-attempt Phase 1 combat evaluation. The current arena has both enemy instances but no confirmed direct isolation selector. This is a development-only evaluation convenience, not a gameplay feature, balancing change, or generalized encounter-testing framework.
+Provide repeatable Pursuer-only, Heavy-only, and combined encounters for the approved 18-attempt Phase 1 combat evaluation. The arena at design approval had both enemy instances but no confirmed direct isolation selector. This is a development-only evaluation convenience, not a gameplay feature, balancing change, or generalized encounter-testing framework.
 
 Consult the current live repository before implementation planning, especially `AGENTS.md`, `docs/DEVELOPMENT_ROADMAP.md`, `docs/design/COMBAT_PROTOTYPE_V0.1.md`, `docs/design/DECISION_LOG.md`, `docs/design/COMBAT_BALANCE_ENCOUNTER_EVALUATION.md`, `docs/design/PR16_PLAYER_HEALTH_DAMAGE_DEATH.md`, `docs/design/PR17_COMBAT_IMPACT_FEEDBACK.md`, `docs/README.md`, and `docs/GODOT_METADATA.md`. Existing approved A-series and M-series gameplay decisions remain authoritative. E1–E10 govern the evaluation; E11–E16 below govern this narrowly scoped test utility. If a design conflict arises, stop for owner approval rather than silently changing behavior.
 
@@ -23,13 +23,14 @@ Consult the current live repository before implementation planning, especially `
 | E14 | B — Reversible inactive enemy state | Retain both enemy instances but exclude inactive enemies from every relevant gameplay subsystem; reactivation restores normal initial state. Inactive is distinct from defeated. |
 | E15 | B — Focused automated regression and owner acceptance | Exercise production behavior with existing test conventions and complete owner runtime acceptance. No broad new test framework. |
 | E16 | B — Retain as isolated development utility | Keep selector in the standalone arena for future regression use, not in production gameplay; no obligation to expand it. |
+| Decision 17 | A — Move Heavy only to F10 | Amends the F8 assignment in E13. Owner playtesting found that F8 stops the running project in the Godot editor. F10 selects Heavy only when the running arena has keyboard focus. |
 
 ## 3. Configuration and controls
 
 | Input | Result |
 | --- | --- |
 | F7 | Select Pursuer only and immediately reset to that fresh configuration. |
-| F8 | Select Heavy only and immediately reset to that fresh configuration. |
+| F10 | Select Heavy only and immediately reset to that fresh configuration. |
 | F9 | Select Pursuer + Heavy and immediately reset to that fresh configuration. |
 | F5 | Reset the currently selected configuration without changing it. |
 | F3 | Continue to toggle existing diagnostics independently of the selector label. |
@@ -77,7 +78,7 @@ Use the existing combat regression conventions and actual production code. Test 
 Minimum focused coverage:
 
 1. Initial combined mode behaves like the existing arena, with both enemies active.
-2. F7/F8/F9 select the correct configuration and immediately produce a fresh player/enemy state.
+2. F7/F10/F9 select the correct configuration and immediately produce a fresh player/enemy state.
 3. F5 resets the selected configuration without changing it; player HP, spawn, starting dagger, attack/dodge state, and active enemy HP/spawns are restored.
 4. Inactive enemies cannot collide, move, detect, attack, receive melee damage, produce contact events, influence navigation/avoidance, or block completion.
 5. Pursuer-only and Heavy-only completion occurs on defeat of the selected enemy; combined completion still requires both.

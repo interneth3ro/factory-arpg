@@ -192,7 +192,7 @@ Examples:
 ## 11. Immediate next steps
 
 1. The owner selected combat impact and feedback for PR #17 (M75) and approved its scope (M76–M90).
-2. The authorized implementation is on the PR #17 feature branch pending independent review, owner runtime acceptance and merge.
+2. PR #19 has completed independent source review and owner runtime acceptance. The owner's manual merge is pending.
 3. Complete and evaluate the combat prototype against the Phase 1 exit gate.
 4. Scope the minimal integrated factory loop and decide whether to use a separate test space or the permanent opening region.
 5. At Phase 2 exit, explicitly approve the production transition and begin building the actual game.

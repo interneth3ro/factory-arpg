@@ -23,9 +23,9 @@ const PHASE_BLEND_SECONDS := 0.020
 var _flash: Tween
 # Local visual displacement (x, y) and tilt in radians (z).
 var _recoil_pose := Vector3.ZERO
-var _recoil_peak := Vector3.ZERO
+var _recoil_target := Vector3.ZERO
 var _recoil_limit := 1.0
-var _rise_left := 0.0
+var _time_to_target := 0.0
 var _release_left := 0.0
 var _flash_strength := 0.0:
 	set(value):
@@ -83,30 +83,35 @@ func _react(direction: Vector2, weapon: WeaponAttack) -> void:
 	var strength := lerpf(0.42, 1.0, weapon.feedback_weight) * _recoil_limit
 	var offset := direction * recoil_distance * strength
 	var angle := direction.x * deg_to_rad(recoil_degrees) * strength
-	_recoil_peak = Vector3(offset.x, offset.y, angle)
-	_rise_left = recoil_duration * 0.28
+	_recoil_target = Vector3(offset.x, offset.y, angle)
+	_time_to_target = recoil_duration * 0.28
 	if _recoil_limit < 1.0:
-		_rise_left = minf(_rise_left, PHASE_BLEND_SECONDS)
-	_release_left = recoil_duration - _rise_left
+		_time_to_target = minf(_time_to_target, PHASE_BLEND_SECONDS)
+	_release_left = recoil_duration - _time_to_target
 	set_process(true)
 
 
 func _process(delta: float) -> void:
 	var limit := _recoil_phase_scale()
 	if limit < _recoil_limit:
-		# Tighten the destination, never the visible pose. On release, settle
-		# promptly to neutral. A later, looser phase cannot revive this hit.
-		_recoil_peak *= limit / _recoil_limit
+		var attenuation := limit / _recoil_limit
 		_recoil_limit = limit
-		if _rise_left > 0.0:
-			_rise_left = minf(_rise_left, PHASE_BLEND_SECONDS)
-		else:
-			_release_left = minf(_release_left, PHASE_BLEND_SECONDS)
-	var rise := minf(delta, _rise_left)
-	if rise > 0.0:
-		_recoil_pose = _ease_recoil(_recoil_peak, rise, _rise_left)
-		_rise_left -= rise
-	var release := minf(delta - rise, _release_left)
+		if _time_to_target > 0.0:
+			_recoil_target *= attenuation
+			var blend := minf(_time_to_target, PHASE_BLEND_SECONDS)
+			_release_left += _time_to_target - blend
+			_time_to_target = blend
+		elif _release_left > PHASE_BLEND_SECONDS:
+			# Split the existing return at the blend boundary. Aim for the
+			# attenuated pose it would have reached there, then finish on time.
+			_time_to_target = PHASE_BLEND_SECONDS
+			_recoil_target = _ease_recoil(Vector3.ZERO, _time_to_target, _release_left) * attenuation
+			_release_left -= _time_to_target
+	var approach := minf(delta, _time_to_target)
+	if approach > 0.0:
+		_recoil_pose = _ease_recoil(_recoil_target, approach, _time_to_target)
+		_time_to_target -= approach
+	var release := minf(delta - approach, _release_left)
 	if release > 0.0:
 		_recoil_pose = _ease_recoil(Vector3.ZERO, release, _release_left)
 		_release_left -= release
@@ -123,9 +128,9 @@ func _ease_recoil(target: Vector3, step: float, remaining: float) -> Vector3:
 
 func _clear_recoil() -> void:
 	set_process(false)
-	_rise_left = 0.0
+	_time_to_target = 0.0
 	_release_left = 0.0
-	_recoil_peak = Vector3.ZERO
+	_recoil_target = Vector3.ZERO
 	_recoil_pose = Vector3.ZERO
 
 

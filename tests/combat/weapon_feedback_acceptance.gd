@@ -81,6 +81,11 @@ func _run() -> void:
 	player._reset_encounter()
 	for enemy in player.enemies:
 		_recoil_transitions(enemy)
+		player._reset_encounter()
+		var coarse := _release_into_active(enemy, PackedFloat64Array([0.033]))
+		player._reset_encounter()
+		var split := _release_into_active(enemy, PackedFloat64Array([0.011, 0.011, 0.011]))
+		_check(coarse.is_equal_approx(split), "%s release pose at 33 ms is independent of frame splits" % enemy.name)
 	arena.queue_free()
 	print("Weapon feedback acceptance: %d failures" % failures)
 	quit(1 if failures else 0)
@@ -177,7 +182,9 @@ func _recoil_transitions(enemy: Enemy) -> void:
 	attack.refresh()
 	_check(is_equal_approx(enemy._body.position.x, -enemy.recoil_distance * 0.35), "Active entry preserves releasing pose")
 	enemy._process(0.010)
-	_check(enemy._body.position.x < 0 and absf(enemy._body.position.x) < enemy.recoil_distance * 0.12, "Existing release eases into Active")
+	_check(enemy._body.position.x < 0 and absf(enemy._body.position.x) < enemy.recoil_distance * 0.35, "Existing release eases toward Active limit")
+	enemy._process(0.010)
+	_check(enemy._body.position.x < 0 and absf(enemy._body.position.x) <= enemy.recoil_distance * 0.12, "Release reaches Active bound with a remaining tail")
 	enemy._react(Vector2.RIGHT, Action.GREATSWORD)
 	enemy._process(0.020)
 	_check(is_equal_approx(enemy._body.position.x, enemy.recoil_distance * 0.12), "Active hit has minimal peak")
@@ -187,3 +194,35 @@ func _recoil_transitions(enemy: Enemy) -> void:
 	_check(is_equal_approx(enemy._body.position.x, enemy.recoil_distance * 0.12), "Recovery does not amplify a previous hit")
 	enemy._process(enemy.recoil_duration)
 	_check(is_zero_approx(enemy._body.position.x) and is_zero_approx(enemy._body.rotation), "Reaction returns to the attack pose")
+
+
+func _release_into_active(enemy: Enemy, frame_steps: PackedFloat64Array) -> Vector2:
+	var attack := enemy.attack
+	var target := enemy.global_position + Vector2.UP * 50.0
+	attack.face_motion(Vector2.UP)
+	attack.begin()
+	attack.advance_phase(attack.remaining - 0.030, 0.0, target)
+	attack.refresh()
+	enemy.receive_hit(Action.GREATSWORD, Vector2.RIGHT)
+	# Read the rendered horizontal offset and tilt. Vertical attack poses
+	# contribute neither. The first 30 ms take this hit past its wind-up peak.
+	enemy._process(0.030)
+	var before := Vector2(enemy._body.position.x, enemy._body.rotation)
+	attack.advance_phase(attack.remaining, 0.0, target)
+	attack.refresh()
+	var at_entry := Vector2(enemy._body.position.x, enemy._body.rotation)
+	_check(attack.phase == EnemyAttack.Phase.ACTIVE and at_entry.is_equal_approx(before), "Phase entry preserves release offset and tilt")
+	var previous := at_entry
+	for step in frame_steps:
+		enemy._process(step)
+		var pose := Vector2(enemy._body.position.x, enemy._body.rotation)
+		_check(pose.x > 0.0 and pose.x < previous.x and pose.y > 0.0 and pose.y < previous.y, "Releasing offset and tilt move toward neutral without snapping or reversing")
+		previous = pose
+	_check(previous.x <= enemy.recoil_distance * 0.12 and previous.y <= deg_to_rad(enemy.recoil_degrees) * 0.12, "Release is inside Active bounds after 33 ms")
+	# Both partitions leave 63 ms elapsed since the hit. Check either side
+	# of its original endpoint, allowing for rounding of the step durations.
+	enemy._process(enemy.recoil_duration - 0.063 - 0.005)
+	_check(enemy._body.position.x > 0.0 and enemy._body.position.x < previous.x, "Release persists until its natural end")
+	enemy._process(0.005001)
+	_check(is_zero_approx(enemy._body.position.x) and is_zero_approx(enemy._body.rotation) and not enemy.is_processing(), "Expired release settles at neutral and stops processing")
+	return previous

@@ -18,7 +18,7 @@ Implementation documentation describes how the current code works. Refactors tha
 
 The [combat test arena](../scenes/combat/combat_test_arena.tscn) is a standalone scene. Open it in the Godot editor and press F6 to run it. The [player coordinator](../scenes/combat/combat_test_player.gd) samples screen-relative WASD with normalized diagonals and passes that intent to the Movement FSM each physics step. It also aims the facing marker independently of movement. Within 4 pixels of the player's center in world coordinates, the marker keeps its previous heading. The Player's exported `movement_speed` defaults to a provisional 220 pixels per second.
 
-The [Movement FSM](../scenes/combat/player_movement_fsm.gd) starts Idle and switches to Moving while it receives a nonzero movement vector, including when a collision blocks travel. It owns player velocity and native 2D collision movement. Pursuer and Heavy are stationary.
+The [Movement FSM](../scenes/combat/player_movement_fsm.gd) starts Idle and switches to Moving while it receives a nonzero movement vector, including when a collision blocks travel. It owns player velocity and native 2D collision movement.
 
 ### Universal dodge
 
@@ -70,13 +70,13 @@ During Active, a radial segment sweeps clockwise from minus half the weapon arc 
 | One-handed sword | 85 px | 110° | 16 px |
 | Greatsword | 115 px | 155° | 22 px |
 
-The [sweep detector](../scenes/combat/melee_sweep.gd) clips each recorded Active interval to the player's resolved slide path. It estimates time to each collision from travel and remainder and interpolates along each leg. Native capsule queries cover the intervening translation, blade rotation and bounded dagger correction. Each midpoint capsule carries at most one extra pixel of radius, so borderline grazes can register. Queries see targets at their current physics poses. Both arena targets are stationary. Continuous relative motion for future moving targets would require target motion history.
+The [sweep detector](../scenes/combat/melee_sweep.gd) clips each recorded Active interval to the player's resolved slide path. It estimates time to each collision from travel and remainder and interpolates along each leg. Native capsule queries cover the intervening translation, blade rotation and bounded dagger correction. Each midpoint capsule carries at most one extra pixel of radius, so borderline grazes can register. Queries see each enemy at its current physics pose. An enemy can cross the blade between samples. Continuous detection of that relative motion would require target motion history. Check approach, retreat, cross-arc motion and repeated swings during owner acceptance.
 
 Living Pursuer and Heavy placeholders keep their solid collision layer and also occupy 2D layer 2, **Melee targets**. Each body's instance ID can register once per attack, including across multiple shapes or ticks. Repeated attacks get fresh IDs.
 
 F3 toggles diagnostics and the translucent capsules queried during the latest physics tick. The attack count identifies the current or most recent attack. The contact list and count persist through Recovery and clear when a new attack starts. A tick crossing into Recovery can display its final Active slice until the next tick.
 
-### Damage and hit feedback (pending merge)
+### Damage and hit feedback
 
 The player routes each contact with its originating Active interval to the shared [enemy health script](../scenes/combat/enemy_health.gd). Pursuer starts at 75 HP and Heavy at 150 HP. The target loses at most its remaining HP. F3 retains the most recent HP loss, target, weapon and attack ID, alongside both enemies' health and the last applied hitstop.
 
@@ -91,6 +91,29 @@ Each successful hit replaces the target's current flash. A lethal hit immediatel
 Contacts resolve after movement. The first successful hit from the attack still in progress schedules its hitstop for the next physics tick. Completed intervals still deal damage when a tick spans attacks. A finished attack cannot pause a later swing. During the paused portion of a tick the attack holds its phase and movement multiplier. The remaining time advances the usual phase loop, with sweep intervals measured from the real tick start. Movement and click-buffer expiry use physics time. A successful dodge clears the pause immediately.
 
 F5 takes priority over gameplay input for that physics tick. It restores spawn positions, health, collision settings, colors, the starting dagger and Ready/Idle states. It clears attack and contact history, hitstop, dodge recovery, flashes and completion while preserving the F3 toggle. Held LMB needs a fresh press to restart.
+
+### Enemy pursuit and navigation (pending merge)
+
+The Pursuer and Heavy start Idle. Each detects the player by range and a native physics ray against the four perimeter walls and three solid blocks. Once engaged, an enemy follows the player around obstructions until the player exceeds the disengagement radius. Coming back into view inside detection range can start another pursuit.
+
+| Provisional value | Pursuer | Heavy |
+| --- | ---: | ---: |
+| Maximum speed (px/s) | 240 | 130 |
+| Acceleration / deceleration (px/s²) | 1800 / 2200 | 600 / 850 |
+| Detect / disengage (px) | 240 / 380 | 190 / 320 |
+| Stop / resume / begin retreat (px) | 55 / 75 / 35 | 90 / 115 / 65 |
+| Target update interval (s) | 0.15 | 0.25 |
+| Collision radius / nominal mesh clearance (px) | 14 / 18 | 25 / 29 |
+
+Distances are center to center. Pursuing ends inside the stopping distance with clear sight. Holding lasts until the player exceeds the resume threshold, passes behind cover, or steps inside the retreat threshold. Retreating aims for the stopping distance, shortening its route at a boundary if that still gains at least 6 px. The enemy tries directly away, then offsets of ±30° and ±55°, rejecting routes that initially close distance or require a long detour. A blocked retreat holds and retries on the archetype's timer.
+
+Each movement agent follows its current waypoints every physics tick. A 6 px target change triggers an update at the next interval. A partial route follows the reachable portion, then enters Waiting for path and retries even for a stationary player. The native reachability result and the endpoint's distance from the requested target distinguish a complete route. Empty or negligible routes also wait. F3 shows the state, engagement, distance, actual movement speed, active destination and path status alongside HP and defeat.
+
+The arena loads two static navigation polygons. The Pursuer uses the world map and layer 1. The Heavy uses a scene-owned map and layer 2. Isolating the overlapping meshes keeps each path query on its own clearance geometry. Both bodies have an avoidance agent on the world map, where they can see each other. The movement controller smooths the preferred velocity before submission. Its sole movement callback applies the avoidance result through the existing body's `move_and_slide()`. A stationary enemy retains avoidance priority. [Godot's actor-size guidance](https://docs.godotengine.org/en/4.7/tutorials/navigation/navigation_different_actor_types.html)
+
+The [offline mesh builder](../tools/arena_navigation.py) derives the floor from the inner faces of the physical walls, subtracts the static obstacle footprints, erodes the surface by the body radius plus 4 px, then triangulates it. With Shapely 2.1.2 in an authoring environment, run `python tools/arena_navigation.py` to check for drift. After a collider edit, add `--write` to regenerate both resources. The resources also retain the outer outline and the static-collider bake settings for the `arena_solid` group. The running game loads the saved vertices and polygons directly.
+
+Lethal damage immediately stops movement and disables avoidance. The player coordinator's F5 reset restores both enemies to their spawn points, cancels destinations and retries, clears velocity and re-enables avoidance. Enemies remain Idle through the reset tick. Enemy attacks and player health are deferred.
 
 For implementation PRs, identify the affected documentation and use [documentation sync](../.agents/skills/documentation-sync/SKILL.md) on the same branch before review. Reconcile approved changes and keep edits focused on the PR.
 

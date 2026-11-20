@@ -1,11 +1,13 @@
 extends CharacterBody2D
 
 const WeaponAttack = preload("res://scenes/combat/weapon_attack.gd")
+const EnemyMovement = preload("res://scenes/combat/enemy_movement.gd")
 const DEFEATED_TINT := Color(0.48, 0.48, 0.48)
 
 @export_range(1, 1000) var max_health := 75
 
 @onready var health := max_health
+@onready var movement: EnemyMovement = $Movement
 @onready var _start_position := position
 @onready var _solid_layers := collision_layer
 @onready var _initial_mask := collision_mask
@@ -24,6 +26,7 @@ func receive_hit(weapon: WeaponAttack) -> int:
 		# Called from a direct-space query in the player's physics step.
 		collision_layer = 0
 		collision_mask = 0
+		movement.defeat()
 	if _flash:
 		_flash.kill()
 	_body.color = _body_color.lerp(Color.WHITE, weapon.flash_strength)
@@ -42,5 +45,6 @@ func reset_encounter() -> void:
 	collision_layer = _solid_layers
 	collision_mask = _initial_mask
 	position = _start_position
+	movement.reset_encounter()
 	_body.color = _body_color
 	modulate = _initial_tint

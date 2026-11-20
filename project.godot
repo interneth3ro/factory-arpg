@@ -80,6 +80,7 @@ reset_combat_test={
 [layer_names]
 
 2d_physics/layer_2="Melee targets"
+2d_physics/layer_3="Arena environment"
 
 [physics]
 

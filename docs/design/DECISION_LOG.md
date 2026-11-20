@@ -33,6 +33,27 @@ These approved implementation decisions apply to the [stationary combat placehol
 | M11 | Successful damage flashes the target, with intensity and duration increasing by weapon weight. |
 | M12 | Defeated placeholders stay visible, dimmed and nonblocking until manual reset. |
 
+## Enemy locomotion decisions
+
+The owner approved these milestone choices for the existing Pursuer and Heavy under the [frozen encounter specification](COMBAT_PROTOTYPE_V0.1.md#6-enemies-and-encounter-behavior). The branch implementation and provisional distances, speeds and timings are recorded in [enemy pursuit and navigation](../README.md#enemy-pursuit-and-navigation-pending-merge).
+
+| ID | Approved selection |
+| --- | --- |
+| M13 | Start inactive. Detect the player within the archetype's detection radius with clear sight. |
+| M14 | Stay engaged through temporary loss of sight. Disengage beyond the larger radius and require fresh detection. |
+| M15 | Give the Pursuer the faster approach and the Heavy the slower approach, with independent provisional speed limits. |
+| M16 | Approach to an archetype-specific engagement distance and hold there. |
+| M17 | Use native NavigationAgent2D waypoints and CharacterBody2D collision movement for both enemies. |
+| M18 | Separate stopping and pursuit-resumption thresholds to stabilize spacing. |
+| M19 | Retreat when crowded and hold again when acceptable spacing returns. |
+| M20 | Validate a small deterministic set of retreat destinations on the enemy's mesh. Hold when none improves separation meaningfully. |
+| M21 | Refresh navigation targets at archetype-specific intervals or on transitions and invalidation. Continue following waypoints between refreshes. |
+| M22 | Build walkable geometry from the physical arena with separate clearance for the 14 px and 25 px bodies. |
+| M23 | Follow useful partial paths to the reachable endpoint, wait and retry while engaged. |
+| M24 | Accelerate and decelerate with physics time. Give the Heavy more gradual changes in movement. |
+| M25 | Combine solid enemy-to-enemy collision with native local avoidance. Defeat removes both until reset. |
+| M26 | Test initial visibility against environmental walls and solid obstacles with native 2D physics. |
+
 ## Recording future decisions
 
 Append decisions in approval order with a stable ID, descriptive title, approved selection, brief summary, and a link to the authoritative specification. Record dates only when supplied. When a decision changes, retain the earlier entry and link it to the approved replacement.

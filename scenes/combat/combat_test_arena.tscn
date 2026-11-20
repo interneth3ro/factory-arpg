@@ -1,10 +1,14 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scenes/combat/combat_test_player.gd" id="1_player"]
 [ext_resource type="Script" path="res://scenes/combat/player_movement_fsm.gd" id="2_movement"]
 [ext_resource type="Script" path="res://scenes/combat/player_action_fsm.gd" id="3_action"]
 [ext_resource type="Script" path="res://scenes/combat/melee_sweep.gd" id="4_sweep"]
 [ext_resource type="Script" path="res://scenes/combat/enemy_health.gd" id="5_enemy"]
+[ext_resource type="Script" path="res://scenes/combat/enemy_movement.gd" id="6_motion"]
+[ext_resource type="Script" path="res://scenes/combat/arena_navigation.gd" id="7_maps"]
+[ext_resource type="NavigationPolygon" path="res://scenes/combat/pursuer_navigation.tres" id="8_small"]
+[ext_resource type="NavigationPolygon" path="res://scenes/combat/heavy_navigation.tres" id="9_large"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_horizontal_wall"]
 size = Vector2(996, 18)
@@ -22,6 +26,15 @@ radius = 14.0
 radius = 25.0
 
 [node name="CombatTestArena" type="Node2D"]
+script = ExtResource("7_maps")
+
+[node name="PursuerRegion" type="NavigationRegion2D" parent="."]
+navigation_polygon = ExtResource("8_small")
+
+[node name="HeavyRegion" type="NavigationRegion2D" parent="."]
+enabled = false
+navigation_layers = 2
+navigation_polygon = ExtResource("9_large")
 
 [node name="Backdrop" type="CanvasLayer" parent="."]
 layer = -1
@@ -146,7 +159,8 @@ width = 2.0
 default_color = Color(0.225, 0.307, 0.333, 1)
 antialiased = true
 
-[node name="Boundaries" type="StaticBody2D" parent="."]
+[node name="Boundaries" type="StaticBody2D" parent="." groups=["arena_solid"]]
+collision_layer = 5
 
 [node name="North" type="CollisionShape2D" parent="Boundaries"]
 position = Vector2(0, -249)
@@ -183,7 +197,8 @@ polygon = PackedVector2Array(-9, -240, 9, -240, 9, 240, -9, 240)
 [node name="ArenaObjects" type="Node2D" parent="."]
 y_sort_enabled = true
 
-[node name="WestBlock" type="StaticBody2D" parent="ArenaObjects"]
+[node name="WestBlock" type="StaticBody2D" parent="ArenaObjects" groups=["arena_solid"]]
+collision_layer = 5
 position = Vector2(-250, -80)
 
 [node name="Footprint" type="CollisionPolygon2D" parent="ArenaObjects/WestBlock"]
@@ -208,7 +223,8 @@ default_color = Color(0.48, 0.67, 0.69, 0.85)
 closed = true
 antialiased = true
 
-[node name="CenterBlock" type="StaticBody2D" parent="ArenaObjects"]
+[node name="CenterBlock" type="StaticBody2D" parent="ArenaObjects" groups=["arena_solid"]]
+collision_layer = 5
 position = Vector2(20, 65)
 
 [node name="Footprint" type="CollisionPolygon2D" parent="ArenaObjects/CenterBlock"]
@@ -233,7 +249,8 @@ default_color = Color(0.48, 0.67, 0.69, 0.85)
 closed = true
 antialiased = true
 
-[node name="EastBlock" type="StaticBody2D" parent="ArenaObjects"]
+[node name="EastBlock" type="StaticBody2D" parent="ArenaObjects" groups=["arena_solid"]]
+collision_layer = 5
 position = Vector2(292, 105)
 
 [node name="Footprint" type="CollisionPolygon2D" parent="ArenaObjects/EastBlock"]
@@ -337,6 +354,17 @@ motion_mode = 1
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ArenaObjects/Pursuer"]
 shape = SubResource("CircleShape2D_pursuer")
 
+[node name="Movement" type="NavigationAgent2D" parent="ArenaObjects/Pursuer" node_paths=PackedStringArray("peer")]
+max_speed = 240.0
+path_desired_distance = 4.0
+target_desired_distance = 3.0
+script = ExtResource("6_motion")
+peer = NodePath("../../Heavy")
+
+[node name="Avoidance" type="NavigationAgent2D" parent="ArenaObjects/Pursuer"]
+neighbor_distance = 88.0
+time_horizon_agents = 0.55
+
 [node name="Body" type="Polygon2D" parent="ArenaObjects/Pursuer"]
 color = Color(0.99, 0.66, 0.33, 1)
 polygon = PackedVector2Array(0, -15, 14, -3, 12, 9, 0, 14, -12, 9, -14, -3)
@@ -363,6 +391,26 @@ motion_mode = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ArenaObjects/Heavy"]
 shape = SubResource("CircleShape2D_heavy")
+
+[node name="Movement" type="NavigationAgent2D" parent="ArenaObjects/Heavy" node_paths=PackedStringArray("peer")]
+navigation_layers = 2
+max_speed = 130.0
+path_desired_distance = 4.0
+target_desired_distance = 3.0
+script = ExtResource("6_motion")
+peer = NodePath("../../Pursuer")
+detection_distance = 190.0
+disengage_distance = 320.0
+stop_distance = 90.0
+resume_distance = 115.0
+retreat_distance = 65.0
+repath_interval = 0.25
+acceleration = 600.0
+deceleration = 850.0
+
+[node name="Avoidance" type="NavigationAgent2D" parent="ArenaObjects/Heavy"]
+neighbor_distance = 88.0
+time_horizon_agents = 0.55
 
 [node name="Body" type="Polygon2D" parent="ArenaObjects/Heavy"]
 color = Color(0.84, 0.47, 0.63, 1)

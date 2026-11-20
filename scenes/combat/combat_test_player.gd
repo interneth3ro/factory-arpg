@@ -117,6 +117,7 @@ func _update_state_diagnostics() -> void:
 			state_diagnostics.text += "\n%s: %d/%d HP (%s)" % [
 				enemy.name, enemy.health, enemy.max_health, "Alive" if enemy.health > 0 else "Defeated",
 			]
+			state_diagnostics.text += "\n    " + enemy.movement.diagnostics()
 		state_diagnostics.text += "\nLast damage: %s\nHitstop: %.0f ms remaining" % [
 			last_damage, action_fsm.hitstop_remaining * 1000.0,
 		]

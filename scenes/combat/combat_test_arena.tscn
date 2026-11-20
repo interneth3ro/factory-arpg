@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://scenes/combat/combat_test_player.gd" id="1_player"]
 [ext_resource type="Script" path="res://scenes/combat/player_movement_fsm.gd" id="2_movement"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://scenes/combat/arena_navigation.gd" id="7_maps"]
 [ext_resource type="NavigationPolygon" path="res://scenes/combat/pursuer_navigation.tres" id="8_small"]
 [ext_resource type="NavigationPolygon" path="res://scenes/combat/heavy_navigation.tres" id="9_large"]
+[ext_resource type="Script" path="res://scenes/combat/enemy_attack.gd" id="10_attack"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_horizontal_wall"]
 size = Vector2(996, 18)
@@ -276,6 +277,7 @@ closed = true
 antialiased = true
 
 [node name="Player" type="CharacterBody2D" parent="ArenaObjects"]
+process_physics_priority = -1
 position = Vector2(-318, 132)
 motion_mode = 1
 script = ExtResource("1_player")
@@ -335,6 +337,7 @@ text = "Encounter complete   |   F5 to reset"
 horizontal_alignment = 1
 
 [node name="StateLabel" type="Label" parent="ArenaObjects/Player/Diagnostics"]
+theme_override_font_sizes/font_size = 14
 visible = false
 offset_left = 16.0
 offset_top = 16.0
@@ -364,6 +367,9 @@ peer = NodePath("../../Heavy")
 [node name="Avoidance" type="NavigationAgent2D" parent="ArenaObjects/Pursuer"]
 neighbor_distance = 88.0
 time_horizon_agents = 0.55
+
+[node name="Attack" type="Node2D" parent="ArenaObjects/Pursuer"]
+script = ExtResource("10_attack")
 
 [node name="Body" type="Polygon2D" parent="ArenaObjects/Pursuer"]
 color = Color(0.99, 0.66, 0.33, 1)
@@ -412,11 +418,25 @@ deceleration = 850.0
 neighbor_distance = 88.0
 time_horizon_agents = 0.55
 
+[node name="Attack" type="Node2D" parent="ArenaObjects/Heavy"]
+script = ExtResource("10_attack")
+initiation_radius = 105.0
+wind_up = 0.75
+active = 0.25
+recovery = 0.85
+cooldown = 0.50
+engagement_delay = 0.40
+turn_rate = 180.0
+reach = 115.0
+sector_degrees = 110.0
+lunge = 0.0
+ground_warning = true
+
 [node name="Body" type="Polygon2D" parent="ArenaObjects/Heavy"]
 color = Color(0.84, 0.47, 0.63, 1)
 polygon = PackedVector2Array(-15, -22, 15, -22, 24, -12, 24, 12, 15, 22, -15, 22, -24, 12, -24, -12)
 
-[node name="ArmorPlate" type="Polygon2D" parent="ArenaObjects/Heavy"]
+[node name="ArmorPlate" type="Polygon2D" parent="ArenaObjects/Heavy/Body"]
 color = Color(0.45, 0.24, 0.39, 1)
 polygon = PackedVector2Array(-13, -9, 13, -9, 17, 0, 13, 9, -13, 9, -17, 0)
 

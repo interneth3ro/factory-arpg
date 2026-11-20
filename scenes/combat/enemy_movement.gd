@@ -1,5 +1,8 @@
 extends NavigationAgent2D
 
+const EnemyAttack = preload("res://scenes/combat/enemy_attack.gd")
+const SlideTrace = preload("res://scenes/combat/slide_trace.gd")
+
 enum State { IDLE, PURSUING, HOLDING, RETREATING, WAITING_FOR_PATH, DEFEATED }
 
 const ENVIRONMENT_MASK := 1 << 2
@@ -21,6 +24,8 @@ const ENDPOINT_EPSILON := 0.5
 @onready var _body: CharacterBody2D = get_parent()
 @onready var _player: CharacterBody2D = $"../../Player"
 @onready var _avoidance: NavigationAgent2D = $"../Avoidance"
+@onready var _attack: EnemyAttack = $"../Attack"
+@onready var _player_trace: SlideTrace = _player.get("motion_trace")
 
 var state := State.IDLE
 var _retry_in := 0.0
@@ -31,6 +36,10 @@ var _moving := false
 var _speed := 0.0
 var _waypoint := Vector2.ZERO
 var _blocking_normal := Vector2.ZERO
+var _command_frame := -1
+var _tick_delta := 0.0
+var _navigation_submitted := false
+var _lunge_trace := SlideTrace.new()
 
 
 func _ready() -> void:
@@ -40,14 +49,19 @@ func _ready() -> void:
 	_avoidance.max_speed = max_speed
 	_avoidance.avoidance_enabled = true
 	_avoidance.velocity_computed.connect(_move_with_safe_velocity)
+	_attack.active_interval.connect(_strike)
+	_attack.standstill_requested.connect(_stand_still)
+	_attack.recovery_finished.connect(_after_recovery)
 
 
 func defeat() -> void:
+	_attack.reset_encounter()
 	_clear_motion(State.DEFEATED)
 	_avoidance.avoidance_enabled = false
 
 
 func reset_encounter() -> void:
+	_attack.reset_encounter()
 	_clear_motion(State.IDLE)
 	_reset_frame = Engine.get_physics_frames()
 	_avoidance.avoidance_enabled = true
@@ -55,6 +69,8 @@ func reset_encounter() -> void:
 
 
 func _clear_motion(next: State) -> void:
+	_command_frame = -1
+	_navigation_submitted = false
 	_change_state(next)
 	_waypoint = _body.global_position
 	_blocking_normal = Vector2.ZERO
@@ -84,16 +100,47 @@ func _has_sight() -> bool:
 func _physics_process(delta: float) -> void:
 	if state == State.DEFEATED or Engine.get_physics_frames() == _reset_frame:
 		return
+	_attack.start_tick()
 	_retry_in = maxf(0.0, _retry_in - delta)
 	var distance := _body.global_position.distance_to(_player.global_position)
 	if state == State.IDLE:
 		if distance > detection_distance or not _has_sight():
+			_attack.advance_wait(delta - _attack.paused_this_tick)
 			return
 		_change_state(State.PURSUING)
-	elif distance > disengage_distance:
+		_attack.acquire()
+	elif _attack.phase == EnemyAttack.Phase.READY and distance > disengage_distance:
+		_attack.disengage()
 		_clear_motion(State.IDLE)
+		_attack.advance_wait(delta - _attack.paused_this_tick)
 		return
+	_tick_delta = delta
+	_command_frame = Engine.get_physics_frames()
+	_navigation_submitted = false
+	# A recovery that finishes inside this tick can use a fresh avoidance
+	# result for its ordinary tail. The body is stationary at this pose.
+	var ordinary := 0.0
+	match _attack.phase:
+		EnemyAttack.Phase.READY:
+			ordinary = delta
+			if _attack.in_range_and_visible(_has_sight):
+				ordinary = minf(delta, _attack.paused_this_tick + _attack.wait_time())
+		EnemyAttack.Phase.RECOVERY:
+			if distance <= disengage_distance:
+				ordinary = delta - _attack.paused_this_tick - _attack.remaining
+	if ordinary > 0.0:
+		_prepare_navigation(distance, ordinary)
+		_navigation_submitted = true
+	else:
+		# Advertise only the committed motion to the peer's avoidance agent.
+		# The lunging body itself follows the committed vector through physics.
+		var strike_time := _attack.active_time_in(delta - _attack.paused_this_tick)
+		var velocity_request := _attack.committed * (_attack.lunge / _attack.active) * strike_time / delta
+		NavigationServer2D.agent_set_velocity(_avoidance.get_rid(), velocity_request)
+		_avoidance.avoidance_priority = 1.0
 
+
+func _prepare_navigation(distance: float, delta: float) -> void:
 	# A nearby player on the opposite side of a wall still needs a route.
 	var spacing_visible := distance <= resume_distance and _has_sight()
 	var direction := _engagement_direction(distance, spacing_visible)
@@ -250,13 +297,66 @@ func _passing_direction(direction: Vector2) -> Vector2:
 
 
 func _move_with_safe_velocity(safe_velocity: Vector2) -> void:
-	if not _moving or state == State.DEFEATED or Engine.get_physics_frames() == _reset_frame:
+	if _command_frame != Engine.get_physics_frames():
+		return
+	_command_frame = -1 # Each submission can move the body only once.
+	_speed = 0.0
+	_attack.advance_tick(_tick_delta, _has_sight, _move_navigation.bind(safe_velocity))
+
+
+func _stand_still() -> void:
+	_clear_motion(State.HOLDING)
+	NavigationServer2D.agent_set_velocity_forced(_avoidance.get_rid(), Vector2.ZERO)
+
+
+func _after_recovery() -> void:
+	if _body.global_position.distance_to(_player.global_position) > disengage_distance:
+		_attack.disengage()
+		_clear_motion(State.IDLE)
+
+
+func _move_navigation(duration: float, safe_velocity: Vector2) -> void:
+	if duration <= 0.0 or not _navigation_submitted:
+		return
+	if not _moving:
 		_body.velocity = Vector2.ZERO
 		_speed = 0.0
 		return
-	_body.velocity = safe_velocity.limit_length(max_speed)
+	var start := _body.global_position
+	_move(safe_velocity.limit_length(max_speed), duration)
+	var motion := _body.global_position - start
+	_attack.face_motion(-motion if state == State.RETREATING else motion)
+	_speed = motion.length() / duration
+	_update_blocking_normal()
+
+
+func _move(velocity_request: Vector2, duration: float) -> void:
+	# move_and_slide integrates a full physics delta, even for a phase slice.
+	var fraction := duration / _tick_delta
+	_body.velocity = velocity_request * fraction
 	_body.move_and_slide()
-	_speed = _body.get_real_velocity().length()
+	_body.velocity /= fraction
+
+
+func _strike(from: float, duration: float) -> void:
+	var origin := _body.global_position
+	var travel_time := 0.0
+	if _attack.lunge > 0.0:
+		var velocity_request := _attack.committed * (_attack.lunge / _attack.active)
+		var hit := KinematicCollision2D.new()
+		travel_time = duration
+		if _body.test_move(_body.global_transform, velocity_request * duration, hit):
+			travel_time = clampf(hit.get_travel().dot(_attack.committed) / velocity_request.length(), 0, duration)
+		if travel_time > 0.0:
+			_move(velocity_request, travel_time)
+	_attack.displacement += _body.global_position - origin
+	_lunge_trace.record(_body, origin, from, travel_time, from + duration)
+	_attack.check_contact(_lunge_trace, _player_trace)
+	_body.velocity = Vector2.ZERO
+	_speed = _body.global_position.distance_to(origin) / _tick_delta
+
+
+func _update_blocking_normal() -> void:
 	_blocking_normal = Vector2.ZERO
 	if _speed < 1.0:
 		for index in _body.get_slide_collision_count():

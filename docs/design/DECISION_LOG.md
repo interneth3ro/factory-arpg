@@ -35,7 +35,7 @@ These approved implementation decisions apply to the [stationary combat placehol
 
 ## Enemy locomotion decisions
 
-The owner approved these milestone choices for the existing Pursuer and Heavy under the [frozen encounter specification](COMBAT_PROTOTYPE_V0.1.md#6-enemies-and-encounter-behavior). The branch implementation and provisional distances, speeds and timings are recorded in [enemy pursuit and navigation](../README.md#enemy-pursuit-and-navigation-pending-merge).
+The owner approved these milestone choices for the existing Pursuer and Heavy under the [frozen encounter specification](COMBAT_PROTOTYPE_V0.1.md#6-enemies-and-encounter-behavior). See [enemy pursuit and navigation](../README.md#enemy-pursuit-and-navigation) for implementation and provisional tuning.
 
 | ID | Approved selection |
 | --- | --- |
@@ -53,6 +53,43 @@ The owner approved these milestone choices for the existing Pursuer and Heavy un
 | M24 | Accelerate and decelerate with physics time. Give the Heavy more gradual changes in movement. |
 | M25 | Combine solid enemy-to-enemy collision with native local avoidance. Defeat removes both until reset. |
 | M26 | Use a native 2D physics sight check for acquisition. Environmental walls and solid obstacles block detection. After acquisition, temporary loss of sight preserves engagement. |
+
+## Enemy attack decisions
+
+The owner approved Option B for each milestone decision below. Numerical values are provisional. These decisions supplement the frozen [enemy encounter](COMBAT_PROTOTYPE_V0.1.md#6-enemies-and-encounter-behavior) and [player health and reset](COMBAT_PROTOTYPE_V0.1.md#7-player-health-death-and-repeatable-reset) specifications. See [enemy attacks and telegraphs](../README.md#enemy-attacks-and-telegraphs) for implementation and acceptance status.
+
+| ID | Approved selection | Behavior |
+| --- | --- | --- |
+| M27 | Two focused PRs | PR #15 delivers enemy attacks through geometric contact. PR #16 handles player health, damage, dodge immunity resolution, death and reset integration. |
+| M28 | Distance and line of sight | Initiation requires readiness, range and clear environmental sight. Range or sight loss after initiation allows the strike to finish. |
+| M29 | Independent initiation ranges | Pursuer initiates within 65 px and Heavy within 105 px, independently of their navigation thresholds. |
+| M30 | Balanced, readable phases | Pursuer wind-up, active and recovery last 0.35, 0.15 and 0.45 s. Heavy uses 0.75, 0.25 and 0.85 s. |
+| M31 | Balanced commitment | Track for the first 60% of wind-up. Lock aim and the Heavy warning at 0.21 s for Pursuer and 0.45 s for Heavy. |
+| M32 | Archetype-specific tracking | Pursuer turns up to 360°/s and Heavy up to 180°/s before commitment. |
+| M33 | Archetype-specific movement | Both stand still in wind-up and recovery. Only Pursuer moves during the strike. Resume navigation after recovery. |
+| M34 | Committed lunge | Pursuer attempts 35 px over its active phase at approximately 233 px/s along its committed direction, subject to native collision. |
+| M35 | Directional sectors | Center each sector on the committed heading. Pursuer's sector follows its resolved position and Heavy's stays stationary. |
+| M36 | Balanced coverage | Pursuer reaches 60 px over 70° and Heavy reaches 115 px over 110°. Test the player's collision shape. |
+| M37 | Progressive telegraph and commitment cue | Both use procedural pose, intensifying color, a lock cue and a strike flash. Heavy also shows its threatened ground region. |
+| M38 | Short cooldown | After recovery, ordinary navigation resumes. Further attacks wait 0.30 s for Pursuer and 0.50 s for Heavy. |
+| M39 | Interruption and defeat | Nonlethal hits preserve execution. Defeat immediately cancels the attack, contact geometry and attack movement. |
+| M40 | Swept detection | Cover relative player and enemy travel between physics samples, using collision-resolved movement. |
+| M41 | Detailed diagnostics | F3 shows phase time, readiness, cooldown, directions, geometry, lunge progress and contact. Gameplay telegraphs remain visible with F3 closed. |
+| M42 | Separate attack controller | Movement retains navigation, avoidance, collision and sole authority to move the body. |
+| M43 | Finish before disengaging | Crossing the disengagement radius during execution defers reevaluation until recovery ends. |
+| M44 | Geometric contact during dodge | Register contact regardless of dodge state. PR #16 resolves invulnerability. |
+| M45 | One contact per target per execution | The first contact consumes the opportunity even during invulnerability. Clear history on new execution, defeat and reset. |
+| M46 | Collision-limited lunge | Obstruction can shorten or stop travel. Keep timing and direction, with no catch-up motion or detour. |
+| M47 | Controlled handoff | Clear ordinary motion and confirm standstill before wind-up. Reevaluate navigation and accelerate from rest at release. |
+| M48 | Complete attack reset | F5 clears executions, clocks, aim, contacts, movement ownership, poses, warnings and transient diagnostics. |
+| M49 | Initial engagement delay | Count 0.25 s for Pursuer and 0.40 s for Heavy from acquisition during navigation. Restart only on fresh acquisition. |
+| M50 | Environment-clipped danger | Solid environment blocks strikes. Heavy shows the reachable region, including around corners. Enemy bodies affect movement only. |
+| M51 | Independent attacks | Both archetypes can telegraph and strike simultaneously with separate timing, effects and contact histories. |
+| M52 | Pause attack progression | Effective hitstop freezes aim, phase clocks, lunge, recovery, cooldown and telegraph progress. Resume the same execution. |
+| M53 | Recovery follow-through | Pursuer leans forward and fades quickly. Heavy drops its warning and shows a stronger follow-through. Return to neutral over each recovery. |
+| M54 | Layered feedback | Defeat takes priority, followed by hit feedback, attack telegraph, recovery and neutral. Hit flashes preserve pose, direction and warning geometry. |
+| M55 | Fully validated non-damaging attacks | Deliver the complete attack, collision, presentation and diagnostic behavior with static checks and owner runtime acceptance. |
+| M56 | Lightweight hitstop notification | The player Action FSM owns hitstop and reports effective paused time to enemy attacks. Player movement and dodge keep their existing clocks. |
 
 ## Recording future decisions
 

@@ -93,7 +93,7 @@ Both detect, pursue, position within a tolerance band, prepare attacks, commit, 
 
 For the original stationary placeholders, milestone decisions M8 through M12 specify fixed integer damage, one hit per target per attack, localized attack hitstop and weapon-weighted flashes. Defeated placeholders remain visible and dimmed until F5 restores the encounter. See the [milestone tuning and reset behavior](../README.md#damage-and-hit-feedback).
 
-For the Pursuer and Heavy locomotion milestone, the owner approved M13–M26 under A13, A15 and A16. M17, M22 and M25 refine this section's pathfinding scope to permit native 2D waypoint navigation, clearance meshes for these two body sizes and local avoidance between the two enemies. The broader tactical and encounter scope stays as frozen above. See the [pursuit decisions](DECISION_LOG.md#enemy-locomotion-decisions) and [provisional movement tuning](../README.md#enemy-pursuit-and-navigation-pending-merge).
+For the Pursuer and Heavy locomotion milestone, the owner approved M13–M26 under A13, A15 and A16. M17, M22 and M25 refine this section's pathfinding scope to permit native 2D waypoint navigation, clearance meshes for these two body sizes and local avoidance between the two enemies. The broader tactical and encounter scope stays as frozen above. See the [pursuit decisions](DECISION_LOG.md#enemy-locomotion-decisions) and [provisional movement tuning](../README.md#enemy-pursuit-and-navigation).
 
 ## 7. Player health, death and repeatable reset
 

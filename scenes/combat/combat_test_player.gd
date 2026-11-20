@@ -74,14 +74,10 @@ func _physics_process(delta: float) -> void:
 	_update_facing()
 	var facing_direction := Vector2.RIGHT.rotated(facing_marker.global_rotation)
 	if Input.is_action_just_pressed("dodge"):
-		if movement_fsm.request_dodge(movement_input, facing_direction):
-			action_fsm.interrupt_attack()
-			weapon_effects.clear_trail()
-			combat_audio.interrupt_swing()
+		_request_dodge(movement_input, facing_direction)
 	# Sample before advancing movement so the final dodge tick still discards input.
 	var movement_multiplier := 1.0
 	var attacking_allowed := not movement_fsm.is_dodging()
-	var paused := minf(delta, action_fsm.hitstop_remaining)
 	if attacking_allowed:
 		movement_multiplier = _step_actions(delta, facing_direction)
 	var start := global_position
@@ -89,25 +85,24 @@ func _physics_process(delta: float) -> void:
 	motion_trace.record(self, start, 0.0, delta, delta)
 	melee_sweep.begin_tick()
 	if attacking_allowed:
-		_resolve_swings(start, delta, paused)
+		_resolve_swings(start, delta)
 	melee_sweep.select_attack(action_fsm.attack_count)
 	_update_presentation()
 
 
-func _resolve_swings(start: Vector2, delta: float, paused: float) -> void:
-	# Handle each execution in FSM order, including attacks that already
-	# finished this tick. A paused prefix advances neither the blade nor fade.
-	var cursor := paused
+func _resolve_swings(start: Vector2, delta: float) -> void:
+	# Only Active samples advance the blade. Once the last Active slice ends,
+	# its cosmetic fade uses elapsed physics time, including recovery hitstop.
+	var fade_from := 0.0
 	for interval in action_fsm.active_intervals:
-		weapon_effects.decay_trail(maxf(0.0, interval.tick_start - cursor))
-		cursor = interval.tick_start + interval.duration
 		combat_audio.swing(interval.attack_id, interval.weapon)
-		weapon_effects.follow(interval, motion_trace.at(cursor))
+		weapon_effects.follow(interval)
+		fade_from = interval.tick_start + interval.duration
 		if interval.duration > 0.0:
 			_resolving_interval = interval
 			melee_sweep.check_motion_interval(self, start, delta, interval)
 			_resolving_interval = null
-	weapon_effects.decay_trail(maxf(0.0, delta - cursor))
+	weapon_effects.decay_trail(maxf(0.0, delta - fade_from))
 
 
 func _update_presentation() -> void:
@@ -242,12 +237,22 @@ func _show_damage(contact: EnemyAttack.Contact) -> void:
 	_update_presentation()
 
 
-func _on_death() -> void:
+func _request_dodge(movement_input: Vector2, facing: Vector2) -> void:
+	if movement_fsm.request_dodge(movement_input, facing):
+		_interrupt_swing()
+
+
+func _interrupt_swing() -> void:
 	_resolving_interval = null
-	weapon_effects.clear_trail()
-	combat_audio.reset()
 	action_fsm.interrupt_attack()
 	action_fsm.active_intervals.clear()
+	weapon_effects.clear_trail()
+	combat_audio.interrupt_swing()
+
+
+func _on_death() -> void:
+	_interrupt_swing()
+	combat_audio.reset()
 	movement_fsm.reset_encounter()
 	melee_sweep.begin_tick()
 	_flash_left = 0.0

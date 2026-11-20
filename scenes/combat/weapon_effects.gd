@@ -19,10 +19,9 @@ var _angles := PackedFloat64Array()
 var _times := PackedFloat64Array()
 var _fade_left := 0.0
 var _fade_duration := 0.0
-var _fade_origin := Vector2.ZERO
 
 
-func follow(interval: ActionFSM.ActiveInterval, end_origin: Vector2) -> void:
+func follow(interval: ActionFSM.ActiveInterval) -> void:
 	if interval.attack_id != _trail_id:
 		clear_trail()
 		_trail_id = interval.attack_id
@@ -42,7 +41,6 @@ func follow(interval: ActionFSM.ActiveInterval, end_origin: Vector2) -> void:
 			_times.remove_at(0)
 			_angles.remove_at(0)
 	if interval.ends_active:
-		_fade_origin = end_origin
 		_fade_duration = lerpf(0.035, 0.075, _weapon.feedback_weight)
 		_fade_left = _fade_duration
 	queue_redraw()
@@ -99,24 +97,27 @@ func _draw() -> void:
 
 
 func _draw_trail() -> void:
-	var origin := to_local(_fade_origin) if _fade_left > 0.0 else Vector2.ZERO
 	var opacity := _fade_left / _fade_duration if _fade_left > 0.0 else 1.0
 	var width := lerpf(3.0, 13.0, _weapon.feedback_weight)
-	var tip := origin + Vector2.from_angle(_angles[0]) * _weapon.reach
+	var tip := _trail_tip(0)
 	var initial_width := width if _angles.size() == 1 else width * 0.15
-	var inside := tip - Vector2.from_angle(_angles[0]) * initial_width
+	var inside := tip.move_toward(Vector2.ZERO, initial_width)
 	for i in range(1, _angles.size()):
 		var t := float(i) / (_angles.size() - 1)
-		var blade := Vector2.from_angle(_angles[i])
-		var next_tip := origin + blade * _weapon.reach
+		var next_tip := _trail_tip(i)
 		if next_tip.is_equal_approx(tip):
 			continue
-		var next_inside := next_tip - blade * width * lerpf(0.15, 1.0, t)
+		var next_inside := next_tip.move_toward(Vector2.ZERO, width * lerpf(0.15, 1.0, t))
 		draw_colored_polygon(PackedVector2Array([inside, tip, next_tip, next_inside]), Color(INK, opacity * t * 0.48))
 		draw_line(tip, next_tip, Color(LIGHT, opacity * t * 0.80), 1.2, true)
 		tip = next_tip
 		inside = next_inside
 	draw_line(inside, tip, Color(LIGHT, opacity * 0.9), 1.6, true)
+
+
+# Both Active and Recovery render the same player-local blade geometry.
+func _trail_tip(index: int) -> Vector2:
+	return Vector2.from_angle(_angles[index]) * _weapon.reach
 
 
 func _draw_burst(effect: Burst) -> void:

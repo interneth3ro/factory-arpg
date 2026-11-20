@@ -32,6 +32,9 @@ var active_intervals: Array[ActiveInterval] = []
 var state := State.READY
 var weapon: WeaponAttack = DAGGER
 var attack_count: int = 0
+var hitstop_remaining := 0.0
+var last_hitstop_attack := 0
+var last_hitstop_duration := 0.0
 var attack_direction := Vector2.ZERO
 var _phase_elapsed: float = 0.0
 var _buffer_remaining: float = 0.0
@@ -72,7 +75,26 @@ func select_weapon(selection: WeaponAttack) -> void:
 		weapon = selection
 
 
+func request_hitstop(interval: ActiveInterval) -> void:
+	# Contacts arrive after movement. A finished swing cannot freeze its successor.
+	if state == State.READY or interval.attack_id != attack_count or last_hitstop_attack == attack_count:
+		return
+	last_hitstop_attack = attack_count
+	last_hitstop_duration = interval.weapon.hitstop
+	hitstop_remaining = last_hitstop_duration
+
+
+func reset_encounter() -> void:
+	interrupt_attack()
+	active_intervals.clear()
+	weapon = DAGGER
+	attack_count = 0
+	last_hitstop_attack = 0
+	last_hitstop_duration = 0.0
+
+
 func interrupt_attack() -> void:
+	hitstop_remaining = 0.0
 	state = State.READY
 	attack_direction = Vector2.ZERO
 	_phase_elapsed = 0.0
@@ -89,8 +111,11 @@ func step(delta: float, pressed: bool, held: bool, aim: Vector2) -> float:
 			_buffer_remaining = buffer_lifetime
 
 	# Consume time up to each boundary, including the instant a repeat can start.
-	var remaining := delta
-	var weighted_time := 0.0
+	var paused := minf(delta, hitstop_remaining)
+	hitstop_remaining -= paused
+	_buffer_remaining = maxf(0.0, _buffer_remaining - paused)
+	var remaining := delta - paused
+	var weighted_time := paused * get_movement_multiplier()
 	while remaining > 0.0 and state != State.READY:
 		var until_boundary := _phase_duration() - _phase_elapsed
 		var spent := minf(remaining, until_boundary)

@@ -4,6 +4,10 @@
 
 [resource]
 script = ExtResource("1_weapon")
+damage = 45
+hitstop = 0.060
+flash_duration = 0.14
+flash_strength = 0.75
 display_name = "Greatsword"
 reach = 115.0
 sweep_angle = 155.0

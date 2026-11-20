@@ -43,6 +43,14 @@ func step(direction: Vector2, movement_speed: float, delta: float, ordinary_mult
 	_transition_to(ordinary_state)
 
 
+func reset_encounter() -> void:
+	_body.velocity = Vector2.ZERO
+	_dodge_direction = Vector2.ZERO
+	_dodge_elapsed = 0.0
+	_dodge_recovery_remaining = 0.0
+	_transition_to(State.IDLE)
+
+
 func can_dodge() -> bool:
 	return not is_dodging() and _dodge_recovery_remaining <= 0.0
 

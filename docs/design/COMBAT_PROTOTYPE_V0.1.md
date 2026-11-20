@@ -91,6 +91,8 @@ Both detect, pursue, position within a tolerance band, prepare attacks, commit, 
 
 **Health and defeat:** Both enemy types have configurable fixed health. At zero, terminate attack, movement, telegraph and queued actions; enter terminal defeat; stop blocking player movement and stop receiving damage. Show brief defeat feedback, then hide/remove as appropriate. All enemies defeated triggers a simple completion indication. No automatic enemy respawn.
 
+For the stationary placeholders, milestone decisions M8 through M12 specify fixed integer damage, one hit per target per attack, localized attack hitstop and weapon-weighted flashes. Defeated placeholders remain visible and dimmed until F5 restores the encounter. See the [milestone tuning and reset behavior](../README.md#damage-and-hit-feedback-pending-merge).
+
 ## 7. Player health, death and repeatable reset
 
 - Configurable fixed maximum health and per-archetype attack damage; simple always-visible health bar and damage flash.

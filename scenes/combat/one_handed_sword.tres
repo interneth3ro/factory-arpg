@@ -4,6 +4,10 @@
 
 [resource]
 script = ExtResource("1_weapon")
+damage = 25
+hitstop = 0.040
+flash_duration = 0.10
+flash_strength = 0.55
 display_name = "One-handed sword"
 reach = 85.0
 sweep_angle = 110.0

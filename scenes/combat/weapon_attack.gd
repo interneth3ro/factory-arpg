@@ -3,6 +3,10 @@ extends Resource
 enum AimMode { LOCK_AT_ACTIVE, CORRECT_ACTIVE, LOCK_DURING_WIND_UP }
 
 @export var display_name: String
+@export_range(1, 1000) var damage := 10
+@export_range(0.0, 0.2, 0.001, "suffix:s") var hitstop := 0.025
+@export_range(0.01, 0.5, 0.01, "suffix:s") var flash_duration := 0.07
+@export_range(0.0, 1.0) var flash_strength := 0.35
 @export_range(1.0, 300.0, 1.0, "suffix:px") var reach := 85.0
 @export_range(1.0, 360.0, 1.0, "suffix:deg") var sweep_angle := 110.0
 @export_range(1.0, 100.0, 1.0, "suffix:px") var contact_width := 16.0

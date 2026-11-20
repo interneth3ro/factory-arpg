@@ -21,6 +21,18 @@ The [Combat Prototype v0.1 decision register](COMBAT_PROTOTYPE_V0.1.md#2-approve
 | A15 | Enemy defeat and reset | B — Enemy defeat state and manual reset | Defeat ends actions and collision, gives brief feedback, and contributes to encounter completion. Enemies return through manual reset. | [Enemy defeat](COMBAT_PROTOTYPE_V0.1.md#6-enemies-and-encounter-behavior), [encounter reset](COMBAT_PROTOTYPE_V0.1.md#7-player-health-death-and-repeatable-reset) |
 | A16 | World coordinates | A — Native 2D with isometric presentation | Use standard 2D nodes and physics. Artwork, geometry, and Y-sorting provide the isometric presentation. | [Approved decision A16](COMBAT_PROTOTYPE_V0.1.md#2-approved-decision-register) |
 
+## Damage milestone decisions
+
+These approved implementation decisions apply to the [stationary combat placeholders](COMBAT_PROTOTYPE_V0.1.md#6-enemies-and-encounter-behavior).
+
+| ID | Approved selection |
+| --- | --- |
+| M8 | Active melee contacts apply damage once per target per attack. Zero health causes terminal defeat until reset. |
+| M9 | Dagger, sword and greatsword deal 10, 25 and 45 damage. Pursuer and Heavy start with 75 and 150 HP. Values are provisional. |
+| M10 | Successful damage pauses player attack progression for 25, 40 or 60 ms according to weapon weight. |
+| M11 | Successful damage flashes the target, with intensity and duration increasing by weapon weight. |
+| M12 | Defeated placeholders stay visible, dimmed and nonblocking until manual reset. |
+
 ## Recording future decisions
 
 Append decisions in approval order with a stable ID, descriptive title, approved selection, brief summary, and a link to the authoritative specification. Record dates only when supplied. When a decision changes, retain the earlier entry and link it to the approved replacement.

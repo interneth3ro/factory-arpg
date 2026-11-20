@@ -4,6 +4,7 @@ const AIM_DEAD_ZONE_RADIUS: float = 4.0
 const MovementFSM = preload("res://scenes/combat/player_movement_fsm.gd")
 const ActionFSM = preload("res://scenes/combat/player_action_fsm.gd")
 const MeleeSweep = preload("res://scenes/combat/melee_sweep.gd")
+const EnemyHealth = preload("res://scenes/combat/enemy_health.gd")
 const PHASE_COLORS := {
 	ActionFSM.State.READY: Color(0.3, 0.82, 0.95),
 	ActionFSM.State.WIND_UP: Color(1.0, 0.72, 0.16),
@@ -20,13 +21,20 @@ const PHASE_COLORS := {
 @onready var action_fsm: ActionFSM = $ActionFSM
 @onready var state_diagnostics: Label = $Diagnostics/StateLabel
 @onready var melee_sweep: MeleeSweep = $MeleeSweep
+@onready var enemies: Array[EnemyHealth] = [$"../Pursuer", $"../Heavy"]
+@onready var completion: Label = $Diagnostics/Completion
+@onready var start_position := position
+var last_damage := "None"
 
 
 func _ready() -> void:
-	melee_sweep.contacted.connect(_flash_target)
+	melee_sweep.contacted.connect(_apply_contact)
 
 
 func _physics_process(delta: float) -> void:
+	if Input.is_action_just_pressed("reset_combat_test"):
+		_reset_encounter()
+		return
 	var movement_input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	_update_facing()
 	var facing_direction := Vector2.RIGHT.rotated(facing_marker.global_rotation)
@@ -44,6 +52,10 @@ func _physics_process(delta: float) -> void:
 	if attacking_allowed and not action_fsm.active_intervals.is_empty():
 		melee_sweep.check_motion(self, start, delta, action_fsm.active_intervals)
 	melee_sweep.select_attack(action_fsm.attack_count)
+	_update_presentation()
+
+
+func _update_presentation() -> void:
 	body_marker.color = PHASE_COLORS[action_fsm.state]
 	attack_marker.visible = action_fsm.state != ActionFSM.State.READY
 	if attack_marker.visible:
@@ -101,16 +113,41 @@ func _update_state_diagnostics() -> void:
 			melee_sweep.contacts.size(), ", ".join(melee_sweep.contacts.values()) if not melee_sweep.contacts.is_empty() else "None",
 		]
 
+		for enemy in enemies:
+			state_diagnostics.text += "\n%s: %d/%d HP (%s)" % [
+				enemy.name, enemy.health, enemy.max_health, "Alive" if enemy.health > 0 else "Defeated",
+			]
+		state_diagnostics.text += "\nLast damage: %s\nHitstop: %.0f ms remaining" % [
+			last_damage, action_fsm.hitstop_remaining * 1000.0,
+		]
+		if action_fsm.last_hitstop_attack > 0:
+			state_diagnostics.text += " (last %.0f ms on #%d)" % [
+				action_fsm.last_hitstop_duration * 1000.0, action_fsm.last_hitstop_attack,
+			]
 
-func _flash_target(target: CollisionObject2D) -> void:
-	var body := target.get_node_or_null("Body") as Polygon2D
-	if body == null:
+
+func _apply_contact(target: CollisionObject2D, interval: ActionFSM.ActiveInterval) -> void:
+	var enemy := target as EnemyHealth
+	if enemy == null:
 		return
-	var flash := Polygon2D.new()
-	flash.polygon = body.polygon
-	flash.color = Color.WHITE
-	flash.z_index = 1
-	body.add_child(flash)
-	var tween := flash.create_tween()
-	tween.tween_property(flash, "modulate:a", 0.0, 0.12)
-	tween.tween_callback(flash.queue_free)
+	var applied := enemy.receive_hit(interval.weapon)
+	if applied > 0:
+		last_damage = "%d to %s from %s (#%d)" % [applied, enemy.name, interval.weapon.display_name, interval.attack_id]
+		action_fsm.request_hitstop(interval)
+		if enemy.health == 0:
+			completion.visible = enemies.all(func(candidate: EnemyHealth) -> bool: return candidate.health == 0)
+
+
+func _reset_encounter() -> void:
+	for enemy in enemies:
+		enemy.reset_encounter()
+	position = start_position
+	facing_marker.rotation = 0.0
+	_update_facing()
+	action_fsm.reset_encounter()
+	movement_fsm.reset_encounter()
+	melee_sweep.select_attack(0)
+	melee_sweep.begin_tick()
+	last_damage = "None"
+	completion.hide()
+	_update_presentation()

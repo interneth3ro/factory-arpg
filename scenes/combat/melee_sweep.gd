@@ -1,6 +1,6 @@
 extends Node2D
 
-signal contacted(target: CollisionObject2D)
+signal contacted(target: CollisionObject2D, interval: ActionFSM.ActiveInterval)
 
 const ActionFSM = preload("res://scenes/combat/player_action_fsm.gd")
 const TARGET_MASK := 1 << 1
@@ -86,9 +86,9 @@ func _check_interval(interval: ActionFSM.ActiveInterval, start: Vector2, finish:
 		for hit in space.intersect_shape(query):
 			var target := hit.collider as CollisionObject2D
 			var id := target.get_instance_id()
-			if not contacts.has(id):
+			if (target.collision_layer & TARGET_MASK) != 0 and not contacts.has(id):
 				contacts[id] = str(target.name)
-				contacted.emit(target)
+				contacted.emit(target, interval)
 		if visible:
 			_debug_poses.append(query.transform)
 			_debug_shapes.append(capsule)

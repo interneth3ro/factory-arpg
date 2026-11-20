@@ -1,9 +1,10 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scenes/combat/combat_test_player.gd" id="1_player"]
 [ext_resource type="Script" path="res://scenes/combat/player_movement_fsm.gd" id="2_movement"]
 [ext_resource type="Script" path="res://scenes/combat/player_action_fsm.gd" id="3_action"]
 [ext_resource type="Script" path="res://scenes/combat/melee_sweep.gd" id="4_sweep"]
+[ext_resource type="Script" path="res://scenes/combat/enemy_health.gd" id="5_enemy"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_horizontal_wall"]
 size = Vector2(996, 18)
@@ -305,6 +306,17 @@ script = ExtResource("4_sweep")
 
 [node name="Diagnostics" type="CanvasLayer" parent="ArenaObjects/Player"]
 
+[node name="Completion" type="Label" parent="ArenaObjects/Player/Diagnostics"]
+visible = false
+anchor_left = 0.5
+anchor_right = 0.5
+offset_top = 16.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_constants/outline_size = 5
+text = "Encounter complete   |   F5 to reset"
+horizontal_alignment = 1
+
 [node name="StateLabel" type="Label" parent="ArenaObjects/Player/Diagnostics"]
 visible = false
 offset_left = 16.0
@@ -316,6 +328,8 @@ theme_override_colors/font_outline_color = Color(0.055, 0.077, 0.092, 1)
 theme_override_constants/outline_size = 5
 
 [node name="Pursuer" type="CharacterBody2D" parent="ArenaObjects"]
+script = ExtResource("5_enemy")
+max_health = 75
 collision_layer = 3
 position = Vector2(12, -126)
 motion_mode = 1
@@ -341,6 +355,8 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="Heavy" type="CharacterBody2D" parent="ArenaObjects"]
+script = ExtResource("5_enemy")
+max_health = 150
 collision_layer = 3
 position = Vector2(314, -115)
 motion_mode = 1

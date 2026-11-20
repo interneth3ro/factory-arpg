@@ -125,11 +125,11 @@ All runtime tests require **explicit owner authorization** before Codex or other
 
 ## 8. Implementation workflow and documentation
 
-1. Owner reviews and accepts this standalone specification; resolve any identified conflicts before coding.
-2. Inspect current live repository fully and prepare a **separate, complete Codex Desktop implementation prompt** explicitly attaching this specification. Codex must stop if it cannot access the attachment.
-3. Codex uses a traditional feature branch in the primary checkout from synchronized clean `main`, not a worktree; creates a Draft PR; never merges.
+1. Documentation-only PR #18 carries this approved specification, the M75–M90 entries in the decision log, the documentation index link, and the roadmap update. The owner reviews and merges that PR before gameplay implementation begins.
+2. After PR #18 merges, synchronize the primary checkout's clean `main` with live `main`. Read the complete, committed specification at `docs/design/PR17_COMBAT_IMPACT_FEEDBACK.md` and inspect the current repository. If the specification is unavailable or conflicts with the approved baseline, stop and ask the owner to resolve the issue before coding.
+3. The owner authorizes PR #17 gameplay work through a separate Codex Desktop implementation prompt referencing the committed specification. Create a separate feature branch from synchronized `main` in the primary checkout and open a Draft PR for the implementation.
 4. Preserve all owner assets, local settings, unrelated changes, historical evidence, `.uid` and `.import` metadata. Follow `AGENTS.md` and `docs/GODOT_METADATA.md`.
-5. On the feature branch, add this specification to `docs/design/`, register M75–M90 in `docs/design/DECISION_LOG.md`, link it in `docs/README.md`, and update the roadmap's now-stale milestone status. Follow documentation-sync skill.
+5. Before review, use the documentation-sync skill on the gameplay feature branch to update documentation affected by the implementation.
 6. Independently review the **exact live PR diff and head SHA** and resolve issues on the same branch. Owner completes runtime acceptance. Run repository pre-merge verification; mark Ready only after PASS. Owner merges manually. Cleanup happens in a separate Codex conversation.
 
 ## 9. Remaining tuning choices (not silently approved values)

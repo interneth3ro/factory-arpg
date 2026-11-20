@@ -91,6 +91,31 @@ The owner approved Option B for each milestone decision below. Numerical values 
 | M55 | Fully validated non-damaging attacks | Deliver the complete attack, collision, presentation and diagnostic behavior with static checks and owner runtime acceptance. |
 | M56 | Lightweight hitstop notification | The player Action FSM owns hitstop and reports effective paused time to enemy attacks. Player movement and dodge keep their existing clocks. |
 
+## Player survivability decisions
+
+The owner approved Option B for each decision on 2026-11-20. The supplied [PR #16 design specification](PR16_PLAYER_HEALTH_DAMAGE_DEATH.md) is authoritative for M57–M74.
+
+| ID | Approved behavior |
+| --- | --- |
+| M57 | Start at 100 HP. Pursuer deals 15 and Heavy deals 30. All three values are configurable. |
+| M58 | Evaluate dodge immunity at geometric contact and consume the attack opportunity even on a block. |
+| M59 | Apply distinct eligible attacks independently, including both in one tick. Clamp HP to zero. |
+| M60 | Use a 0.12 s Pursuer flash and stronger 0.20 s Heavy flash. Nonlethal damage preserves actions. |
+| M61 | Keep a fixed upper-left red health bar and numeric HP visible through death and F3 toggles. |
+| M62 | Disable gameplay immediately at zero, collapse over about 0.35 s and show the restart message. |
+| M63 | Cancel surviving enemy attacks and navigation immediately, then settle their artwork over about 0.20 s. |
+| M64 | Prioritize death, then damage flash, dodge and ordinary movement or attack visuals. |
+| M65 | Give player health its own component and keep dodge timing in the Movement FSM. |
+| M66 | F5 atomically restores the encounter from any phase, preserves F3 and requires a fresh attack press. |
+| M67 | Resolve in contact-time order with stable ties. Identify the first lethal event and ignore later damage. |
+| M68 | Add visual impact emphasis for 0.04 s or 0.07 s according to archetype. Gameplay clocks continue. |
+| M69 | Retain the five most recent resolver outcomes in F3, including the lethal source and actual HP loss. |
+| M70 | Collect only this tick's contacts and resolve after its enemy attack callbacks finish. |
+| M71 | Report earliest verified swept contact. Bound geometry approximations and favor protection at ambiguous expiry. |
+| M72 | Expose actual tick-relative dodge protection from the existing FSM and retain its current-state query. |
+| M73 | Advance encounter generation on reset and reject stale contacts and callbacks. |
+| M74 | Deliver the entire milestone together, with independent review and owner acceptance against PRs #13–#15. |
+
 ## Recording future decisions
 
 Append decisions in approval order with a stable ID, descriptive title, approved selection, brief summary, and a link to the authoritative specification. Record dates only when supplied. When a decision changes, retain the earlier entry and link it to the approved replacement.

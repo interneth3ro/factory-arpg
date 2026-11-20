@@ -20,14 +20,18 @@ func read_arena(tree: SceneTree) -> void:
 				_solids.append(child.global_transform * outline)
 
 
-func visible_region(origin: Vector2, direction: Vector2, reach: float, degrees: float, end_origin: Vector2) -> Array[PackedVector2Array]:
+static func outline(direction: Vector2, reach: float, degrees: float) -> PackedVector2Array:
 	var arc := PackedVector2Array([Vector2.ZERO])
 	# Inscribed chords of at most 3 degrees. The Heavy's largest radial
 	# difference is under 0.04 px, identical for warning and contact.
 	var count := ceili(degrees / 3.0)
 	for i in count + 1:
 		arc.append(direction.rotated(deg_to_rad(degrees * (float(i) / count - 0.5))) * reach)
-	var regions: Array[PackedVector2Array] = [arc]
+	return arc
+
+
+func visible_region(origin: Vector2, direction: Vector2, reach: float, degrees: float, end_origin: Vector2) -> Array[PackedVector2Array]:
+	var regions: Array[PackedVector2Array] = [outline(direction, reach, degrees)]
 	for solid in _solids:
 		# In the translating attack's coordinates the solid sweeps a convex
 		# hull. Its shadow is blocked for this entire short movement interval.
@@ -59,18 +63,40 @@ func visible_region(origin: Vector2, direction: Vector2, reach: float, degrees: 
 	return regions
 
 
-static func touches(regions: Array[PackedVector2Array], start: Vector2, finish: Vector2, radius: float) -> bool:
+## First entry of a translating disk into the clipped polygons. Outside a
+## polygon the expanded boundary consists of offset edges and vertex disks.
+static func first_touch(regions: Array[PackedVector2Array], start: Vector2, finish: Vector2, radius: float) -> float:
+	var travel := finish - start
+	var length := travel.length()
+	var direction := travel.normalized()
+	var earliest := INF
 	for region in regions:
-		if Geometry2D.is_point_in_polygon(start, region) or Geometry2D.is_point_in_polygon(finish, region):
-			return true
+		if Geometry2D.is_point_in_polygon(start, region):
+			return 0.0
 		for i in region.size():
 			var a := region[i - 1]
 			var b := region[i]
-			if start == finish:
-				if Geometry2D.get_closest_point_to_segment(start, a, b).distance_squared_to(start) <= radius * radius:
-					return true
-			else:
-				var pair := Geometry2D.get_closest_points_between_segments(start, finish, a, b)
-				if pair[0].distance_squared_to(pair[1]) <= radius * radius:
-					return true
-	return false
+			if a == b:
+				continue
+			if Geometry2D.get_closest_point_to_segment(start, a, b).distance_squared_to(start) <= radius * radius:
+				return 0.0
+			if length == 0.0:
+				continue
+			var tangent := a.direction_to(b)
+			var normal := tangent.orthogonal()
+			var offset := (start - a).dot(normal)
+			var across := travel.dot(normal)
+			if offset * across < 0.0:
+				var entry := (signf(offset) * radius - offset) / across
+				if entry >= 0.0 and entry <= 1.0 and entry < earliest:
+					var along := (start + travel * entry - a).dot(tangent)
+					if along >= 0.0 and along <= a.distance_to(b):
+						earliest = entry
+			var to_vertex := b - start
+			var lateral := to_vertex.cross(direction)
+			var chord_squared := radius * radius - lateral * lateral
+			if chord_squared >= 0.0:
+				var entry := (to_vertex.dot(direction) - sqrt(chord_squared)) / length
+				if entry >= 0.0 and entry <= 1.0:
+					earliest = minf(earliest, entry)
+	return earliest

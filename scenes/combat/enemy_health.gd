@@ -76,7 +76,26 @@ func receive_hit(weapon: WeaponAttack) -> int:
 	return applied
 
 
-func reset_encounter() -> void:
+func rest_after_player_death() -> void:
+	if health == 0:
+		return
+	# Cancel combat now, then settle only the artwork from its visible pose.
+	var pose := _body.transform
+	var tint := _body.color
+	if _flash:
+		_flash.kill()
+	_flash_strength = 0.0
+	movement.rest()
+	_body.transform = pose
+	_body.color = tint
+	_flash = create_tween().set_parallel(true)
+	_flash.tween_property(_body, "position", Vector2.ZERO, 0.20)
+	_flash.tween_property(_body, "rotation", 0.0, 0.20)
+	_flash.tween_property(_body, "scale", Vector2.ONE, 0.20)
+	_flash.tween_property(_body, "color", _body_color, 0.20)
+
+
+func reset_encounter(generation: int) -> void:
 	if _flash:
 		_flash.kill()
 		_flash = null
@@ -84,6 +103,6 @@ func reset_encounter() -> void:
 	collision_layer = _solid_layers
 	collision_mask = _initial_mask
 	position = _start_position
-	movement.reset_encounter()
+	movement.reset_encounter(generation)
 	_flash_strength = 0.0
 	modulate = _initial_tint

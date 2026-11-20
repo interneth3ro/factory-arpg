@@ -139,6 +139,23 @@ The owner-approved [PR #17 decision register](PR17_COMBAT_IMPACT_FEEDBACK.md#2-a
 | M89 | B — Curated royalty-free audio assets | Store recordings locally, verify redistribution rights and document provenance, license and processing. Prefer CC0 or comparably permissive assets. |
 | M90 | B — Shared lifecycle rules with independent components | Coordinate feedback across interruption, death and reset. Reject stale and duplicate events using existing execution and encounter identities. |
 
+## Combat balance and encounter evaluation decisions
+
+The owner approved E1–E10 on 2026-11-20 for the Phase 1 evaluation. The [evaluation specification](COMBAT_BALANCE_ENCOUNTER_EVALUATION.md#2-approved-evaluation-decisions) defines the method. Existing A/M-series decisions govern gameplay.
+
+| ID | Approved selection | Evaluation method |
+| --- | --- | --- |
+| E1 | C — Hybrid | Review gameplay parameters and conduct structured owner playtesting. |
+| E2 | C — Layered encounters | Pursuer only, Heavy only, and Pursuer + Heavy, with each of three weapons. |
+| E3 | B — Lightweight structured evaluation | Capture outcomes, approximate HP, notable anomalies, and concise qualitative observations; no mandatory telemetry. |
+| E4 | B — Two baseline attempts plus targeted follow-ups | Nine combinations × two attempts = 18 baseline attempts, unless blocked. Repeat only to resolve uncertainty. |
+| E5 | B — Minimal isolation if needed | Inspect existing arena first; consider only a narrowly scoped development-only configuration if isolation cannot be achieved reliably. Separate authorization required. |
+| E6 | B — Distinct strengths with comparable viability | Preserve weapon identity and practical effectiveness; do not enforce identical DPS, completion times, or remaining HP. |
+| E7 | B — Individual fairness plus combined counterplay | Readable individual attacks and meaningful responses to overlapping threats; no required enemy turn-taking. |
+| E8 | B — Responsive controls with intentional commitment | Preserve approved attack/dodge semantics and weapon-specific weight; assess predictability and perceived control. |
+| E9 | B — Severity-based acceptance | Critical blockers; Significant findings require explicit owner judgment; Minor findings may be deferred. |
+| E10 | B — Lightweight specification and results | Standalone Markdown methodology, simple results record, concise final findings and Phase 1 recommendation. |
+
 ## Recording future decisions
 
 Append decisions in approval order with a stable ID, descriptive title, approved selection, brief summary, and a link to the authoritative specification. Record dates only when supplied. When a decision changes, retain the earlier entry and link it to the approved replacement.

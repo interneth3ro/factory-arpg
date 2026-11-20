@@ -28,7 +28,7 @@ As of 2026-11-20, PRs #13–#16 have established the combat foundation:
 - Pursuer and Heavy enemy archetypes.
 - Player health, enemy damage, deterministic contact handling, damage diagnostics, death, and encounter reset.
 
-**PR #16 is merged and cleaned up.** The owner approved combat impact and feedback for PR #17 under M75. The [PR #17 specification](design/PR17_COMBAT_IMPACT_FEEDBACK.md) defines its scope through M90.
+PR #16 is merged and cleaned up. PR #18 documented the [combat impact and feedback milestone](design/PR17_COMBAT_IMPACT_FEEDBACK.md), originally labeled PR #17. PR #19 delivered M75–M90, passed independent review and all 12 owner runtime checks, and was manually merged. The owner confirmed cleanup for PRs #18 and #19.
 
 ## 3. Roadmap at a glance
 
@@ -50,9 +50,8 @@ Prove that the current combat mechanics feel responsive, legible, and enjoyable 
 
 ### Proposed remaining work
 
-1. **PR #17 — Combat impact and feedback.** The approved scope covers weapon-specific contact bursts, cosmetic enemy recoil, swing trails, and swing and impact audio.
-2. **Combat balance and encounter evaluation.** Playtest weapon distinctions, dodge timing, enemy pressure, telegraph readability, and difficulty. Adjust only through explicit design approval where existing decisions are affected.
-3. **Optional foundation hardening.** Fix substantive reliability or usability issues found during evaluation; do not invent a mandatory additional PR.
+1. **[Combat balance and encounter evaluation](design/COMBAT_BALANCE_ENCOUNTER_EVALUATION.md).** Review the current parameters, then playtest each weapon against the Pursuer, the Heavy, and both together. Plan two attempts per combination (18 total) and record any blocked setup.
+2. **Optional foundation hardening.** A documented finding and explicit owner approval are required before a focused correction.
 
 ### Exit gate
 
@@ -191,11 +190,9 @@ Examples:
 
 ## 11. Immediate next steps
 
-1. The owner selected combat impact and feedback for PR #17 (M75) and approved its scope (M76–M90).
-2. PR #19 has completed independent source review and owner runtime acceptance. The owner's manual merge is pending.
-3. Complete and evaluate the combat prototype against the Phase 1 exit gate.
-4. Scope the minimal integrated factory loop and decide whether to use a separate test space or the permanent opening region.
-5. At Phase 2 exit, explicitly approve the production transition and begin building the actual game.
+1. Evaluate the existing combat prototype under E1–E10 and submit a Phase 1 recommendation for the owner's decision. Critical findings block exit, significant findings require explicit owner judgment, and minor findings may be deferred.
+2. After the owner accepts a Phase 1 pass, scope the minimal integrated factory loop and decide whether to use a separate test space or the permanent opening region.
+3. At Phase 2 exit, explicitly approve the production transition and begin building the actual game.
 
 ## 12. Roadmap maintenance
 

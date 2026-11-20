@@ -1,6 +1,6 @@
 # Factory ARPG — PR #17 Combat Impact and Feedback
 
-**Status:** Owner-approved design decisions M75–M90; repository reconciliation completed for planning; **implementation not authorized**  
+**Status:** PR #18 documented the approved M75–M90 decisions. PR #19 delivered the milestone after independent review and 12/12 owner runtime checks. The owner confirmed manual merge and cleanup.\
 **Date:** 2026-11-20  
 **Repository:** `interneth3ro/factory-arpg` (`main`)  
 **Proposed repository path:** `docs/design/PR17_COMBAT_IMPACT_FEEDBACK.md`  

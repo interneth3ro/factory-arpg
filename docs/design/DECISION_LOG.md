@@ -156,6 +156,19 @@ The owner approved E1–E10 on 2026-11-20 for the Phase 1 evaluation. The [evalu
 | E9 | B — Severity-based acceptance | Critical blockers; Significant findings require explicit owner judgment; Minor findings may be deferred. |
 | E10 | B — Lightweight specification and results | Standalone Markdown methodology, simple results record, concise final findings and Phase 1 recommendation. |
 
+## Development-only encounter selector decisions
+
+The owner approved E11–E16 on 2026-11-20 to support the nine combinations and 18 baseline attempts in the [Phase 1 evaluation](COMBAT_BALANCE_ENCOUNTER_EVALUATION.md#5-encounter-matrix-and-baseline-attempts). The [selector specification](COMBAT_ENCOUNTER_SELECTOR.md#2-approved-decision-register) defines the design. Implementation requires separate owner approval.
+
+| ID | Approved selection | Behavior |
+| --- | --- | --- |
+| E11 | B — Development-only keyboard selector | Select Pursuer only, Heavy only, or both enemies in the existing standalone arena. |
+| E12 | B — Selection triggers complete reset | Start with both enemies. Every selection starts a fresh encounter, and F5 restarts the current selection with the starting dagger. |
+| E13 | B — Dedicated keys and persistent label | F7 selects Pursuer only, F8 Heavy only, and F9 both. Use Input Map actions and keep a small configuration label visible independently of F3. |
+| E14 | B — Reversible inactive enemy state | Keep both instances. Exclude inactive enemies from combat, collision, navigation, avoidance, feedback, and completion. Defeat remains a distinct state. Reactivation restores the enemy's initial state. |
+| E15 | B — Focused automated regression and owner acceptance | Exercise production behavior using existing test conventions. The owner verifies controls, isolation, completion, and lifecycle transitions at the tested implementation head. |
+| E16 | B — Retain as isolated development utility | Keep the selector in the standalone arena for future regression checks. Its scope ends at that arena. |
+
 ## Recording future decisions
 
 Append decisions in approval order with a stable ID, descriptive title, approved selection, brief summary, and a link to the authoritative specification. Record dates only when supplied. When a decision changes, retain the earlier entry and link it to the approved replacement.

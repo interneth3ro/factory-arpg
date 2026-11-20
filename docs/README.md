@@ -6,6 +6,7 @@ Keep design decisions and implementation details versioned alongside the project
 - [Player health, enemy damage and death](design/PR16_PLAYER_HEALTH_DAMAGE_DEATH.md) records the approved M57–M74 survivability decisions.
 - [Combat impact and feedback](design/PR17_COMBAT_IMPACT_FEEDBACK.md) records the approved M75–M90 requirements for contact bursts, enemy recoil, swing trails and combat audio.
 - [Combat balance and encounter evaluation](design/COMBAT_BALANCE_ENCOUNTER_EVALUATION.md) defines the Phase 1 playtest matrix, observation rubric, and owner exit decision.
+- [Development-only encounter selector](design/COMBAT_ENCOUNTER_SELECTOR.md) records the approved E11–E16 design for repeatable isolated and combined encounters in the standalone arena. Implementation requires separate owner approval.
 - [Decision log](design/DECISION_LOG.md) indexes approved gameplay and evaluation decisions and links to their specifications.
 - [Godot metadata policy](GODOT_METADATA.md) describes how to handle resource metadata and run the read-only validator.
 

@@ -5,6 +5,9 @@
 [resource]
 script = ExtResource("1_weapon")
 display_name = "One-handed sword"
+reach = 85.0
+sweep_angle = 110.0
+contact_width = 16.0
 wind_up = 0.16
 active = 0.12
 recovery = 0.26

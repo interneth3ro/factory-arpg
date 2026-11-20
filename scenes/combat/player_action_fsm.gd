@@ -9,6 +9,23 @@ enum State { READY, WIND_UP, ACTIVE, RECOVERY }
 enum AimState { INACTIVE, TRACKING, CORRECTING, LOCKED }
 const PHASE_NAMES := ["Ready", "Wind-up", "Active", "Recovery"]
 
+class ActiveInterval:
+	var attack_id: int
+	var weapon: WeaponAttack
+	var tick_start: float
+	var duration: float
+	var active_elapsed: float
+	var direction: Vector2
+	var correction: float
+
+	func blade_angle(at: float) -> float:
+		var elapsed := clampf(at - tick_start, 0.0, duration)
+		var turn := minf(absf(correction), deg_to_rad(weapon.correction_speed) * elapsed)
+		var progress := (active_elapsed + elapsed) / weapon.active
+		return direction.angle() + signf(correction) * turn + deg_to_rad(weapon.sweep_angle) * (progress - 0.5)
+
+var active_intervals: Array[ActiveInterval] = []
+
 @export_range(0.01, 0.5, 0.01, "suffix:s") var late_recovery_window: float = 0.15
 @export_range(0.01, 0.5, 0.01, "suffix:s") var buffer_lifetime: float = 0.10
 
@@ -64,6 +81,7 @@ func interrupt_attack() -> void:
 
 ## Returns the time-weighted ordinary movement multiplier for this physics tick.
 func step(delta: float, pressed: bool, held: bool, aim: Vector2) -> float:
+	active_intervals.clear()
 	if pressed:
 		if state == State.READY:
 			_start_attack(aim)
@@ -76,6 +94,7 @@ func step(delta: float, pressed: bool, held: bool, aim: Vector2) -> float:
 	while remaining > 0.0 and state != State.READY:
 		var until_boundary := _phase_duration() - _phase_elapsed
 		var spent := minf(remaining, until_boundary)
+		var initial_direction := attack_direction
 		weighted_time += spent * get_movement_multiplier()
 		# Aim is sampled once per tick. Crossing the wind-up lock point keeps
 		# this sample and prevents subsequent ticks from tracking again.
@@ -85,6 +104,16 @@ func step(delta: float, pressed: bool, held: bool, aim: Vector2) -> float:
 			AimState.CORRECTING:
 				var limit := deg_to_rad(weapon.correction_speed) * spent
 				attack_direction = attack_direction.rotated(clampf(attack_direction.angle_to(aim), -limit, limit))
+		if state == State.ACTIVE and spent > 0.0:
+			var interval := ActiveInterval.new()
+			interval.attack_id = attack_count
+			interval.weapon = weapon
+			interval.tick_start = delta - remaining
+			interval.duration = spent
+			interval.active_elapsed = _phase_elapsed
+			interval.direction = initial_direction
+			interval.correction = initial_direction.angle_to(attack_direction)
+			active_intervals.append(interval)
 		_buffer_remaining = maxf(0.0, _buffer_remaining - spent)
 		if remaining < until_boundary:
 			_phase_elapsed += spent

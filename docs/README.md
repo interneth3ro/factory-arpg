@@ -46,9 +46,9 @@ A fresh LMB press starts an attack. At the end of Recovery, the [Action FSM](../
 
 A successful dodge interrupts any phase and clears the buffer. Attack and selection presses during dodge movement are discarded. A fresh LMB press after movement ends can attack during dodge recovery, even if a simultaneous Space request fails. Holding LMB across a dodge requires a new press to restart. Weapon changes during an attack are ignored.
 
-The player's body shows Ready in cyan, Wind-up in amber, Active in white, and Recovery in violet. F3 shows the current phase, weapon and cumulative attack count, including interrupted attacks. Hit detection and damage are deferred.
+The player's body shows Ready in cyan, Wind-up in amber, Active in white, and Recovery in violet. F3 shows the current phase, weapon and cumulative attack count, including interrupted attacks.
 
-### Attack direction and mobility (pending merge)
+### Attack direction and mobility
 
 The dark center marker follows the mouse. During an attack, a separate gold pointer outside the body shows the Action FSM's attack direction through Recovery. Each new swing samples the latest facing, including repeats. F3 shows whether attack aim is tracking, correcting, locked or inactive, alongside the current phase's ordinary-movement multiplier.
 
@@ -59,6 +59,22 @@ The dark center marker follows the mouse. During an attack, a separate gold poin
 | Greatsword | Tracks until 75% of Wind-up (240 ms), then locks | 0.60× | 0.40× | 0.70× |
 
 These values are provisional. The Movement FSM scales ordinary WASD speed by the time spent in each phase within a physics tick. Ready uses full speed. Under owner decision M2 Option B, a successful dodge can still interrupt every phase, including late greatsword Wind-up. It clears attack aim and pending attack input immediately and uses the usual locked dodge trajectory and burst speed.
+
+### Melee contact geometry (pending merge)
+
+During Active, a radial segment sweeps clockwise from minus half the weapon arc to plus half the arc relative to the Action FSM's attack direction. Reach measures the segment from the player's world center to its tip. The round contact envelope extends half the configured width around the segment, including at the tip. Provisional dimensions are:
+
+| Weapon | Reach | Total arc | Full width |
+| --- | ---: | ---: | ---: |
+| Dagger | 55 px | 65° | 12 px |
+| One-handed sword | 85 px | 110° | 16 px |
+| Greatsword | 115 px | 155° | 22 px |
+
+The [sweep detector](../scenes/combat/melee_sweep.gd) clips each recorded Active interval to the player's resolved slide path. It estimates time to each collision from travel and remainder and interpolates along each leg. Native capsule queries cover the intervening translation, blade rotation and bounded dagger correction. Each midpoint capsule carries at most one extra pixel of radius, so borderline grazes can register. Queries see targets at their current physics poses. Both arena targets are stationary. Continuous relative motion for future moving targets would require target motion history.
+
+Pursuer and Heavy keep their solid collision layer and also occupy 2D layer 2, **Melee targets**. Each body's instance ID can register once per attack, including across multiple shapes or ticks. Repeated attacks get fresh IDs. Contact briefly flashes the placeholder and has no damage or movement effect.
+
+F3 toggles diagnostics and the translucent capsules queried during the latest physics tick. The attack count identifies the current or most recent attack. The contact list and count persist through Recovery and clear when a new attack starts. A tick crossing into Recovery can display its final Active slice until the next tick.
 
 For implementation PRs, identify the affected documentation and use [documentation sync](../.agents/skills/documentation-sync/SKILL.md) on the same branch before review. Reconcile approved changes and keep edits focused on the PR.
 

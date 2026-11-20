@@ -40,7 +40,6 @@ var encounter_generation := 0
 var _pending: Array[EnemyAttack.Contact] = []
 var _contact_frame := -1
 var _feedback_frame := -1
-var _feedback_time := -1.0
 var _flash_strength := 0.0
 var _flash_left := 0.0
 var _emphasis_left := 0.0
@@ -210,10 +209,9 @@ func _update_health_hud() -> void:
 
 
 func _show_damage(contact: EnemyAttack.Contact) -> void:
-	if contact.frame == _feedback_frame and contact.time == _feedback_time and contact.flash_strength < _flash_strength:
+	if contact.frame == _feedback_frame and contact.flash_strength < _flash_strength:
 		return
 	_feedback_frame = contact.frame
-	_feedback_time = contact.time
 	_flash_strength = contact.flash_strength
 	_flash_left = contact.flash_seconds
 	_emphasis_left = contact.emphasis_seconds
@@ -266,7 +264,6 @@ func _reset_encounter() -> void:
 	_flash_left = 0.0
 	_emphasis_left = 0.0
 	_feedback_frame = -1
-	_feedback_time = -1.0
 	player_health.reset_encounter()
 	for enemy in enemies:
 		enemy.reset_encounter(encounter_generation)

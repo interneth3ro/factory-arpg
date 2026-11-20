@@ -17,9 +17,12 @@ func resolve(contact: EnemyAttack.Contact) -> void:
 	var outcome := "IGNORED (DEAD)"
 	var applied := 0
 	if health > 0:
-		# Protection always starts at offset zero in this FSM. At an
-		# uncertain moving shadow edge, favor the player's protected side.
-		if _movement.was_invulnerable_at(contact.frame, contact.earliest_possible):
+		var protected_at_contact := _movement.was_invulnerable_at(contact.frame, contact.time)
+		if not protected_at_contact and contact.shadow_miss_time >= 0.0 and contact.shadow_miss_time < contact.time:
+			# The verified touch is vulnerable. Favor protection only when
+			# the clipped miss and touch fall on opposite sides of expiry.
+			protected_at_contact = _movement.was_invulnerable_at(contact.frame, contact.shadow_miss_time)
+		if protected_at_contact:
 			outcome = "BLOCKED (DODGE)"
 		else:
 			applied = mini(contact.damage, health)

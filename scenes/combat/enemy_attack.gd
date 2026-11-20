@@ -19,7 +19,9 @@ class Contact:
 	var frame: int
 	var generation: int
 	var time: float
-	var earliest_possible: float
+	# Only set for a sampled moving-shadow transition: last clipped miss
+	# before the verified touch at time. Both are offsets in the same tick.
+	var shadow_miss_time := -1.0
 	var damage: int
 	var flash_strength: float
 	var flash_seconds: float
@@ -244,7 +246,8 @@ func check_contact(enemy: SlideTrace, player: SlideTrace, frame: int, generation
 			if contact != null:
 				contacted = true
 				contact.time = lerpf(first, last, contact.time)
-				contact.earliest_possible = lerpf(first, last, contact.earliest_possible)
+				if contact.shadow_miss_time >= 0.0:
+					contact.shadow_miss_time = lerpf(first, last, contact.shadow_miss_time)
 				contact.enemy = _body.name
 				contact.execution_id = execution
 				contact.frame = frame
@@ -257,10 +260,10 @@ func check_contact(enemy: SlideTrace, player: SlideTrace, frame: int, generation
 				return
 
 
-func _contact_at(time: float, earliest_possible: float) -> Contact:
+func _contact_at(time: float, shadow_miss_time: float = -1.0) -> Contact:
 	var contact := Contact.new()
 	contact.time = time
-	contact.earliest_possible = earliest_possible
+	contact.shadow_miss_time = shadow_miss_time
 	return contact
 
 
@@ -269,7 +272,7 @@ func _first_contact(origin: Vector2, end_origin: Vector2, start: Vector2, finish
 	var relative_end := finish - end_origin
 	if origin == end_origin:
 		var entry := Sector.first_touch(_region_at(origin, committed), relative_start, relative_end, radius)
-		return _contact_at(entry, entry) if entry != INF else null
+		return _contact_at(entry) if entry != INF else null
 	var nearest := relative_start
 	if relative_start != relative_end:
 		nearest = Geometry2D.get_closest_point_to_segment(Vector2.ZERO, relative_start, relative_end)
@@ -294,13 +297,24 @@ func _first_contact(origin: Vector2, end_origin: Vector2, start: Vector2, finish
 		var instant := p.lerp(q, possible)
 		if Sector.first_touch(_region_at(a.lerp(b, possible), committed), instant, instant, radius) == 0.0:
 			var exact := lerpf(low, high, possible)
-			return _contact_at(exact, exact)
+			return _contact_at(exact)
 		var region := _sector.visible_region(a, committed, reach, sector_degrees, b)
 		var verified := Sector.first_touch(region, p, q, radius)
-		if verified == INF and Sector.first_touch(_region_at(b, committed), q, q, radius) == 0.0:
-			verified = 1.0
 		if verified != INF:
-			return _contact_at(lerpf(low, high, verified), lerpf(low, high, minf(possible, verified)))
+			return _contact_at(lerpf(low, high, verified))
+		if Sector.first_touch(_region_at(b, committed), q, q, radius) == 0.0:
+			# The disk missed at the first candidate and the continuous sweep
+			# missed, but moving the shadow exposed the disk by the endpoint.
+			var miss := possible
+			var touch := 1.0
+			for _subdivision in 8:
+				var mid := (miss + touch) * 0.5
+				var point := p.lerp(q, mid)
+				if Sector.first_touch(_region_at(a.lerp(b, mid), committed), point, point, radius) == 0.0:
+					touch = mid
+				else:
+					miss = mid
+			return _contact_at(lerpf(low, high, touch), lerpf(low, high, miss))
 	return null
 
 

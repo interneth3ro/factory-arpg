@@ -81,7 +81,7 @@ func _update_encounter_label() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if Input.is_action_just_pressed("reset_combat_test") or _select_encounter_from_input():
+	if _select_encounter_from_input() or Input.is_action_just_pressed("reset_combat_test"):
 		_reset_encounter()
 		return
 	if player_health.health == 0:

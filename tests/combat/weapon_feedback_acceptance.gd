@@ -93,21 +93,21 @@ func _run() -> void:
 	quit(1 if failures else 0)
 
 
-# Deliver the mapped key and sample the normal player input path on its physics tick.
-# The fixture drives the player manually so it can inspect the reset before combat resumes.
-func _key_tick(player: Player, key: Key) -> void:
+func _send_key(key: Key, pressed: bool) -> void:
 	var event := InputEventKey.new()
 	event.keycode = key
 	event.physical_keycode = key
-	event.pressed = true
+	event.pressed = pressed
 	Input.parse_input_event(event)
 	Input.flush_buffered_events()
+
+
+# Sample the normal player input path once so the fixture can inspect the reset before combat resumes.
+func _key_tick(player: Player, key: Key) -> void:
+	_send_key(key, true)
 	await physics_frame
 	player._physics_process(1.0 / Engine.physics_ticks_per_second)
-	var release := event.duplicate() as InputEventKey
-	release.pressed = false
-	Input.parse_input_event(release)
-	Input.flush_buffered_events()
+	_send_key(key, false)
 
 
 func _toggle_debug() -> void:
@@ -211,7 +211,11 @@ func _encounter_selector(player: Player) -> void:
 	heavy.attack.refresh()
 	player.position += Vector2.DOWN * 10.0
 	pursuer.position += Vector2.UP * 10.0
+	# Press F5 and F7 before the same physics tick. _select checks Pursuer only and one full reset.
+	_send_key(KEY_F5, true)
 	await _select(player, KEY_F7, pursuer)
+	_check(Input.is_action_just_pressed("reset_combat_test"), "F5 was sampled on the F7 selection tick")
+	_send_key(KEY_F5, false)
 	player._apply_contact(pursuer, stale, Vector2.ZERO, Vector2.RIGHT)
 	_check(pursuer.health == pursuer.max_health and player.weapon_effects._bursts.is_empty(), "Old swing cannot produce damage or effects")
 	player._update_state_diagnostics()

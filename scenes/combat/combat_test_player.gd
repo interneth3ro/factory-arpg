@@ -6,6 +6,10 @@ const ActionFSM = preload("res://scenes/combat/player_action_fsm.gd")
 const MeleeSweep = preload("res://scenes/combat/melee_sweep.gd")
 const SlideTrace = preload("res://scenes/combat/slide_trace.gd")
 const EnemyHealth = preload("res://scenes/combat/enemy_health.gd")
+const EnemyAttack = preload("res://scenes/combat/enemy_attack.gd")
+const PlayerHealth = preload("res://scenes/combat/player_health.gd")
+const HUD_RED := Color(0.84, 0.20, 0.25)
+const DAMAGE_RED := Color(1.0, 0.09, 0.11)
 const PHASE_COLORS := {
 	ActionFSM.State.READY: Color(0.3, 0.82, 0.95),
 	ActionFSM.State.WIND_UP: Color(1.0, 0.72, 0.16),
@@ -20,6 +24,11 @@ const PHASE_COLORS := {
 @onready var body_marker: Polygon2D = $Body
 @onready var movement_fsm: MovementFSM = $MovementFSM
 @onready var action_fsm: ActionFSM = $ActionFSM
+@onready var player_health: PlayerHealth = $Health
+@onready var health_bar: ProgressBar = $Diagnostics/HealthBar
+@onready var health_label: Label = $Diagnostics/HealthBar/Value
+@onready var death_message: Label = $Diagnostics/Death
+@onready var damage_diagnostics: Label = $Diagnostics/DamageLabel
 @onready var state_diagnostics: Label = $Diagnostics/StateLabel
 @onready var melee_sweep: MeleeSweep = $MeleeSweep
 @onready var enemies: Array[EnemyHealth] = [$"../Pursuer", $"../Heavy"]
@@ -27,16 +36,36 @@ const PHASE_COLORS := {
 @onready var start_position := position
 var last_damage := "None"
 var motion_trace := SlideTrace.new()
+var encounter_generation := 0
+var _pending: Array[EnemyAttack.Contact] = []
+var _contact_frame := -1
+var _feedback_frame := -1
+var _feedback_time := -1.0
+var _flash_strength := 0.0
+var _flash_left := 0.0
+var _emphasis_left := 0.0
+var _collapse: Tween
 
 
 func _ready() -> void:
 	melee_sweep.contacted.connect(_apply_contact)
+	player_health.health_changed.connect(_update_health_hud)
+	player_health.damaged.connect(_show_damage)
+	player_health.died.connect(_on_death)
+	_update_health_hud()
+	_update_presentation()
 
 
 func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("reset_combat_test"):
 		_reset_encounter()
 		return
+	if player_health.health == 0:
+		return
+	_pending.clear()
+	_contact_frame = Engine.get_physics_frames()
+	_flash_left = maxf(0.0, _flash_left - delta)
+	_emphasis_left = maxf(0.0, _emphasis_left - delta)
 	var movement_input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	_update_facing()
 	var facing_direction := Vector2.RIGHT.rotated(facing_marker.global_rotation)
@@ -59,7 +88,17 @@ func _physics_process(delta: float) -> void:
 
 
 func _update_presentation() -> void:
-	body_marker.color = PHASE_COLORS[action_fsm.state]
+	var color: Color = PHASE_COLORS[action_fsm.state]
+	if movement_fsm.is_dodging():
+		color = Color(0.55, 0.96, 1.0)
+	health_bar.self_modulate = HUD_RED
+	if _flash_left > 0.0:
+		var strength := _flash_strength
+		if _emphasis_left > 0.0:
+			strength = minf(1.0, strength + 0.18)
+		color = color.lerp(DAMAGE_RED, strength)
+		health_bar.self_modulate = HUD_RED.lerp(Color.WHITE, strength * (0.85 if _emphasis_left > 0.0 else 0.35))
+	body_marker.color = color
 	attack_marker.visible = action_fsm.state != ActionFSM.State.READY
 	if attack_marker.visible:
 		attack_marker.global_rotation = action_fsm.attack_direction.angle()
@@ -76,7 +115,8 @@ func _step_actions(delta: float, aim: Vector2) -> float:
 
 
 func _process(_delta: float) -> void:
-	_update_facing()
+	if player_health.health > 0:
+		_update_facing()
 	_update_state_diagnostics()
 
 
@@ -93,6 +133,7 @@ func _update_facing() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_combat_debug"):
 		state_diagnostics.visible = not state_diagnostics.visible
+		damage_diagnostics.visible = state_diagnostics.visible
 		melee_sweep.visible = state_diagnostics.visible
 		for enemy in enemies:
 			enemy.attack.debug_visible = state_diagnostics.visible
@@ -103,7 +144,9 @@ func _unhandled_input(event: InputEvent) -> void:
 func _update_state_diagnostics() -> void:
 	if state_diagnostics.visible:
 		var dodge_status := "Available" if movement_fsm.can_dodge() else "Recovering"
-		if movement_fsm.is_dodging():
+		if player_health.health == 0:
+			dodge_status = "Disabled"
+		elif movement_fsm.is_dodging():
 			dodge_status = "In progress"
 		state_diagnostics.text = "Movement: %s\nAction / phase: %s\nWeapon: %s\nAttack count: %d\nAttack aim: %s\nOrdinary speed: %.2fx\nDodge: %s\nInvulnerability: %s" % [
 			movement_fsm.get_state_name(),
@@ -132,6 +175,70 @@ func _update_state_diagnostics() -> void:
 			state_diagnostics.text += " (last %.0f ms on #%d)" % [
 				action_fsm.last_hitstop_duration * 1000.0, action_fsm.last_hitstop_attack,
 			]
+		damage_diagnostics.text = "Player %d / %d HP  |  %s  |  I-frames %s\nEnemy contacts (oldest first)\n%s" % [
+			player_health.health, player_health.max_health, "DEAD" if player_health.health == 0 else "ALIVE",
+			"on" if is_invulnerable() else "off",
+			"None" if player_health.history.is_empty() else "\n".join(player_health.history),
+		]
+
+
+func _collect_contact(target: CharacterBody2D, contact: EnemyAttack.Contact) -> void:
+	if target != self or contact.generation != encounter_generation or contact.frame != _contact_frame:
+		return
+	if player_health.health == 0:
+		return
+	if _pending.is_empty():
+		# Only called inside synchronous navigation avoidance dispatch. Godot
+		# flushes deferred calls after all agents return, within this tick.
+		_resolve_contacts.call_deferred(contact.frame, contact.generation)
+	_pending.append(contact)
+
+
+func _resolve_contacts(frame: int, generation: int) -> void:
+	if generation != encounter_generation or frame != _contact_frame or frame != Engine.get_physics_frames():
+		return
+	_pending.sort_custom(func(a: EnemyAttack.Contact, b: EnemyAttack.Contact) -> bool: return a.precedes(b))
+	for contact in _pending:
+		player_health.resolve(contact)
+	_pending.clear()
+
+
+func _update_health_hud() -> void:
+	health_bar.max_value = player_health.max_health
+	health_bar.value = player_health.health
+	health_label.text = "%d / %d" % [player_health.health, player_health.max_health]
+
+
+func _show_damage(contact: EnemyAttack.Contact) -> void:
+	if contact.frame == _feedback_frame and contact.time == _feedback_time and contact.flash_strength < _flash_strength:
+		return
+	_feedback_frame = contact.frame
+	_feedback_time = contact.time
+	_flash_strength = contact.flash_strength
+	_flash_left = contact.flash_seconds
+	_emphasis_left = contact.emphasis_seconds
+	_update_presentation()
+
+
+func _on_death() -> void:
+	action_fsm.interrupt_attack()
+	action_fsm.active_intervals.clear()
+	movement_fsm.reset_encounter()
+	melee_sweep.begin_tick()
+	_flash_left = 0.0
+	_emphasis_left = 0.0
+	health_bar.self_modulate = HUD_RED
+	body_marker.color = PHASE_COLORS[ActionFSM.State.READY]
+	attack_marker.hide()
+	facing_marker.hide()
+	death_message.show()
+	for enemy in enemies:
+		enemy.rest_after_player_death()
+	_collapse = create_tween().set_parallel(true)
+	_collapse.tween_property(body_marker, "rotation", -0.42, 0.35)
+	_collapse.tween_property(body_marker, "scale", Vector2(1.12, 0.50), 0.35)
+	_collapse.tween_property(body_marker, "position", Vector2(0, 7), 0.35)
+	_collapse.tween_property(body_marker, "color", Color(0.27, 0.32, 0.34), 0.35)
 
 
 func _apply_contact(target: CollisionObject2D, interval: ActionFSM.ActiveInterval) -> void:
@@ -147,8 +254,22 @@ func _apply_contact(target: CollisionObject2D, interval: ActionFSM.ActiveInterva
 
 
 func _reset_encounter() -> void:
+	encounter_generation += 1
+	_contact_frame = -1
+	_pending.clear()
+	if _collapse:
+		_collapse.kill()
+		_collapse = null
+	body_marker.transform = Transform2D.IDENTITY
+	facing_marker.show()
+	death_message.hide()
+	_flash_left = 0.0
+	_emphasis_left = 0.0
+	_feedback_frame = -1
+	_feedback_time = -1.0
+	player_health.reset_encounter()
 	for enemy in enemies:
-		enemy.reset_encounter()
+		enemy.reset_encounter(encounter_generation)
 	position = start_position
 	motion_trace.record(self, global_position, 0.0, 0.0, 0.0)
 	facing_marker.rotation = 0.0

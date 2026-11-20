@@ -3,7 +3,7 @@ extends NavigationAgent2D
 const EnemyAttack = preload("res://scenes/combat/enemy_attack.gd")
 const SlideTrace = preload("res://scenes/combat/slide_trace.gd")
 
-enum State { IDLE, PURSUING, HOLDING, RETREATING, WAITING_FOR_PATH, DEFEATED }
+enum State { IDLE, PURSUING, HOLDING, RETREATING, WAITING_FOR_PATH, DEFEATED, RESTING }
 
 const ENVIRONMENT_MASK := 1 << 2
 const RETREAT_ANGLES := [0.0, 30.0, -30.0, 55.0, -55.0]
@@ -37,6 +37,8 @@ var _speed := 0.0
 var _waypoint := Vector2.ZERO
 var _blocking_normal := Vector2.ZERO
 var _command_frame := -1
+var _generation := 0
+var _command_generation := -1
 var _tick_delta := 0.0
 var _navigation_submitted := false
 var _lunge_trace := SlideTrace.new()
@@ -60,7 +62,14 @@ func defeat() -> void:
 	_avoidance.avoidance_enabled = false
 
 
-func reset_encounter() -> void:
+func rest() -> void:
+	_attack.cancel_execution()
+	_clear_motion(State.RESTING)
+	_avoidance.avoidance_enabled = false
+
+
+func reset_encounter(generation: int) -> void:
+	_generation = generation
 	_attack.reset_encounter()
 	_clear_motion(State.IDLE)
 	_reset_frame = Engine.get_physics_frames()
@@ -82,7 +91,7 @@ func _clear_motion(next: State) -> void:
 
 
 func _change_state(next: State) -> void:
-	if next == State.IDLE or next == State.DEFEATED or next == State.HOLDING:
+	if next in [State.IDLE, State.DEFEATED, State.HOLDING, State.RESTING]:
 		# Setting a target resets the native path result. Park at this pose
 		# until a new movement order arrives, including after an F5 teleport.
 		target_position = _body.global_position
@@ -98,7 +107,7 @@ func _has_sight() -> bool:
 
 
 func _physics_process(delta: float) -> void:
-	if state == State.DEFEATED or Engine.get_physics_frames() == _reset_frame:
+	if state in [State.DEFEATED, State.RESTING] or Engine.get_physics_frames() == _reset_frame:
 		return
 	_attack.start_tick()
 	_retry_in = maxf(0.0, _retry_in - delta)
@@ -116,6 +125,7 @@ func _physics_process(delta: float) -> void:
 		return
 	_tick_delta = delta
 	_command_frame = Engine.get_physics_frames()
+	_command_generation = _generation
 	_navigation_submitted = false
 	# A recovery that finishes inside this tick can use a fresh avoidance
 	# result for its ordinary tail. The body is stationary at this pose.
@@ -297,7 +307,7 @@ func _passing_direction(direction: Vector2) -> Vector2:
 
 
 func _move_with_safe_velocity(safe_velocity: Vector2) -> void:
-	if _command_frame != Engine.get_physics_frames():
+	if _command_frame != Engine.get_physics_frames() or _command_generation != _generation:
 		return
 	_command_frame = -1 # Each submission can move the body only once.
 	_speed = 0.0
@@ -351,7 +361,7 @@ func _strike(from: float, duration: float) -> void:
 			_move(velocity_request, travel_time)
 	_attack.displacement += _body.global_position - origin
 	_lunge_trace.record(_body, origin, from, travel_time, from + duration)
-	_attack.check_contact(_lunge_trace, _player_trace)
+	_attack.check_contact(_lunge_trace, _player_trace, Engine.get_physics_frames(), _command_generation)
 	_body.velocity = Vector2.ZERO
 	_speed = _body.global_position.distance_to(origin) / _tick_delta
 
@@ -367,7 +377,7 @@ func _update_blocking_normal() -> void:
 
 
 func diagnostics() -> String:
-	var engaged := state != State.IDLE and state != State.DEFEATED
+	var engaged := state not in [State.IDLE, State.DEFEATED, State.RESTING]
 	var target := str(target_position.round()) if _has_target else "none"
 	return "%s | %s | %.0f px | %.0f px/s\n    Target %s | Path %s" % [
 		String(State.keys()[state]).capitalize(), "engaged" if engaged else "inactive",

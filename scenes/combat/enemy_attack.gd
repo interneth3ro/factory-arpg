@@ -8,11 +8,35 @@ const SlideTrace = preload("res://scenes/combat/slide_trace.gd")
 signal active_interval(tick_start: float, duration: float)
 signal standstill_requested
 signal recovery_finished
-signal contact_registered(target: CharacterBody2D, execution_id: int)
+signal contact_registered(target: CharacterBody2D, contact: Contact)
 signal presentation_changed
 
 enum Phase { READY, WIND_UP, ACTIVE, RECOVERY }
 
+class Contact:
+	var enemy: StringName
+	var execution_id: int
+	var frame: int
+	var generation: int
+	var time: float
+	var earliest_possible: float
+	var damage: int
+	var flash_strength: float
+	var flash_seconds: float
+	var emphasis_seconds: float
+
+	func precedes(other: Contact) -> bool:
+		if time != other.time:
+			return time < other.time
+		if enemy != other.enemy:
+			return String(enemy) < String(other.enemy)
+		return execution_id < other.execution_id
+
+
+@export_range(1, 1000) var damage := 15
+@export_range(0, 1) var flash_strength := 0.66
+@export_range(0.01, 1) var flash_seconds := 0.12
+@export_range(0.01, 1) var emphasis_seconds := 0.04
 @export_range(1, 300) var initiation_radius := 65.0
 @export_range(0.01, 5) var wind_up := 0.35
 @export_range(0.01, 5) var active := 0.15
@@ -78,16 +102,20 @@ func disengage() -> void:
 
 
 func reset_encounter() -> void:
+	execution = 0
+	contacted = false
+	displacement = Vector2.ZERO
+	cancel_execution()
+
+
+func cancel_execution() -> void:
 	disengage()
 	phase = Phase.READY
 	remaining = 0.0
 	cooldown_left = 0.0
-	execution = 0
-	contacted = false
 	tracking = Vector2.ZERO
 	committed = Vector2.ZERO
 	_heading = Vector2.RIGHT
-	displacement = Vector2.ZERO
 	_visible_region.clear()
 	_region_origin = Vector2.INF
 	paused_this_tick = 0.0
@@ -202,7 +230,7 @@ func _region_at(origin: Vector2, direction: Vector2) -> Array[PackedVector2Array
 	return _visible_region
 
 
-func check_contact(enemy: SlideTrace, player: SlideTrace) -> void:
+func check_contact(enemy: SlideTrace, player: SlideTrace, frame: int, generation: int) -> void:
 	if contacted:
 		return
 	var circle := _player_shape.shape as CircleShape2D
@@ -212,25 +240,45 @@ func check_contact(enemy: SlideTrace, player: SlideTrace) -> void:
 			var last := minf(enemy.times[i], player.times[j])
 			if last <= first:
 				continue
-			if _touches_leg(enemy.at(first), enemy.at(last), player.at(first), player.at(last), circle.radius):
+			var contact := _first_contact(enemy.at(first), enemy.at(last), player.at(first), player.at(last), circle.radius)
+			if contact != null:
 				contacted = true
-				contact_registered.emit(_player, execution)
+				contact.time = lerpf(first, last, contact.time)
+				contact.earliest_possible = lerpf(first, last, contact.earliest_possible)
+				contact.enemy = _body.name
+				contact.execution_id = execution
+				contact.frame = frame
+				contact.generation = generation
+				contact.damage = damage
+				contact.flash_strength = flash_strength
+				contact.flash_seconds = flash_seconds
+				contact.emphasis_seconds = emphasis_seconds
+				contact_registered.emit(_player, contact)
 				return
 
 
-func _touches_leg(origin: Vector2, end_origin: Vector2, start: Vector2, finish: Vector2, radius: float) -> bool:
+func _contact_at(time: float, earliest_possible: float) -> Contact:
+	var contact := Contact.new()
+	contact.time = time
+	contact.earliest_possible = earliest_possible
+	return contact
+
+
+func _first_contact(origin: Vector2, end_origin: Vector2, start: Vector2, finish: Vector2, radius: float) -> Contact:
 	var relative_start := start - origin
 	var relative_end := finish - end_origin
 	if origin == end_origin:
-		return Sector.touches(_region_at(origin, committed), relative_start, relative_end, radius)
+		var entry := Sector.first_touch(_region_at(origin, committed), relative_start, relative_end, radius)
+		return _contact_at(entry, entry) if entry != INF else null
 	var nearest := relative_start
 	if relative_start != relative_end:
 		nearest = Geometry2D.get_closest_point_to_segment(Vector2.ZERO, relative_start, relative_end)
 	if nearest.length() > reach + radius:
-		return false
+		return null
 	# Both traces are linear here. Test the moving disk continuously against
 	# the region guaranteed visible over each half-pixel of attacker travel.
 	var parts := ceili(origin.distance_to(end_origin) / 0.5)
+	var sector: Array[PackedVector2Array] = [Sector.outline(committed, reach, sector_degrees)]
 	for k in parts:
 		var low := float(k) / parts
 		var high := float(k + 1) / parts
@@ -238,14 +286,22 @@ func _touches_leg(origin: Vector2, end_origin: Vector2, start: Vector2, finish: 
 		var b := origin.lerp(end_origin, high)
 		var p := relative_start.lerp(relative_end, low)
 		var q := relative_start.lerp(relative_end, high)
+		var possible := Sector.first_touch(sector, p, q, radius)
+		if possible == INF:
+			continue
+		# If the earliest unoccluded touch is visible at that instant, it
+		# is also the exact first contact against the moving shadows.
+		var instant := p.lerp(q, possible)
+		if Sector.first_touch(_region_at(a.lerp(b, possible), committed), instant, instant, radius) == 0.0:
+			var exact := lerpf(low, high, possible)
+			return _contact_at(exact, exact)
 		var region := _sector.visible_region(a, committed, reach, sector_degrees, b)
-		if Sector.touches(region, p, q, radius):
-			return true
-		# At a corner the visible region can open or close during this slice.
-		# Check the exact instantaneous shadows at its two bounds as well.
-		if Sector.touches(_region_at(a, committed), p, p, radius) or Sector.touches(_region_at(b, committed), q, q, radius):
-			return true
-	return false
+		var verified := Sector.first_touch(region, p, q, radius)
+		if verified == INF and Sector.first_touch(_region_at(b, committed), q, q, radius) == 0.0:
+			verified = 1.0
+		if verified != INF:
+			return _contact_at(lerpf(low, high, verified), lerpf(low, high, minf(possible, verified)))
+	return null
 
 
 func diagnostics() -> String:

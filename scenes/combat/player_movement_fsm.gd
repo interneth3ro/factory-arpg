@@ -13,6 +13,9 @@ var _state := State.IDLE
 var _dodge_direction := Vector2.ZERO
 var _dodge_elapsed: float = 0.0
 var _dodge_recovery_remaining: float = 0.0
+var _interval_frame := -1
+var _tick_duration := 0.0
+var _protection_until := 0.0
 
 @onready var _body := get_parent() as CharacterBody2D
 
@@ -29,6 +32,11 @@ func request_dodge(movement_input: Vector2, facing_direction: Vector2) -> bool:
 
 
 func step(direction: Vector2, movement_speed: float, delta: float, ordinary_multiplier: float = 1.0) -> void:
+	# Input can start a dodge at offset zero. Snapshot before advancing the
+	# only dodge clock so a mid-step expiry survives the end-state change.
+	_interval_frame = Engine.get_physics_frames()
+	_tick_duration = delta
+	_protection_until = dodge_duration * dodge_invulnerability_fraction - _dodge_elapsed if is_dodging() else 0.0
 	var ordinary_state := State.IDLE if direction == Vector2.ZERO else State.MOVING
 	if is_dodging():
 		_step_dodge(delta)
@@ -44,6 +52,8 @@ func step(direction: Vector2, movement_speed: float, delta: float, ordinary_mult
 
 
 func reset_encounter() -> void:
+	_interval_frame = -1
+	_protection_until = 0.0
 	_body.velocity = Vector2.ZERO
 	_dodge_direction = Vector2.ZERO
 	_dodge_elapsed = 0.0
@@ -61,6 +71,10 @@ func is_dodging() -> bool:
 
 func is_invulnerable() -> bool:
 	return is_dodging() and _dodge_elapsed < dodge_duration * dodge_invulnerability_fraction
+
+
+func was_invulnerable_at(frame: int, offset: float) -> bool:
+	return frame == _interval_frame and offset >= 0.0 and offset <= _tick_duration and offset < _protection_until
 
 
 func get_state_name() -> String:

@@ -3,6 +3,7 @@
 Keep design decisions and implementation details versioned alongside the project so contributors can trace what the game should do and how the code delivers it.
 
 - [Combat Prototype v0.1](design/COMBAT_PROTOTYPE_V0.1.md) is the frozen gameplay baseline for the prototype. Consult it before implementing related systems.
+- [Player health, enemy damage and death](design/PR16_PLAYER_HEALTH_DAMAGE_DEATH.md) records the approved M57–M74 survivability decisions.
 - [Decision log](design/DECISION_LOG.md) indexes approved gameplay decisions and links to the authoritative specification for each.
 - [Godot metadata policy](GODOT_METADATA.md) describes how to handle resource metadata and run the read-only validator.
 
@@ -26,7 +27,7 @@ Space requests a dodge in the same physics step as the input. The Movement FSM e
 
 The dodge starts at high speed and slows linearly toward zero. The Movement FSM averages the speed over each physics step and scales the final partial step to preserve the configured travel distance on unobstructed terrain. Native collision stays active and can stop or constrain travel.
 
-The Player's `is_invulnerable()` query reports the early dodge window for future damage checks. It turns on at dodge start and expires during dodge movement. At the end of movement, the FSM returns to Idle or Moving and starts a separate dodge recovery timer. Normal WASD movement resumes on the next physics step. Space presses during execution or recovery are discarded, and dodge has no resource cost.
+The Player's `is_invulnerable()` query reports the current early dodge window. It turns on at dodge start and expires during dodge movement. At the end of movement, the FSM returns to Idle or Moving and starts a separate dodge recovery timer. Normal WASD movement resumes on the next physics step. Space presses during execution or recovery are discarded, and dodge has no resource cost.
 
 The MovementFSM inspector exposes provisional defaults of 0.24 seconds of movement, 120 pixels of unobstructed travel, invulnerability for the first 40% of the dodge (0.096 seconds before physics-step sampling), and 0.16 seconds of recovery. Invulnerability and recovery status update on physics ticks.
 
@@ -117,7 +118,7 @@ Lethal damage immediately stops movement and disables avoidance. The player coor
 
 ### Enemy attacks and telegraphs
 
-PR #15 implements geometric contact on the feature branch. The owner passed all 47 runtime checks at `ee9a5a8ef472ecc3301a04dd54fffe8f688a5d28` with no reported exceptions. Merge is pending. Each enemy's Attack node exposes its own provisional tuning. The approved ranges, durations, commitment points, sector dimensions and lunge distance are recorded in the [M27–M56 decision register](design/DECISION_LOG.md#enemy-attack-decisions).
+PR #15 introduced geometric contact. The owner passed all 47 runtime checks at `ee9a5a8ef472ecc3301a04dd54fffe8f688a5d28` with no reported exceptions. Each enemy's Attack node exposes its own provisional tuning. The approved ranges, durations, commitment points, sector dimensions and lunge distance are recorded in the [M27–M56 decision register](design/DECISION_LOG.md#enemy-attack-decisions).
 
 After acquisition, the initial delay counts down during pursuit. A ready enemy in range with clear environmental sight parks its path and zeros its velocity inside the movement callback. This handoff establishes standstill before the wind-up clock starts. Early aim turns from the enemy's heading toward the player. The bright chevron marks commitment. Heavy also displays a ground warning through its active strike. The hit flash blends over the current pose, and both enemies visibly return to neutral over recovery.
 
@@ -125,7 +126,24 @@ The movement callback accepts one submission per physics frame. During the Pursu
 
 The sector uses inscribed chords at most 3° apart. At Heavy reach the maximum difference from a circular rim is under 0.04 px. The geometry code subtracts shadows projected from the arena's static collision rectangles and convex footprints. Heavy draws and tests the same clipped polygons. The player circle is swept along its resolved slide legs within each active interval. During a lunge, contact also follows the enemy's resolved travel and any blocked stationary tail. Travel/remainder ratios estimate collision times. Over each half-pixel of attacker travel the test uses the region visible throughout that slice and checks both endpoint poses. A fleeting graze at a moving shadow edge can be missed between those bounds. [Sector construction](../scenes/combat/enemy_attack_sector.gd) · [Motion traces](../scenes/combat/slide_trace.gd)
 
-The player updates first and reports the exact hitstop consumed at the start of that physics tick. Each enemy excludes that prefix from attack progression, including on the final fractional tick. Hitstop scheduled by a new contact takes effect when the player consumes it. F3 shows the per-enemy pause, phase, lock, execution number, contact, lunge displacement and geometry alongside player dodge invulnerability. F5 clears both attacks and preserves the diagnostic toggle. The first geometric contact consumes the strike even during dodge. Player damage, immunity resolution and death belong to PR #16. [Enemy attack controller](../scenes/combat/enemy_attack.gd)
+The player updates first and reports the exact hitstop consumed at the start of that physics tick. Each enemy excludes that prefix from attack progression, including on the final fractional tick. Hitstop scheduled by a new contact takes effect when the player consumes it. F3 shows the per-enemy pause, phase, lock, execution number, contact, lunge displacement and geometry alongside player dodge invulnerability. F5 clears both attacks and preserves the diagnostic toggle. The first geometric contact consumes the strike even during dodge. [Enemy attack controller](../scenes/combat/enemy_attack.gd)
+
+### Player survivability
+
+PR #16 implements M57–M74 on the feature branch. Independent review, owner runtime acceptance and merge are pending. Player/Health owns HP and death. Each Attack node exports its damage and visual feedback tuning. The fixed upper-left HUD shows HP even while dead or with F3 closed. F3 adds the last five resolver decisions, oldest first, with physics frame, verified offset in milliseconds, enemy, execution, outcome, actual HP loss, remaining HP and lethal source. [Player health](../scenes/combat/player_health.gd) · [Owner acceptance checklist](PR16_RUNTIME_ACCEPTANCE.md)
+
+| Enemy | Damage | Body flash | Stronger body and HUD flash |
+| --- | ---: | ---: | ---: |
+| Pursuer | 15 HP | 0.12 s | First 0.04 s |
+| Heavy | 30 HP | 0.20 s | First 0.07 s |
+
+The detector intersects the two collision-resolved traces in time order. On each linear leg it finds the player disk's first entry against the clipped polygons using offset edges and circles around their vertices. Initial overlap gives offset zero within the leg. During a lunge it checks the earliest unoccluded entry against the shadow at that instant, then tests the region visible throughout each half-pixel slice and its end pose. For a verified moving-shadow contact, the unoccluded entry bounds how early it could have happened in that slice. Sorting uses the verified time. If the uncertainty straddles dodge expiry, protection wins. A shadow opening and closing entirely between checks can still hide a fleeting graze. Collision travel/remainder timing and the inscribed sector remain approximations. [Sector geometry](../scenes/combat/enemy_attack_sector.gd) · [Trace interpolation](../scenes/combat/slide_trace.gd)
+
+The existing player physics priority schedules input and movement before enemy submissions. Movement records the tick's protected interval from its dodge clock before advancing it. A successful Space request starts at tick offset zero. `was_invulnerable_at(frame, offset)` includes the start and excludes the exact expiry. The end of a tick is protected if time remains in the window. Death and F5 invalidate the snapshot. [Movement FSM](../scenes/combat/player_movement_fsm.gd)
+
+Enemy movement submits one frame- and generation-tagged command. Its direct `velocity_computed` connection advances the attack and reports contacts synchronously. The first contact queues one deferred drain **inside avoidance dispatch**. Godot 4.7.2 finishes iterating active agents and then flushes the message queue within the same physics iteration, before the physics step. Idle or defeated enemies owe no callback. The coordinator sorts by verified tick offset, enemy name (Heavy before Pursuer on ties), then execution ID. Health applies each decision, clamps lethal loss to remaining HP, and records later events in the batch as ignored. This boundary depends on the direct connections and the 4.7.2 navigation loop. Recheck it if either changes. [Engine physics loop](https://github.com/godotengine/godot/blob/4.7.2-stable/main/main.cpp#L4636-L4672) · [Avoidance dispatch](https://github.com/godotengine/godot/blob/4.7.2-stable/modules/navigation_2d/nav_map_2d.cpp#L489-L507) · [NavigationAgent2D signal](https://github.com/godotengine/godot/blob/4.7.2-stable/scene/2d/navigation/navigation_agent_2d.cpp#L654-L657)
+
+At a distinct later hit the flash refreshes. Equal-time hits use the strongest feedback. A nonlethal hit overrides dodge or weapon color for its duration while both FSMs continue. Death cancels actions, hides aim markers and starts a 0.35 s collapse. Surviving enemies clear navigation, warnings and contact geometry immediately and ease to neutral over 0.20 s. The centered death message and zero HP persist. F5 increments the encounter generation first, invalidates the batch and pending movement commands, kills active visual tweens, and restores the encounter. Deferred drains reject a mismatched generation or physics frame. [Player coordinator](../scenes/combat/combat_test_player.gd) · [Enemy movement](../scenes/combat/enemy_movement.gd) · [Enemy presentation](../scenes/combat/enemy_health.gd)
 
 For implementation PRs, identify the affected documentation and use [documentation sync](../.agents/skills/documentation-sync/SKILL.md) on the same branch before review. Reconcile approved changes and keep edits focused on the PR.
 

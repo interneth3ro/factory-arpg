@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://scenes/combat/combat_test_player.gd" id="1_player"]
 [ext_resource type="Script" path="res://scenes/combat/player_movement_fsm.gd" id="2_movement"]
@@ -10,6 +10,13 @@
 [ext_resource type="NavigationPolygon" path="res://scenes/combat/pursuer_navigation.tres" id="8_small"]
 [ext_resource type="NavigationPolygon" path="res://scenes/combat/heavy_navigation.tres" id="9_large"]
 [ext_resource type="Script" path="res://scenes/combat/enemy_attack.gd" id="10_attack"]
+[ext_resource type="Script" path="res://scenes/combat/player_health.gd" id="11_health"]
+
+[sub_resource type="StyleBoxFlat" id="HealthTrack"]
+bg_color = Color(0.25, 0.15, 0.18, 1)
+
+[sub_resource type="StyleBoxFlat" id="HealthFill"]
+bg_color = Color(1, 1, 1, 1)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_horizontal_wall"]
 size = Vector2(996, 18)
@@ -317,6 +324,9 @@ script = ExtResource("2_movement")
 [node name="ActionFSM" type="Node" parent="ArenaObjects/Player"]
 script = ExtResource("3_action")
 
+[node name="Health" type="Node" parent="ArenaObjects/Player"]
+script = ExtResource("11_health")
+
 [node name="MeleeSweep" type="Node2D" parent="ArenaObjects/Player"]
 visible = false
 top_level = true
@@ -324,6 +334,24 @@ z_index = 2
 script = ExtResource("4_sweep")
 
 [node name="Diagnostics" type="CanvasLayer" parent="ArenaObjects/Player"]
+
+[node name="HealthBar" type="ProgressBar" parent="ArenaObjects/Player/Diagnostics"]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 196.0
+offset_bottom = 40.0
+mouse_filter = 2
+show_percentage = false
+theme_override_styles/background = SubResource("HealthTrack")
+theme_override_styles/fill = SubResource("HealthFill")
+
+[node name="Value" type="Label" parent="ArenaObjects/Player/Diagnostics/HealthBar"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+theme_override_constants/outline_size = 3
 
 [node name="Completion" type="Label" parent="ArenaObjects/Player/Diagnostics"]
 visible = false
@@ -338,14 +366,42 @@ horizontal_alignment = 1
 
 [node name="StateLabel" type="Label" parent="ArenaObjects/Player/Diagnostics"]
 theme_override_font_sizes/font_size = 14
+theme_override_constants/line_spacing = 0
 visible = false
 offset_left = 16.0
-offset_top = 16.0
+offset_top = 48.0
 offset_right = 16.0
-offset_bottom = 16.0
+offset_bottom = 48.0
 mouse_filter = 2
 theme_override_colors/font_outline_color = Color(0.055, 0.077, 0.092, 1)
 theme_override_constants/outline_size = 5
+
+[node name="DamageLabel" type="Label" parent="ArenaObjects/Player/Diagnostics"]
+visible = false
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -350.0
+offset_right = -16.0
+offset_top = 16.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 14
+theme_override_constants/outline_size = 4
+
+[node name="Death" type="Label" parent="ArenaObjects/Player/Diagnostics"]
+visible = false
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 28
+theme_override_constants/outline_size = 6
+text = "YOU DIED — Press F5 to Restart"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="Pursuer" type="CharacterBody2D" parent="ArenaObjects"]
 script = ExtResource("5_enemy")
@@ -420,6 +476,10 @@ time_horizon_agents = 0.55
 
 [node name="Attack" type="Node2D" parent="ArenaObjects/Heavy"]
 script = ExtResource("10_attack")
+damage = 30
+flash_strength = 0.85
+flash_seconds = 0.20
+emphasis_seconds = 0.07
 initiation_radius = 105.0
 wind_up = 0.75
 active = 0.25
@@ -454,3 +514,6 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="Camera2D" type="Camera2D" parent="."]
+
+[connection signal="contact_registered" from="ArenaObjects/Pursuer/Attack" to="ArenaObjects/Player" method="_collect_contact"]
+[connection signal="contact_registered" from="ArenaObjects/Heavy/Attack" to="ArenaObjects/Player" method="_collect_contact"]

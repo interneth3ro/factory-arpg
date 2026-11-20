@@ -1,0 +1,10 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" uid="uid://bybwy2cp4m1ko" path="res://scenes/combat/weapon_attack.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+display_name = "Dagger"
+wind_up = 0.08
+active = 0.07
+recovery = 0.16

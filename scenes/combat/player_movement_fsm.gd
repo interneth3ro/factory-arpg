@@ -17,14 +17,15 @@ var _dodge_recovery_remaining: float = 0.0
 @onready var _body := get_parent() as CharacterBody2D
 
 
-func request_dodge(movement_input: Vector2, facing_direction: Vector2) -> void:
+func request_dodge(movement_input: Vector2, facing_direction: Vector2) -> bool:
 	if not can_dodge():
-		return
+		return false
 
 	var direction := facing_direction if movement_input == Vector2.ZERO else movement_input
 	_dodge_direction = direction.normalized()
 	_dodge_elapsed = 0.0
 	_transition_to(State.DODGING)
+	return true
 
 
 func step(direction: Vector2, movement_speed: float, delta: float) -> void:

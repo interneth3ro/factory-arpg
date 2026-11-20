@@ -6,7 +6,7 @@ Keep design decisions and implementation details versioned alongside the project
 - [Player health, enemy damage and death](design/PR16_PLAYER_HEALTH_DAMAGE_DEATH.md) records the approved M57–M74 survivability decisions.
 - [Combat impact and feedback](design/PR17_COMBAT_IMPACT_FEEDBACK.md) records the approved M75–M90 requirements for contact bursts, enemy recoil, swing trails and combat audio.
 - [Combat balance and encounter evaluation](design/COMBAT_BALANCE_ENCOUNTER_EVALUATION.md) defines the Phase 1 playtest matrix, observation rubric, and owner exit decision.
-- [Development-only encounter selector](design/COMBAT_ENCOUNTER_SELECTOR.md) records the approved E11–E16 design. The [arena controls](#encounter-selection) are implemented on the feature branch pending runtime acceptance and merge.
+- [Development-only encounter selector](design/COMBAT_ENCOUNTER_SELECTOR.md) records E11–E16 and the Decision 17 amendment to the Heavy-only key. The [arena controls](#encounter-selection) are implemented on the feature branch pending runtime acceptance and merge.
 - [Decision log](design/DECISION_LOG.md) indexes approved gameplay and evaluation decisions and links to their specifications.
 - [Godot metadata policy](GODOT_METADATA.md) describes how to handle resource metadata and run the read-only validator.
 
@@ -26,7 +26,7 @@ The [Movement FSM](../scenes/combat/player_movement_fsm.gd) starts Idle and swit
 
 ### Encounter selection
 
-The standalone arena starts with Pursuer + Heavy. Press F7 for Pursuer only, F8 for Heavy only, or F9 for both. Each press starts a fresh encounter with the dagger, even when selecting the current configuration again. F5 restarts the current selection. Choose the weapon for the attempt with 1, 2, or 3 after the reset.
+The standalone arena starts with Pursuer + Heavy. Press F7 for Pursuer only, F10 for Heavy only, or F9 for both. Each press starts a fresh encounter with the dagger, even when selecting the current configuration again. F5 restarts the current selection. Choose the weapon for the attempt with 1, 2, or 3 after the reset.
 
 The lower-right label shows the selection through death and completion, with F3 open or closed. An excluded enemy stays in the scene with full HP, hidden, with collision and avoidance disabled. Its movement controller parks its navigation target and skips detection and attack updates. F3 identifies it as inactive. The [arena regression fixture](../tests/combat/weapon_feedback_acceptance.gd) exercises switching, reactivation, and completion in all three configurations.
 

@@ -89,6 +89,9 @@ func _run() -> void:
 		var split := _release_into_active(enemy, PackedFloat64Array([0.011, 0.011, 0.011]))
 		_check(coarse.is_equal_approx(split), "%s release pose at 33 ms is independent of frame splits" % enemy.name)
 	arena.queue_free()
+	await arena.tree_exited
+	# Let the mixer release stopped WAV playbacks before shutting down the audio server.
+	await create_timer(0.1).timeout
 	print("Weapon feedback acceptance: %d failures" % failures)
 	quit(1 if failures else 0)
 
@@ -233,9 +236,9 @@ func _encounter_selector(player: Player) -> void:
 	await _key_tick(player, KEY_3)
 	_step(player, Action.GREATSWORD.wind_up * 0.95, true)
 	_check(player.action_fsm.state == Action.State.WIND_UP and player.action_fsm.get_aim_state() == Action.AimState.LOCKED, "Switch during committed greatsword wind-up")
-	await _select(player, KEY_F8, heavy)
+	await _select(player, KEY_F10, heavy)
 	await _complete_with_swings(player, heavy)
-	await _select(player, KEY_F8, heavy)
+	await _select(player, KEY_F10, heavy)
 	await _pursue_with_inactive_peer(player, heavy, pursuer)
 	await _select(player, KEY_F9)
 	await _complete_with_swings(player)
@@ -258,12 +261,12 @@ func _encounter_selector(player: Player) -> void:
 	_step(player, Action.GREATSWORD.wind_up * 0.95, true)
 	await _key_tick(player, KEY_SPACE)
 	_check(player.action_fsm.state == Action.State.READY and player.movement_fsm.is_dodging(), "Space interrupts late greatsword wind-up")
-	await _select(player, KEY_F8, heavy)
+	await _select(player, KEY_F10, heavy)
 	await _key_tick(player, KEY_SPACE)
 	player.movement_fsm.step(Vector2.ZERO, player.movement_speed, player.movement_fsm.dodge_duration)
 	_check(not player.movement_fsm.is_dodging() and not player.movement_fsm.can_dodge(), "Switch during dodge recovery")
 	await _select(player, KEY_F9)
-	await _select(player, KEY_F8, heavy)
+	await _select(player, KEY_F10, heavy)
 	injury.damage = player.player_health.max_health
 	player.player_health.resolve(injury)
 	_check(player.death_message.visible and player.encounter_label.is_visible_in_tree() and player.encounter_label.text == "Encounter: Heavy only", "Label survives death")

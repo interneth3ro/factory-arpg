@@ -117,7 +117,7 @@ Lethal damage immediately stops movement and disables avoidance. The player coor
 
 ### Enemy attacks and telegraphs
 
-PR #15 implements geometric contact on the feature branch. Owner runtime acceptance and merge are pending. Each enemy's Attack node exposes its own provisional tuning. The approved ranges, durations, commitment points, sector dimensions and lunge distance are recorded in the [M27–M56 decision register](design/DECISION_LOG.md#enemy-attack-decisions).
+PR #15 implements geometric contact on the feature branch. The owner passed all 47 runtime checks at `ee9a5a8ef472ecc3301a04dd54fffe8f688a5d28` with no reported exceptions. Merge is pending. Each enemy's Attack node exposes its own provisional tuning. The approved ranges, durations, commitment points, sector dimensions and lunge distance are recorded in the [M27–M56 decision register](design/DECISION_LOG.md#enemy-attack-decisions).
 
 After acquisition, the initial delay counts down during pursuit. A ready enemy in range with clear environmental sight parks its path and zeros its velocity inside the movement callback. This handoff establishes standstill before the wind-up clock starts. Early aim turns from the enemy's heading toward the player. The bright chevron marks commitment. Heavy also displays a ground warning through its active strike. The hit flash blends over the current pose, and both enemies visibly return to neutral over recovery.
 

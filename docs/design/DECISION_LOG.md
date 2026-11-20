@@ -40,19 +40,19 @@ The owner approved these milestone choices for the existing Pursuer and Heavy un
 | ID | Approved selection |
 | --- | --- |
 | M13 | Start inactive. Detect the player within the archetype's detection radius with clear sight. |
-| M14 | Stay engaged through temporary loss of sight. Disengage beyond the larger radius and require fresh detection. |
-| M15 | Give the Pursuer the faster approach and the Heavy the slower approach, with independent provisional speed limits. |
-| M16 | Approach to an archetype-specific engagement distance and hold there. |
+| M14 | The Pursuer detects within 240 px and disengages beyond 380 px. The Heavy detects within 190 px and disengages beyond 320 px. Reacquisition requires fresh detection. |
+| M15 | Set provisional maximum speeds to 240 px/s for the Pursuer and 130 px/s for the Heavy. |
+| M16 | The Pursuer stops approaching at 55 px and resumes beyond 75 px. The Heavy stops at 90 px and resumes beyond 115 px. |
 | M17 | Use native NavigationAgent2D waypoints and CharacterBody2D collision movement for both enemies. |
-| M18 | Separate stopping and pursuit-resumption thresholds to stabilize spacing. |
-| M19 | Retreat when crowded and hold again when acceptable spacing returns. |
+| M18 | Maintain engagement spacing through controlled retreat. Hold again once acceptable spacing returns. |
+| M19 | The Pursuer begins retreat below 35 px from the player. The Heavy begins retreat below 65 px. |
 | M20 | Validate a small deterministic set of retreat destinations on the enemy's mesh. Hold when none improves separation meaningfully. |
-| M21 | Refresh navigation targets at archetype-specific intervals or on transitions and invalidation. Continue following waypoints between refreshes. |
+| M21 | Check navigation targets every 0.15 s for the Pursuer and every 0.25 s for the Heavy. Update immediately on significant state changes or target invalidation. Follow current waypoints between updates. |
 | M22 | Build walkable geometry from the physical arena with separate clearance for the 14 px and 25 px bodies. |
 | M23 | Follow useful partial paths to the reachable endpoint, wait and retry while engaged. |
 | M24 | Accelerate and decelerate with physics time. Give the Heavy more gradual changes in movement. |
 | M25 | Combine solid enemy-to-enemy collision with native local avoidance. Defeat removes both until reset. |
-| M26 | Test initial visibility against environmental walls and solid obstacles with native 2D physics. |
+| M26 | Use a native 2D physics sight check for acquisition. Environmental walls and solid obstacles block detection. After acquisition, temporary loss of sight preserves engagement. |
 
 ## Recording future decisions
 

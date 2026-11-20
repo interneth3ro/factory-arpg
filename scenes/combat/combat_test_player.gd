@@ -4,6 +4,8 @@ const AIM_DEAD_ZONE_RADIUS: float = 4.0
 const MovementFSM = preload("res://scenes/combat/player_movement_fsm.gd")
 const ActionFSM = preload("res://scenes/combat/player_action_fsm.gd")
 const MeleeSweep = preload("res://scenes/combat/melee_sweep.gd")
+const WeaponEffects = preload("res://scenes/combat/weapon_effects.gd")
+const CombatAudio = preload("res://scenes/combat/combat_audio.gd")
 const SlideTrace = preload("res://scenes/combat/slide_trace.gd")
 const EnemyHealth = preload("res://scenes/combat/enemy_health.gd")
 const EnemyAttack = preload("res://scenes/combat/enemy_attack.gd")
@@ -31,6 +33,8 @@ const PHASE_COLORS := {
 @onready var damage_diagnostics: Label = $Diagnostics/DamageLabel
 @onready var state_diagnostics: Label = $Diagnostics/StateLabel
 @onready var melee_sweep: MeleeSweep = $MeleeSweep
+@onready var weapon_effects: WeaponEffects = $WeaponEffects
+@onready var combat_audio: CombatAudio = $CombatAudio
 @onready var enemies: Array[EnemyHealth] = [$"../Pursuer", $"../Heavy"]
 @onready var completion: Label = $Diagnostics/Completion
 @onready var start_position := position
@@ -44,6 +48,7 @@ var _flash_strength := 0.0
 var _flash_left := 0.0
 var _emphasis_left := 0.0
 var _collapse: Tween
+var _resolving_interval: ActionFSM.ActiveInterval
 
 
 func _ready() -> void:
@@ -71,19 +76,38 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("dodge"):
 		if movement_fsm.request_dodge(movement_input, facing_direction):
 			action_fsm.interrupt_attack()
+			weapon_effects.clear_trail()
+			combat_audio.interrupt_swing()
 	# Sample before advancing movement so the final dodge tick still discards input.
 	var movement_multiplier := 1.0
 	var attacking_allowed := not movement_fsm.is_dodging()
+	var paused := minf(delta, action_fsm.hitstop_remaining)
 	if attacking_allowed:
 		movement_multiplier = _step_actions(delta, facing_direction)
 	var start := global_position
 	movement_fsm.step(movement_input, movement_speed, delta, movement_multiplier)
 	motion_trace.record(self, start, 0.0, delta, delta)
 	melee_sweep.begin_tick()
-	if attacking_allowed and not action_fsm.active_intervals.is_empty():
-		melee_sweep.check_motion(self, start, delta, action_fsm.active_intervals)
+	if attacking_allowed:
+		_resolve_swings(start, delta, paused)
 	melee_sweep.select_attack(action_fsm.attack_count)
 	_update_presentation()
+
+
+func _resolve_swings(start: Vector2, delta: float, paused: float) -> void:
+	# Handle each execution in FSM order, including attacks that already
+	# finished this tick. A paused prefix advances neither the blade nor fade.
+	var cursor := paused
+	for interval in action_fsm.active_intervals:
+		weapon_effects.decay_trail(maxf(0.0, interval.tick_start - cursor))
+		cursor = interval.tick_start + interval.duration
+		combat_audio.swing(interval.attack_id, interval.weapon)
+		weapon_effects.follow(interval, motion_trace.at(cursor))
+		if interval.duration > 0.0:
+			_resolving_interval = interval
+			melee_sweep.check_motion_interval(self, start, delta, interval)
+			_resolving_interval = null
+	weapon_effects.decay_trail(maxf(0.0, delta - cursor))
 
 
 func _update_presentation() -> void:
@@ -219,6 +243,9 @@ func _show_damage(contact: EnemyAttack.Contact) -> void:
 
 
 func _on_death() -> void:
+	_resolving_interval = null
+	weapon_effects.clear_trail()
+	combat_audio.reset()
 	action_fsm.interrupt_attack()
 	action_fsm.active_intervals.clear()
 	movement_fsm.reset_encounter()
@@ -239,20 +266,29 @@ func _on_death() -> void:
 	_collapse.tween_property(body_marker, "color", Color(0.27, 0.32, 0.34), 0.35)
 
 
-func _apply_contact(target: CollisionObject2D, interval: ActionFSM.ActiveInterval) -> void:
+func _apply_contact(target: CollisionObject2D, interval: ActionFSM.ActiveInterval, point: Vector2, direction: Vector2) -> void:
+	# Only the direct signal inside this exact interval may apply a hit.
+	# IDs restart at F5, but interval objects are never reused.
+	if interval == null or interval != _resolving_interval or player_health.health == 0:
+		return
 	var enemy := target as EnemyHealth
 	if enemy == null:
 		return
-	var applied := enemy.receive_hit(interval.weapon)
+	var applied := enemy.receive_hit(interval.weapon, direction)
 	if applied > 0:
 		last_damage = "%d to %s from %s (#%d)" % [applied, enemy.name, interval.weapon.display_name, interval.attack_id]
 		action_fsm.request_hitstop(interval)
+		weapon_effects.burst(point, direction, interval.weapon)
+		combat_audio.impact(interval.attack_id, interval.weapon)
 		if enemy.health == 0:
 			completion.visible = enemies.all(func(candidate: EnemyHealth) -> bool: return candidate.health == 0)
 
 
 func _reset_encounter() -> void:
 	encounter_generation += 1
+	_resolving_interval = null
+	weapon_effects.reset()
+	combat_audio.reset()
 	_contact_frame = -1
 	_pending.clear()
 	if _collapse:

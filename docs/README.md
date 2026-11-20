@@ -94,6 +94,16 @@ Contacts resolve after movement. The first successful hit from the attack still 
 
 F5 takes priority over gameplay input for that physics tick. It restores spawn positions, health, collision settings, colors, the starting dagger and Ready/Idle states. It clears attack and contact history, hitstop, dodge recovery, flashes and completion while preserving the F3 toggle. Held LMB needs a fresh press to restart.
 
+### Weapon impact, recoil, trails and audio
+
+The PR #17 feature branch implements M75–M90, pending owner runtime acceptance and merge. Every Active interval uses the Action FSM's blade angle, including dagger correction. An exact end-of-tick entry seeds the first trail edge and plays the swing even when the first positive-duration sweep falls in the next tick. Longer ticks consume intervals in execution order. The outer ribbon follows the player's center during Active, freezes its angle during offensive hitstop and fades at the final resolved world position for 35/55/75 ms (dagger/sword/greatsword). Dodge or death cuts the trail and swing immediately. [Weapon effects](../scenes/combat/weapon_effects.gd) · [Action FSM](../scenes/combat/player_action_fsm.gd)
+
+The existing capsule query supplies the matched enemy shape and blade pose. The burst begins on the facing edge of the enemy disk nearest that sampled blade, an approximation at the midpoint of the first matching substep. Each distinct damaged target gets one world-space burst. Needle, slash and broad fan decay over 75/118/160 ms. A surviving enemy blends from its current recoil toward the new direction, then back to neutral. The body pose applies Pursuer limits of 6 px and 7° over 120 ms and Heavy limits of 3 px and 3° over 180 ms. Wind-up limits recoil to 35% and Active to 12%. Defeat clears recoil, surviving enemies settle from their visible pose on player death, and F5 clears every effect. [Sweep](../scenes/combat/melee_sweep.gd) · [Enemy body presentation](../scenes/combat/enemy_health.gd)
+
+Each Active entry plays the weapon's swing at −12 dB. The first successful damage application per execution plays the primary impact at −8 dB. Swing and primary players each retain up to two playbacks, so two executions in one physics tick can both sound. A third replaces the oldest on that player. Changing the recording replaces that player's previous stream. Later targets in the existing query order can use one free secondary voice at −20 dB. A busy secondary drops only that sound. The cap is three impacts plus two swings. Death and F5 stop all playback. [Combat audio](../scenes/combat/combat_audio.gd) · [Recording credits and processing](COMBAT_AUDIO_CREDITS.md)
+
+The owner-run [weapon feedback fixture](../tests/combat/weapon_feedback_acceptance.gd) exercises exact Active entry, two targets, hitstop, two attacks in one tick and execution-ID reuse across F5. The Draft PR includes perceptual checks for timing, silhouette, recoil and the audio mix.
+
 ### Enemy pursuit and navigation
 
 The Pursuer and Heavy start Idle. Each detects the player by range and a native physics ray against the four perimeter walls and three solid blocks. Once engaged, an enemy follows the player around obstructions until the player exceeds the disengagement radius. Coming back into view inside detection range can start another pursuit.

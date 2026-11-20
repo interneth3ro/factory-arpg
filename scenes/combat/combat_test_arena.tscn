@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene load_steps=21 format=3]
 
 [ext_resource type="Script" path="res://scenes/combat/combat_test_player.gd" id="1_player"]
 [ext_resource type="Script" path="res://scenes/combat/player_movement_fsm.gd" id="2_movement"]
@@ -11,6 +11,8 @@
 [ext_resource type="NavigationPolygon" path="res://scenes/combat/heavy_navigation.tres" id="9_large"]
 [ext_resource type="Script" path="res://scenes/combat/enemy_attack.gd" id="10_attack"]
 [ext_resource type="Script" path="res://scenes/combat/player_health.gd" id="11_health"]
+[ext_resource type="Script" path="res://scenes/combat/weapon_effects.gd" id="12_effects"]
+[ext_resource type="Script" path="res://scenes/combat/combat_audio.gd" id="13_audio"]
 
 [sub_resource type="StyleBoxFlat" id="HealthTrack"]
 bg_color = Color(0.25, 0.15, 0.18, 1)
@@ -333,6 +335,24 @@ top_level = true
 z_index = 2
 script = ExtResource("4_sweep")
 
+[node name="WeaponEffects" type="Node2D" parent="ArenaObjects/Player"]
+z_index = 1
+script = ExtResource("12_effects")
+
+[node name="CombatAudio" type="Node" parent="ArenaObjects/Player"]
+script = ExtResource("13_audio")
+
+[node name="Swing" type="AudioStreamPlayer" parent="ArenaObjects/Player/CombatAudio"]
+volume_db = -12.0
+max_polyphony = 2
+
+[node name="Primary" type="AudioStreamPlayer" parent="ArenaObjects/Player/CombatAudio"]
+volume_db = -8.0
+max_polyphony = 2
+
+[node name="Secondary" type="AudioStreamPlayer" parent="ArenaObjects/Player/CombatAudio"]
+volume_db = -20.0
+
 [node name="Diagnostics" type="CanvasLayer" parent="ArenaObjects/Player"]
 
 [node name="HealthBar" type="ProgressBar" parent="ArenaObjects/Player/Diagnostics"]
@@ -447,6 +467,9 @@ vertical_alignment = 1
 [node name="Heavy" type="CharacterBody2D" parent="ArenaObjects"]
 script = ExtResource("5_enemy")
 max_health = 150
+recoil_distance = 3.0
+recoil_duration = 0.18
+recoil_degrees = 3.0
 collision_layer = 3
 position = Vector2(314, -115)
 motion_mode = 1

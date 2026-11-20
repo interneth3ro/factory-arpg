@@ -1,6 +1,6 @@
 extends Node2D
 
-signal contacted(target: CollisionObject2D, interval: ActionFSM.ActiveInterval)
+signal contacted(target: CollisionObject2D, interval: ActionFSM.ActiveInterval, point: Vector2, direction: Vector2)
 
 const ActionFSM = preload("res://scenes/combat/player_action_fsm.gd")
 const TARGET_MASK := 1 << 1
@@ -24,15 +24,8 @@ func begin_tick() -> void:
 	queue_redraw()
 
 
-func check_motion(player: CharacterBody2D, start: Vector2, delta: float, intervals: Array[ActionFSM.ActiveInterval]) -> void:
-	# The FSM emits intervals in attack order. Finish every leg for this
-	# interval before a newer attack can replace its contact history.
-	for interval in intervals:
-		select_attack(interval.attack_id)
-		_check_motion_interval(player, start, delta, interval)
-
-
-func _check_motion_interval(player: CharacterBody2D, start: Vector2, delta: float, interval: ActionFSM.ActiveInterval) -> void:
+func check_motion_interval(player: CharacterBody2D, start: Vector2, delta: float, interval: ActionFSM.ActiveInterval) -> void:
+	select_attack(interval.attack_id)
 	var position_on_path := start
 	var time := 0.0
 	# Reconstruct the resolved slide legs. The travel/remainder ratio estimates
@@ -81,17 +74,35 @@ func _check_interval(interval: ActionFSM.ActiveInterval, start: Vector2, finish:
 	for index in count:
 		var fraction := (index + 0.5) / count
 		var angle := interval.blade_angle(lerpf(first, last, fraction))
-		var center := start.lerp(finish, fraction) + Vector2.from_angle(angle) * weapon.reach * 0.5
+		var origin := start.lerp(finish, fraction)
+		var direction := Vector2.from_angle(angle)
+		var center := origin + direction * weapon.reach * 0.5
 		query.transform = Transform2D(angle - PI * 0.5, center)
 		for hit in space.intersect_shape(query):
 			var target := hit.collider as CollisionObject2D
 			var id := target.get_instance_id()
 			if (target.collision_layer & TARGET_MASK) != 0 and not contacts.has(id):
 				contacts[id] = str(target.name)
-				contacted.emit(target, interval)
+				var point := _contact_point(target, hit.shape, origin, direction, weapon.reach)
+				contacted.emit(target, interval, point, direction)
 		if visible:
 			_debug_poses.append(query.transform)
 			_debug_shapes.append(capsule)
+
+
+## intersect_shape supplies the matched shape, but no manifold. Project its
+## center onto this sampled blade and take the facing surface of the arena disk.
+func _contact_point(target: CollisionObject2D, shape_index: int, origin: Vector2, direction: Vector2, reach: float) -> Vector2:
+	var owner_id := target.shape_find_owner(shape_index)
+	var pose := target.global_transform * target.shape_owner_get_transform(owner_id)
+	var blade := origin + direction * clampf((pose.origin - origin).dot(direction), 0.0, reach)
+	var collider := target.shape_owner_get_owner(owner_id) as CollisionShape2D
+	if collider and collider.shape is CircleShape2D:
+		var normal := pose.origin.direction_to(blade)
+		if normal.is_zero_approx():
+			normal = -direction
+		return pose.origin + normal * (collider.shape as CircleShape2D).radius * pose.x.length()
+	return blade
 
 
 func _draw() -> void:

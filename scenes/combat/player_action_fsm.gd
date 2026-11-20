@@ -1,5 +1,7 @@
 extends Node
 
+signal hitstop_consumed(seconds: float)
+
 const WeaponAttack = preload("res://scenes/combat/weapon_attack.gd")
 const DAGGER: WeaponAttack = preload("res://scenes/combat/dagger.tres")
 const SWORD: WeaponAttack = preload("res://scenes/combat/one_handed_sword.tres")
@@ -113,6 +115,8 @@ func step(delta: float, pressed: bool, held: bool, aim: Vector2) -> float:
 	# Consume time up to each boundary, including the instant a repeat can start.
 	var paused := minf(delta, hitstop_remaining)
 	hitstop_remaining -= paused
+	if paused > 0.0:
+		hitstop_consumed.emit(paused)
 	_buffer_remaining = maxf(0.0, _buffer_remaining - paused)
 	var remaining := delta - paused
 	var weighted_time := paused * get_movement_multiplier()

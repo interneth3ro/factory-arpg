@@ -4,6 +4,7 @@ const AIM_DEAD_ZONE_RADIUS: float = 4.0
 const MovementFSM = preload("res://scenes/combat/player_movement_fsm.gd")
 const ActionFSM = preload("res://scenes/combat/player_action_fsm.gd")
 const MeleeSweep = preload("res://scenes/combat/melee_sweep.gd")
+const SlideTrace = preload("res://scenes/combat/slide_trace.gd")
 const EnemyHealth = preload("res://scenes/combat/enemy_health.gd")
 const PHASE_COLORS := {
 	ActionFSM.State.READY: Color(0.3, 0.82, 0.95),
@@ -25,6 +26,7 @@ const PHASE_COLORS := {
 @onready var completion: Label = $Diagnostics/Completion
 @onready var start_position := position
 var last_damage := "None"
+var motion_trace := SlideTrace.new()
 
 
 func _ready() -> void:
@@ -48,6 +50,7 @@ func _physics_process(delta: float) -> void:
 		movement_multiplier = _step_actions(delta, facing_direction)
 	var start := global_position
 	movement_fsm.step(movement_input, movement_speed, delta, movement_multiplier)
+	motion_trace.record(self, start, 0.0, delta, delta)
 	melee_sweep.begin_tick()
 	if attacking_allowed and not action_fsm.active_intervals.is_empty():
 		melee_sweep.check_motion(self, start, delta, action_fsm.active_intervals)
@@ -60,7 +63,6 @@ func _update_presentation() -> void:
 	attack_marker.visible = action_fsm.state != ActionFSM.State.READY
 	if attack_marker.visible:
 		attack_marker.global_rotation = action_fsm.attack_direction.angle()
-	_update_state_diagnostics()
 
 
 func _step_actions(delta: float, aim: Vector2) -> float:
@@ -75,6 +77,7 @@ func _step_actions(delta: float, aim: Vector2) -> float:
 
 func _process(_delta: float) -> void:
 	_update_facing()
+	_update_state_diagnostics()
 
 
 func is_invulnerable() -> bool:
@@ -91,6 +94,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_combat_debug"):
 		state_diagnostics.visible = not state_diagnostics.visible
 		melee_sweep.visible = state_diagnostics.visible
+		for enemy in enemies:
+			enemy.attack.debug_visible = state_diagnostics.visible
+			enemy.attack.queue_redraw()
 		_update_state_diagnostics()
 
 
@@ -118,6 +124,7 @@ func _update_state_diagnostics() -> void:
 				enemy.name, enemy.health, enemy.max_health, "Alive" if enemy.health > 0 else "Defeated",
 			]
 			state_diagnostics.text += "\n    " + enemy.movement.diagnostics()
+			state_diagnostics.text += "\n    " + enemy.attack.diagnostics()
 		state_diagnostics.text += "\nLast damage: %s\nHitstop: %.0f ms remaining" % [
 			last_damage, action_fsm.hitstop_remaining * 1000.0,
 		]
@@ -143,6 +150,7 @@ func _reset_encounter() -> void:
 	for enemy in enemies:
 		enemy.reset_encounter()
 	position = start_position
+	motion_trace.record(self, global_position, 0.0, 0.0, 0.0)
 	facing_marker.rotation = 0.0
 	_update_facing()
 	action_fsm.reset_encounter()

@@ -30,7 +30,7 @@ The Player's `is_invulnerable()` query reports the early dodge window for future
 
 The MovementFSM inspector exposes provisional defaults of 0.24 seconds of movement, 120 pixels of unobstructed travel, invulnerability for the first 40% of the dodge (0.096 seconds before physics-step sampling), and 0.16 seconds of recovery. Invulnerability and recovery status update on physics ticks.
 
-F3 toggles the diagnostic label, which starts hidden and refreshes each physics step while visible. It shows the Movement and Action FSM states, dodge status (Available, In progress, or Recovering), and whether invulnerability is active.
+F3 toggles the diagnostic label, which starts hidden. While visible it displays the latest completed physics state each rendered frame, including the Movement and Action FSM states, dodge status (Available, In progress, or Recovering), and whether invulnerability is active.
 
 ### Melee attack timing
 
@@ -92,7 +92,7 @@ Contacts resolve after movement. The first successful hit from the attack still 
 
 F5 takes priority over gameplay input for that physics tick. It restores spawn positions, health, collision settings, colors, the starting dagger and Ready/Idle states. It clears attack and contact history, hitstop, dodge recovery, flashes and completion while preserving the F3 toggle. Held LMB needs a fresh press to restart.
 
-### Enemy pursuit and navigation (pending merge)
+### Enemy pursuit and navigation
 
 The Pursuer and Heavy start Idle. Each detects the player by range and a native physics ray against the four perimeter walls and three solid blocks. Once engaged, an enemy follows the player around obstructions until the player exceeds the disengagement radius. Coming back into view inside detection range can start another pursuit.
 
@@ -113,7 +113,19 @@ The arena loads two static navigation polygons. The Pursuer uses the world map a
 
 The [offline mesh builder](../tools/arena_navigation.py) derives the floor from the inner faces of the physical walls, subtracts the static obstacle footprints, erodes the surface by the body radius plus 4 px, then triangulates it. With Shapely 2.1.2 in an authoring environment, run `python tools/arena_navigation.py` to check for drift. After a collider edit, add `--write` to regenerate both resources. The resources also retain the outer outline and the static-collider bake settings for the `arena_solid` group. The running game loads the saved vertices and polygons directly.
 
-Lethal damage immediately stops movement and disables avoidance. The player coordinator's F5 reset restores both enemies to their spawn points, cancels destinations and retries, clears velocity and re-enables avoidance. Enemies remain Idle through the reset tick. Enemy attacks and player health are deferred.
+Lethal damage immediately stops movement and disables avoidance. The player coordinator's F5 reset restores both enemies to their spawn points, cancels destinations and retries, clears velocity and re-enables avoidance. Enemies remain Idle through the reset tick.
+
+### Enemy attacks and telegraphs
+
+PR #15 implements geometric contact on the feature branch. Owner runtime acceptance and merge are pending. Each enemy's Attack node exposes its own provisional tuning. The approved ranges, durations, commitment points, sector dimensions and lunge distance are recorded in the [M27–M56 decision register](design/DECISION_LOG.md#enemy-attack-decisions).
+
+After acquisition, the initial delay counts down during pursuit. A ready enemy in range with clear environmental sight parks its path and zeros its velocity inside the movement callback. This handoff establishes standstill before the wind-up clock starts. Early aim turns from the enemy's heading toward the player. The bright chevron marks commitment. Heavy also displays a ground warning through its active strike. The hit flash blends over the current pose, and both enemies visibly return to neutral over recovery.
+
+The movement callback accepts one submission per physics frame. During the Pursuer's active interval it tests forward travel against native collision, then moves only the available distance through the same body movement function used for pursuit. Recovery releases movement and checks disengagement. The next navigation request accelerates from rest. Cooldown runs during ordinary positioning.
+
+The sector uses inscribed chords at most 3° apart. At Heavy reach the maximum difference from a circular rim is under 0.04 px. The geometry code subtracts shadows projected from the arena's static collision rectangles and convex footprints. Heavy draws and tests the same clipped polygons. The player circle is swept along its resolved slide legs within each active interval. During a lunge, contact also follows the enemy's resolved travel and any blocked stationary tail. Travel/remainder ratios estimate collision times. Over each half-pixel of attacker travel the test uses the region visible throughout that slice and checks both endpoint poses. A fleeting graze at a moving shadow edge can be missed between those bounds. [Sector construction](../scenes/combat/enemy_attack_sector.gd) · [Motion traces](../scenes/combat/slide_trace.gd)
+
+The player updates first and reports the exact hitstop consumed at the start of that physics tick. Each enemy excludes that prefix from attack progression, including on the final fractional tick. Hitstop scheduled by a new contact takes effect when the player consumes it. F3 shows the per-enemy pause, phase, lock, execution number, contact, lunge displacement and geometry alongside player dodge invulnerability. F5 clears both attacks and preserves the diagnostic toggle. The first geometric contact consumes the strike even during dodge. Player damage, immunity resolution and death belong to PR #16. [Enemy attack controller](../scenes/combat/enemy_attack.gd)
 
 For implementation PRs, identify the affected documentation and use [documentation sync](../.agents/skills/documentation-sync/SKILL.md) on the same branch before review. Reconcile approved changes and keep edits focused on the PR.
 

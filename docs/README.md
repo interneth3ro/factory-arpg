@@ -130,7 +130,7 @@ The player updates first and reports the exact hitstop consumed at the start of 
 
 ### Player survivability
 
-PR #16 implements M57–M74 on the feature branch. Independent review, owner runtime acceptance and merge are pending. Player/Health owns HP and death. Each Attack node exports its damage and visual feedback tuning. The fixed upper-left HUD shows HP even while dead or with F3 closed. F3 adds the last five resolver decisions, oldest first, with physics frame, verified offset in milliseconds, enemy, execution, outcome, actual HP loss, remaining HP and lethal source. [Player health](../scenes/combat/player_health.gd) · [Owner acceptance checklist](PR16_RUNTIME_ACCEPTANCE.md)
+PR #16 implements M57–M74 on the feature branch. The owner reports that independent corrective review passed at `c586db88e3ebd02db59b92ea115bdb1a0b516b19` and all applicable runtime playtesting checks passed for that implementation with no reported exceptions. Merge is pending. Player/Health owns HP and death. Each Attack node exports its damage and visual feedback tuning. The fixed upper-left HUD shows HP even while dead or with F3 closed. F3 adds the last five resolver decisions, oldest first, with physics frame, verified offset in milliseconds, enemy, execution, outcome, actual HP loss, remaining HP and lethal source. [Player health](../scenes/combat/player_health.gd) · [Owner acceptance checklist](PR16_RUNTIME_ACCEPTANCE.md)
 
 | Enemy | Damage | Body flash | Stronger body and HUD flash |
 | --- | ---: | ---: | ---: |

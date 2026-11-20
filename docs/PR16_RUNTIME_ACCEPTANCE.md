@@ -1,6 +1,8 @@
 # PR #16 owner runtime acceptance
 
-Run against the draft's exact head in Godot 4.7.2. Record the SHA, physics rate, observed failures and the relevant F3 rows. All boxes start pending. Open the [combat test arena](../scenes/combat/combat_test_arena.tscn) and run that scene. Give the game window keyboard focus for F3/F5. Use the editor's game-input forwarding if necessary.
+The owner reports that all applicable PR #16 playtesting checks passed for the reviewed implementation at `c586db88e3ebd02db59b92ea115bdb1a0b516b19`, with no reported exceptions. The checkboxes below are reusable instructions for reproducing individual cases.
+
+For a new run in Godot 4.7.2, record the tested SHA, physics rate, observed failures and the relevant F3 rows. Open the [combat test arena](../scenes/combat/combat_test_arena.tscn) and run that scene. Give the game window keyboard focus for F3/F5. Use the editor's game-input forwarding if necessary.
 
 ## Reproducible timing and reset checks
 

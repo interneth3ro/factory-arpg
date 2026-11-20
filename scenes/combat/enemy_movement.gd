@@ -51,7 +51,7 @@ func reset_encounter() -> void:
 	_clear_motion(State.IDLE)
 	_reset_frame = Engine.get_physics_frames()
 	_avoidance.avoidance_enabled = true
-	_avoidance.set_velocity_forced(Vector2.ZERO)
+	NavigationServer2D.agent_set_velocity_forced(_avoidance.get_rid(), Vector2.ZERO)
 
 
 func _clear_motion(next: State) -> void:
@@ -61,7 +61,7 @@ func _clear_motion(next: State) -> void:
 	_moving = false
 	_speed = 0.0
 	_body.velocity = Vector2.ZERO
-	_avoidance.velocity = Vector2.ZERO
+	NavigationServer2D.agent_set_velocity(_avoidance.get_rid(), Vector2.ZERO)
 	_avoidance.avoidance_priority = 1.0
 
 
@@ -132,7 +132,9 @@ func _submit_velocity(direction: Vector2, distance: float, spacing_visible: bool
 		preferred = Vector2.ZERO
 	_moving = not preferred.is_zero_approx()
 	_avoidance.avoidance_priority = 0.5 if _moving else 1.0
-	_avoidance.velocity = preferred
+	# Godot 4.7.2 only forwards node velocity when that node has a path target.
+	# This sibling handles avoidance only, so submit to its server agent directly.
+	NavigationServer2D.agent_set_velocity(_avoidance.get_rid(), preferred)
 
 
 func _map_ready() -> bool:

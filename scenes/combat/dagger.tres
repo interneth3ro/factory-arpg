@@ -4,6 +4,10 @@
 
 [resource]
 script = ExtResource("1_weapon")
+damage = 10
+hitstop = 0.025
+flash_duration = 0.07
+flash_strength = 0.35
 display_name = "Dagger"
 reach = 55.0
 sweep_angle = 65.0

@@ -8,3 +8,6 @@ display_name = "One-handed sword"
 wind_up = 0.16
 active = 0.12
 recovery = 0.26
+wind_up_movement = 0.80
+active_movement = 0.65
+recovery_movement = 0.85

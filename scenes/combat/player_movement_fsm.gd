@@ -28,7 +28,7 @@ func request_dodge(movement_input: Vector2, facing_direction: Vector2) -> bool:
 	return true
 
 
-func step(direction: Vector2, movement_speed: float, delta: float) -> void:
+func step(direction: Vector2, movement_speed: float, delta: float, ordinary_multiplier: float = 1.0) -> void:
 	var ordinary_state := State.IDLE if direction == Vector2.ZERO else State.MOVING
 	if is_dodging():
 		_step_dodge(delta)
@@ -37,7 +37,7 @@ func step(direction: Vector2, movement_speed: float, delta: float) -> void:
 			_transition_to(ordinary_state)
 		return
 
-	_body.velocity = direction * movement_speed
+	_body.velocity = direction * movement_speed * ordinary_multiplier
 	_body.move_and_slide()
 	_dodge_recovery_remaining = maxf(0.0, _dodge_recovery_remaining - delta)
 	_transition_to(ordinary_state)

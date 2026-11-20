@@ -272,6 +272,11 @@ polygon = PackedVector2Array(-10, -16, 10, -16, 17, -8, 17, 8, 10, 16, -10, 16, 
 color = Color(0.07, 0.21, 0.26, 1)
 polygon = PackedVector2Array(-7, 5, 10, 0, -7, -5, -4, 0)
 
+[node name="AttackMarker" type="Polygon2D" parent="ArenaObjects/Player"]
+visible = false
+color = Color(1, 0.83, 0.32, 1)
+polygon = PackedVector2Array(19, -4, 27, 0, 19, 4)
+
 [node name="NameLabel" type="Label" parent="ArenaObjects/Player"]
 offset_left = -60.0
 offset_top = -54.0

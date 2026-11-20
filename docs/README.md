@@ -32,7 +32,7 @@ The MovementFSM inspector exposes provisional defaults of 0.24 seconds of moveme
 
 F3 toggles the diagnostic label, which starts hidden and refreshes each physics step while visible. It shows the Movement and Action FSM states, dodge status (Available, In progress, or Recovering), and whether invulnerability is active.
 
-### Melee attack timing (pending merge)
+### Melee attack timing
 
 Press 1, 2 or 3 while Ready to select a weapon. The player starts with the dagger. Each [weapon definition](../scenes/combat/weapon_attack.gd) supplies three provisional durations for owner evaluation.
 
@@ -46,7 +46,19 @@ A fresh LMB press starts an attack. At the end of Recovery, the [Action FSM](../
 
 A successful dodge interrupts any phase and clears the buffer. Attack and selection presses during dodge movement are discarded. A fresh LMB press after movement ends can attack during dodge recovery, even if a simultaneous Space request fails. Holding LMB across a dodge requires a new press to restart. Weapon changes during an attack are ignored.
 
-The player's body shows Ready in cyan, Wind-up in amber, Active in white, and Recovery in violet. F3 shows the current phase, weapon and cumulative attack count, including interrupted attacks. The color cue indicates timing only. Hit detection, damage, weapon commitment and attack movement modifiers are deferred.
+The player's body shows Ready in cyan, Wind-up in amber, Active in white, and Recovery in violet. F3 shows the current phase, weapon and cumulative attack count, including interrupted attacks. Hit detection and damage are deferred.
+
+### Attack direction and mobility (pending merge)
+
+The dark center marker follows the mouse. During an attack, a separate gold pointer outside the body shows the Action FSM's attack direction through Recovery. Each new swing samples the latest facing, including repeats. F3 shows whether attack aim is tracking, correcting, locked or inactive, alongside the current phase's ordinary-movement multiplier.
+
+| Weapon | Attack direction | Wind-up | Active | Recovery |
+| --- | --- | ---: | ---: | ---: |
+| Dagger | Tracks through Wind-up, turns toward the mouse at up to 180°/s during Active, then holds | 0.90× | 0.85× | 0.95× |
+| One-handed sword | Tracks through Wind-up and locks at Active start | 0.80× | 0.65× | 0.85× |
+| Greatsword | Tracks until 75% of Wind-up (240 ms), then locks | 0.60× | 0.40× | 0.70× |
+
+These values are provisional. The Movement FSM scales ordinary WASD speed by the time spent in each phase within a physics tick. Ready uses full speed. Under owner decision M2 Option B, a successful dodge can still interrupt every phase, including late greatsword Wind-up. It clears attack aim and pending attack input immediately and uses the usual locked dodge trajectory and burst speed.
 
 For implementation PRs, identify the affected documentation and use [documentation sync](../.agents/skills/documentation-sync/SKILL.md) on the same branch before review. Reconcile approved changes and keep edits focused on the PR.
 

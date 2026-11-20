@@ -8,3 +8,7 @@ display_name = "Dagger"
 wind_up = 0.08
 active = 0.07
 recovery = 0.16
+wind_up_movement = 0.90
+active_movement = 0.85
+recovery_movement = 0.95
+aim_mode = 1

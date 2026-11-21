@@ -52,6 +52,8 @@ Prove that the current combat mechanics feel responsive, legible, and enjoyable 
 
 The owner completed all 18 baseline attempts and approved **Phase 1 — CONDITIONAL PASS**. EVAL-01 (greatsword timing against the Pursuer) is Minor, deferred, and non-blocking. Further combat tuning is unnecessary before Phase 2 planning. [Evaluation results and owner disposition](design/PHASE_1_COMBAT_EVALUATION_RESULTS.md)
 
+The owner subsequently approved the design for a [ranged, magic, and combat input extension](design/RANGED_MAGIC_COMBAT_INPUT.md). It defines the next standalone combat prototype scope. Implementation requires separate authorization. The Phase 1 result and Phase 2 planning gate retain their recorded status.
+
 ### Exit gate
 
 - All three weapons are distinguishable in use and feedback.

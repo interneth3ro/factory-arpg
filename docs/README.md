@@ -3,6 +3,7 @@
 Keep design decisions and implementation details versioned alongside the project so contributors can trace what the game should do and how the code delivers it.
 
 - [Combat Prototype v0.1](design/COMBAT_PROTOTYPE_V0.1.md) is the frozen gameplay baseline for the prototype. Consult it before implementing related systems.
+- [Ranged, magic, and combat input](design/RANGED_MAGIC_COMBAT_INPUT.md) specifies the approved extension to the standalone arena. It covers pistol shots, magic field pulses, five combat slots, buffered switching and active-style retention on F5. Implementation is pending.
 - [Player health, enemy damage and death](design/PR16_PLAYER_HEALTH_DAMAGE_DEATH.md) records the approved M57–M74 survivability decisions.
 - [Combat impact and feedback](design/PR17_COMBAT_IMPACT_FEEDBACK.md) records the approved M75–M90 requirements for contact bursts, enemy recoil, swing trails and combat audio.
 - [Combat balance and encounter evaluation](design/COMBAT_BALANCE_ENCOUNTER_EVALUATION.md) defines the Phase 1 playtest matrix, observation rubric, and exit criteria.

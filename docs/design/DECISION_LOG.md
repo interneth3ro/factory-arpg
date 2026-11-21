@@ -106,7 +106,7 @@ The owner approved Option B for each decision on 2026-11-20. The supplied [PR #1
 | M63 | Cancel surviving enemy attacks and navigation immediately, then settle their artwork over about 0.20 s. |
 | M64 | Prioritize death, then damage flash, dodge and ordinary movement or attack visuals. |
 | M65 | Give player health its own component and keep dodge timing in the Movement FSM. |
-| M66 | F5 atomically restores the encounter from any phase, preserves F3 and requires a fresh attack press. |
+| M66 | F5 atomically restores the encounter from any phase, preserves F3 and requires a fresh attack press. For the extension, [INT12](RANGED_MAGIC_COMBAT_INPUT.md#combat-input-and-hud) amends the original default-weapon reset. |
 | M67 | Resolve in contact-time order with stable ties. Identify the first lethal event and ignore later damage. |
 | M68 | Add visual impact emphasis for 0.04 s or 0.07 s according to archetype. Gameplay clocks continue. |
 | M69 | Retain the five most recent resolver outcomes in F3, including the lethal source and actual HP loss. |
@@ -163,7 +163,7 @@ The owner approved E11–E16 on 2026-11-20 to support the nine combinations and 
 | ID | Approved selection | Behavior |
 | --- | --- | --- |
 | E11 | B — Development-only keyboard selector | Select Pursuer only, Heavy only, or both enemies in the existing standalone arena. |
-| E12 | B — Selection triggers complete reset | Start with both enemies. Every selection starts a fresh encounter, and F5 restarts the current selection with the starting dagger. |
+| E12 | B — Selection triggers complete reset | Start with both enemies. Every selection starts a fresh encounter, and F5 restarts the current selection with the starting dagger. For the extension, [INT12](RANGED_MAGIC_COMBAT_INPUT.md#combat-input-and-hud) supersedes the starting-dagger rule on F5. |
 | E13 | B — Dedicated keys and persistent label | F7 selects Pursuer only, F8 Heavy only, and F9 both. Use Input Map actions and keep a small configuration label visible independently of F3. |
 | E14 | B — Reversible inactive enemy state | Keep both instances. Exclude inactive enemies from combat, collision, navigation, avoidance, feedback, and completion. Defeat remains a distinct state. Reactivation restores the enemy's initial state. |
 | E15 | B — Focused automated regression and owner acceptance | Exercise production behavior using existing test conventions. The owner verifies controls, isolation, completion, and lifecycle transitions at the tested implementation head. |
@@ -173,6 +173,67 @@ The owner approved E11–E16 on 2026-11-20 to support the nine combinations and 
 ## Phase 1 combat evaluation closure
 
 The owner approved **Phase 1 — CONDITIONAL PASS** after completing the E1–E10 baseline in the standalone arena. EVAL-01 began as a provisional Significant finding about greatsword timing against the Pursuer. After clarifying how dodge supported repositioning between swings, the owner deferred EVAL-01 as **Minor and non-blocking**. The original ratings and exit decision stand. No combat parameter changes were authorized. Phase 2 planning is next. [Evaluation results and owner decision](PHASE_1_COMBAT_EVALUATION_RESULTS.md)
+
+## Ranged, magic and combat input decisions
+
+The owner approved the following 36 decisions for the next combat extension. The feature specification defines the behavioral contract, initial tuning and [acceptance checks](RANGED_MAGIC_COMBAT_INPUT.md#behavioral-acceptance). Implementation is pending.
+
+### Physical firearm
+
+The [pistol specification](RANGED_MAGIC_COMBAT_INPUT.md#pistol) defines shot resolution and the provisional balance values.
+
+| ID | Decision | Approved selection |
+| --- | --- | --- |
+| R1 | Archetype | Physical firearm. |
+| R2 | Weapon | Simple semi-automatic pistol. |
+| R3 | Delivery | Traveling bullets with swept collision. |
+| R4 | Handling | Aim freely with the mouse while moving. Firing briefly slows movement. Dodge interrupts firing commitment. |
+| R5 | Ammunition | Unlimited, with no magazine or reload. |
+| R6 | Contact | Stop at the first enemy or solid obstacle. Deal damage at most once per bullet. No penetration or ricochet. |
+| R7 | Trigger | Fire immediately when ready. Holding attack repeats at controlled intervals. |
+| R8 | Cadence | Three shots per second, approximately 333 ms apart. |
+| R9 | Bullet speed | 1,000 px/s. |
+| R10 | Travel limit | 600 px. |
+| R11 | Damage | 15 per bullet. |
+| R12 | Firing slowdown | Move at 80% (176 px/s) for 120 ms after each shot. Subsequent shots refresh the window. Dodge interrupts it. |
+
+### Magic
+
+The [magic field specification](RANGED_MAGIC_COMBAT_INPUT.md#magic-field) defines casting, placement and the pulse schedule.
+
+| ID | Decision | Approved selection |
+| --- | --- | --- |
+| MGC1 | Archetype | Ground-targeted area spell. |
+| MGC2 | Targeting | Place the spell by direction at a fixed distance. |
+| MGC3 | Effect | Persistent area damage field. |
+| MGC4 | Damage timing | Field-wide pulses damage each eligible enemy at most once per pulse. |
+| MGC5 | Lifetime | Four pulses over three seconds at field ages 0.75, 1.50, 2.25 and 3.00 s. Resolve the final pulse before expiration. |
+| MGC6 | Radius | 85 px. |
+| MGC7 | Damage | 15 per pulse, up to 60 per enemy per field. |
+| MGC8 | Cast time | 450 ms. |
+| MGC9 | Cast movement and interruption | Move at 60% (132 px/s) while casting. Dodge cancels an unfinished cast without creating a field. |
+| MGC10 | Aim commitment | Aim can change throughout the cast and locks at completion. |
+| MGC11 | Field center | Place it 220 px from the player's position at completion, along the final aim direction. |
+| MGC12 | Recast | Allow a recast after completion. Keep the previous field on its clock while casting. Only successful completion replaces it. Canceling leaves it intact. Maximum one player-created field. |
+
+### Input integration
+
+The [combat input and HUD specification](RANGED_MAGIC_COMBAT_INPUT.md#combat-input-and-hud) defines shared inputs and the changes to switching and F5.
+
+| ID | Decision | Approved selection |
+| --- | --- | --- |
+| INT1 | Style slots | One set of slots for the three melee weapons, pistol and magic field. |
+| INT2 | Switching | Switch immediately when permitted. Buffer requests during committed actions. |
+| INT3 | Dodge | Preserve pending selection through dodge. Switching cannot interrupt the dodge. |
+| INT4 | Pending choice | Keep at most one pending selection. The latest valid request wins. |
+| INT5 | Attack control | One universal primary attack input. |
+| INT6 | Per-style trigger | Preserve melee input behavior. Holding repeats pistol shots at three per second. Magic requires a fresh press per cast. |
+| INT7 | Keyboard slots | 1 Dagger, 2 Sword, 3 Greatsword, 4 Pistol, 5 Magic Field. |
+| INT8 | Aim interface | All styles consume a shared normalized direction, from mouse now and compatible with a future controller stick. |
+| INT9 | Aim fallback | Retain the last valid direction on neutral or invalid input. Before the first valid sample use a consistent initial facing. |
+| INT10 | Held attack across a switch | Allow switching while held. Require release and a fresh press to attack with the newly active style. |
+| INT11 | HUD | Display the active style and any pending selection. |
+| INT12 | F5 reset | Preserve active style. Clear pending selection, unfinished casting and active player-created fields. |
 
 ## Recording future decisions
 

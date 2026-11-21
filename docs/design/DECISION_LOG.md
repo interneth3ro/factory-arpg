@@ -158,7 +158,7 @@ The owner approved E1–E10 on 2026-11-20 for the Phase 1 evaluation. The [evalu
 
 ## Development-only encounter selector decisions
 
-The owner approved E11–E16 on 2026-11-20 to support the nine combinations and 18 baseline attempts in the [Phase 1 evaluation](COMBAT_BALANCE_ENCOUNTER_EVALUATION.md#5-encounter-matrix-and-baseline-attempts). The [selector specification](COMBAT_ENCOUNTER_SELECTOR.md#2-approved-decision-register) defines the design. Implementation requires separate owner approval.
+The owner approved E11–E16 on 2026-11-20 to support the nine combinations and 18 baseline attempts in the [Phase 1 evaluation](COMBAT_BALANCE_ENCOUNTER_EVALUATION.md#5-encounter-matrix-and-baseline-attempts). The [selector specification](COMBAT_ENCOUNTER_SELECTOR.md#2-approved-decision-register) defines the design. PR #22 delivered the selector with the Decision 17 amendment below.
 
 | ID | Approved selection | Behavior |
 | --- | --- | --- |
@@ -169,6 +169,10 @@ The owner approved E11–E16 on 2026-11-20 to support the nine combinations and 
 | E15 | B — Focused automated regression and owner acceptance | Exercise production behavior using existing test conventions. The owner verifies controls, isolation, completion, and lifecycle transitions at the tested implementation head. |
 | E16 | B — Retain as isolated development utility | Keep the selector in the standalone arena for future regression checks. Its scope ends at that arena. |
 | Decision 17 | A — Heavy-only selector on F10 | Supersedes E13's Heavy-only binding after owner playtesting identified the editor's F8 Stop shortcut. Use F10 for Heavy only in the focused running arena. See the [current controls](COMBAT_ENCOUNTER_SELECTOR.md#3-configuration-and-controls). |
+
+## Phase 1 combat evaluation closure
+
+The owner approved **Phase 1 — CONDITIONAL PASS** after completing the E1–E10 baseline in the standalone arena. EVAL-01 began as a provisional Significant finding about greatsword timing against the Pursuer. After clarifying how dodge supported repositioning between swings, the owner deferred EVAL-01 as **Minor and non-blocking**. The original ratings and exit decision stand. No combat parameter changes were authorized. Phase 2 planning is next. [Evaluation results and owner decision](PHASE_1_COMBAT_EVALUATION_RESULTS.md)
 
 ## Recording future decisions
 

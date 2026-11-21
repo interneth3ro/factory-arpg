@@ -1,7 +1,7 @@
 # Factory ARPG — Development Roadmap
 
 **Status:** Planning reference — proposed roadmap, subject to owner approval and revision  
-**Updated:** 2026-11-20  
+**Updated:** 2026-11-21\
 **Repository:** `interneth3ro/factory-arpg`  
 **Target path:** `docs/DEVELOPMENT_ROADMAP.md`  
 **Engine:** Godot 4.7.2
@@ -34,8 +34,8 @@ PR #16 is merged and cleaned up. PR #18 documented the [combat impact and feedba
 
 | Phase | Focus | Exit gate |
 | --- | --- | --- |
-| 1. Finish combat prototype | Readable, satisfying, testable melee combat | A short encounter is enjoyable, fair enough to evaluate, and technically reliable |
-| 2. Validate integrated factory loop | Exploration → resources → automation → useful upgrade → further exploration | The two defining gameplay pillars reinforce one another |
+| 1. Finish combat prototype | Readable, satisfying, testable melee combat | **CONDITIONAL PASS** — owner evaluation complete |
+| 2. Validate integrated factory loop | Exploration → Combat → Resources → Automation → Upgrades → Further exploration | The two defining gameplay pillars reinforce one another |
 | 3. Begin actual game production | Permanent opening region, home base, systems and content | A playable opening exists with persistent progression |
 | 4. Complete a vertical slice | A cohesive, representative segment of the intended game | A polished end-to-end experience demonstrates the game’s identity |
 | 5. Expand the game | Content, progression depth, world and systems | Iterative production against approved scope and quality gates |
@@ -48,10 +48,9 @@ PR #16 is merged and cleaned up. PR #18 documented the [combat impact and feedba
 
 Prove that the current combat mechanics feel responsive, legible, and enjoyable in a short encounter without expanding prematurely into full RPG combat systems.
 
-### Proposed remaining work
+### Completed evaluation
 
-1. **[Combat balance and encounter evaluation](design/COMBAT_BALANCE_ENCOUNTER_EVALUATION.md).** Review the current parameters, then playtest each weapon against the Pursuer, the Heavy, and both together. Plan two attempts per combination (18 total) and record any blocked setup.
-2. **Optional foundation hardening.** A documented finding and explicit owner approval are required before a focused correction.
+The owner completed all 18 baseline attempts and approved **Phase 1 — CONDITIONAL PASS**. EVAL-01 (greatsword timing against the Pursuer) is Minor, deferred, and non-blocking. Further combat tuning is unnecessary before Phase 2 planning. [Evaluation results and owner disposition](design/PHASE_1_COMBAT_EVALUATION_RESULTS.md)
 
 ### Exit gate
 
@@ -170,7 +169,7 @@ Examples:
 | Feature | Default approach |
 | --- | --- |
 | Core melee and enemy behavior | Existing prototype foundation |
-| Combat feel and balance | Finish current prototype gate |
+| Combat feel and balance | Use the completed Phase 1 evaluation as the baseline |
 | Minimal integrated automation loop | Essential focused validation |
 | Every class, weapon, and enemy | Build incrementally in production |
 | Complete crafting and technology trees | Build incrementally in production |
@@ -190,9 +189,8 @@ Examples:
 
 ## 11. Immediate next steps
 
-1. Evaluate the existing combat prototype under E1–E10 and submit a Phase 1 recommendation for the owner's decision. Critical findings block exit, significant findings require explicit owner judgment, and minor findings may be deferred.
-2. After the owner accepts a Phase 1 pass, scope the minimal integrated factory loop and decide whether to use a separate test space or the permanent opening region.
-3. At Phase 2 exit, explicitly approve the production transition and begin building the actual game.
+1. Begin Phase 2 planning. Scope the minimal integrated loop and decide whether to use a separate test space or the permanent opening region. Implementation requires separate owner approval.
+2. At Phase 2 exit, explicitly approve the production transition and begin building the actual game.
 
 ## 12. Roadmap maintenance
 

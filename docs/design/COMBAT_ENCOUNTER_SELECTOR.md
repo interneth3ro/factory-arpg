@@ -1,6 +1,6 @@
 # Factory ARPG — Development-Only Encounter Selector
 
-**Status:** Owner-approved design, implemented on the feature branch pending runtime acceptance and merge\
+**Status:** Merged in PR #22 and used for the [completed Phase 1 evaluation](PHASE_1_COMBAT_EVALUATION_RESULTS.md)\
 **Approved:** 2026-11-20\
 **Repository:** `interneth3ro/factory-arpg` (`main`)\
 **Engine:** Godot 4.7.2\

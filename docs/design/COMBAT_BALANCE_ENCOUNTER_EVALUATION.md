@@ -136,6 +136,8 @@ Severity depends on demonstrated impact, not just occurrence count. Distinguish 
 
 ### Phase 1 result
 
+The categories below define the original evaluation rubric. The owner approved **Phase 1 — CONDITIONAL PASS** and deferred EVAL-01 as Minor and non-blocking. [Completed results and exit decision](PHASE_1_COMBAT_EVALUATION_RESULTS.md#phase-1-exit-decision)
+
 - **PASS:** All roadmap exit criteria are adequately met; no critical blocker and any significant concerns have been explicitly resolved or accepted by the owner. Proceed to Phase 2 without requiring a combat implementation PR.
 - **CONDITIONAL:** No unresolved critical blocker, but one or more significant findings await explicit owner judgment or targeted work.
 - **BLOCKED:** At least one critical finding prevents reliable, fair, or meaningful evaluation/continuation.

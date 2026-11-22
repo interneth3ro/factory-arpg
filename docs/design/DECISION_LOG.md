@@ -280,6 +280,50 @@ The owner approved the following decisions for the four-style combat evaluation.
 | EVAL2-4 | Final disposition | A — Phase 2 PASS. Eight of eight trials passed with zero findings. |
 | EVAL2-5 | Documentation scope | A — Record the evaluation in a focused four-file documentation-only PR. |
 
+## Construction and material handling
+
+The [early-game design specification](EARLY_GAME_GATHERING_AND_AUTOMATION.md) records the approved construction and recovery rules.
+
+| ID | Decision | Approved selection |
+| --- | --- | --- |
+| FM8 | Conveyor changes | B — Preserve items during compatible edits and recover them safely on removal. |
+| FM9 | Dismantling | B — Recover the intact machine. |
+| FM10 | Machine transport | C — Carry smaller machines. Larger industrial machines eventually require specialized transport or construction capabilities. |
+| FM11 | Local relocation | C — Committing a move cancels production, returns unconsumed materials and discards partial progress. Canceling the move before commitment leaves the machine as it was. |
+| FM12 | Recovery destination | B — Recover into inventory or accessible storage. Insufficient space blocks dismantling without loss. |
+| FM13 | Machine configuration | A — Local moves preserve configuration. Redeploying a dismantled machine resets its recipe, settings and connections. |
+| FM14 | Construction supplies | B — Build at home from inventory and accessible local storage. Remote construction requires physically available materials. |
+
+## Early-game gathering, workshop, and automation
+
+The [early-game specification](EARLY_GAME_GATHERING_AND_AUTOMATION.md) gives the operating rules and identifies provisional tuning.
+
+| ID | Decision | Approved selection |
+| --- | --- | --- |
+| EG1 | First automation milestone | C — Gather and process by hand, connect two workshop stations by conveyor, then deploy an extractor and collect its output manually. |
+| EG2 | Manual extraction | B — Award resources on completed cycles. The deposit retains interrupted progress. |
+| EG3 | Mining movement | A — Mine while stationary. Movement interrupts mining and preserves deposit progress. |
+| EG4 | Laser targeting | A — Target an eligible deposit directly with the cursor, within range and with clear line of sight. |
+| EG5 | Target lock | B — Holding the primary action keeps the valid target locked even when the cursor moves away. |
+| EG6 | Mining feedback | B — Show targeting, progress and extraction feedback in the world near the deposit. |
+| EG7 | Inventory and collection | C — Use slots with handling rules by item type. Collect mined resources automatically when capacity permits. |
+| EG8 | Opening workshop | B — Process two basic materials at the smelter and assemble components at the crafting station. |
+| EG9 | Teaching sequence | B — Have the player carry a batch between stations before a short conveyor takes over that transfer. |
+| EG10 | Continuous production | B — Repeat the selected recipe whenever inputs, output space and operating conditions allow. |
+| EG11 | Input compatibility | C — Accept conveyor inputs required by the active recipe. Allow manual insertion of other materials the machine supports. |
+| EG12 | Recipe switching | B — Switch immediately when idle. During an active cycle, finish it and deposit its output before switching. |
+| EG13 | Buffer allocation | C — Use shared buffers and protect input space for the active recipe's ingredients. |
+| EG14 | Blocked delivery | B — Keep blocked items on the conveyor, propagate backpressure and show the cause so the player can clear it. |
+| EG15 | Conveyor interaction | B — Inspect a segment and retrieve an item in place. If inventory is full, the item stays on the belt. |
+| EG16 | Extractor placement | B — Place the extractor beside a compatible deposit with a visible, unobstructed direct connection. |
+| EG17 | Deposit throughput | B — Divide throughput equally among active extractors and redistribute shares they cannot use. |
+| EG18 | Manual mining priority | C — Give active manual mining first claim up to the laser's capacity. Extractors share the remaining deposit throughput. |
+| EG19 | Extractor output | B — Use a moderate fixed buffer. Pause when full and resume when space opens, including during unattended production. |
+| EG20 | Remote hauling | B — Carry output home and bulk-deposit eligible resources into accessible storage up to capacity. |
+| EG21 | Wireless research | C — Make basic transportation a visible goal reachable through normal research and workshop production. Exploration can contribute discoveries and reveal advanced capabilities. |
+
+EG22 remains undecided. Pairing and operational details are deferred. [Wireless research boundary](EARLY_GAME_GATHERING_AND_AUTOMATION.md#11-wireless-research-boundary-eg21-only)
+
 ## Recording future decisions
 
 Append decisions in approval order with a stable ID, descriptive title, approved selection, brief summary, and a link to the authoritative specification. Record dates only when supplied. When a decision changes, retain the earlier entry and link it to the approved replacement.

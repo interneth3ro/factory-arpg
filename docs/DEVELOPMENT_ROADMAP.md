@@ -113,7 +113,7 @@ Move from proving systems to building the real opening experience. **Production 
 - Permanent opening environment and small explorable region.
 - First home base or shelter with room for early expansion.
 - Reusable combat, resource, and production foundations adapted from prototypes.
-- First permanent machines, recipes, and a small set of upgrades.
+- First permanent machines, recipes, and a small set of upgrades. See the approved [opening workshop chain and teaching sequence](design/EARLY_GAME_GATHERING_AND_AUTOMATION.md#opening-progression).
 - Introductory objectives connecting exploration, fighting, and reconstruction.
 - Basic progression choices and persistent save/load behavior.
 - Maintainable content and testing workflows appropriate for ongoing production.

@@ -10,6 +10,7 @@ Keep design decisions and implementation details versioned alongside the project
 - The owner approved **Phase 1 — CONDITIONAL PASS**. EVAL-01 is Minor, deferred, and non-blocking. [Phase 1 evaluation results](design/PHASE_1_COMBAT_EVALUATION_RESULTS.md)
 - The authoritative owner-approved Phase 2 combat evaluation records **PASS** for all eight trials. [Phase 2 evaluation results](design/PHASE_2_COMBAT_EVALUATION_RESULTS.md) · [Development roadmap](DEVELOPMENT_ROADMAP.md#11-immediate-next-steps)
 - [Development-only encounter selector](design/COMBAT_ENCOUNTER_SELECTOR.md) records E11–E16 and the Decision 17 amendment to the Heavy-only key. PR #22 delivered the [standalone arena controls](#encounter-selection) used for the evaluation.
+- [Early-game gathering, workshop, and automation](design/EARLY_GAME_GATHERING_AND_AUTOMATION.md) records FM8–FM14 and EG1–EG21, from material recovery and manual mining through the first extractor and the basic wireless research unlock. EG22 remains undecided.
 - [Decision log](design/DECISION_LOG.md) indexes approved gameplay and evaluation decisions and links to their specifications.
 - [Godot metadata policy](GODOT_METADATA.md) describes how to handle resource metadata and run the read-only validator.
 

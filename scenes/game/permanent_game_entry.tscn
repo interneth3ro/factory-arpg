@@ -1,0 +1,41 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/game/permanent_game_entry.gd" id="1_entry"]
+
+[node name="PermanentGameEntry" type="Node"]
+script = ExtResource("1_entry")
+
+[node name="EntryUI" type="CanvasLayer" parent="."]
+
+[node name="EntryScreen" type="CenterContainer" parent="EntryUI"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Choices" type="VBoxContainer" parent="EntryUI/EntryScreen"]
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="EntryUI/EntryScreen/Choices"]
+theme_override_font_sizes/font_size = 32
+text = "Factory ARPG"
+horizontal_alignment = 1
+
+[node name="StartSession" type="Button" parent="EntryUI/EntryScreen/Choices"]
+text = "Start Session"
+
+[node name="ErrorMessage" type="Label" parent="EntryUI/EntryScreen/Choices"]
+visible = false
+text = "Session could not start. Try again."
+horizontal_alignment = 1
+
+[node name="EndSession" type="Button" parent="EntryUI"]
+visible = false
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -148.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 56.0
+text = "End Session"
+
+[connection signal="pressed" from="EntryUI/EntryScreen/Choices/StartSession" to="." method="start_session"]
+[connection signal="pressed" from="EntryUI/EndSession" to="." method="end_session"]

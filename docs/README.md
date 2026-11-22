@@ -16,7 +16,7 @@ Keep design decisions and implementation details versioned alongside the project
 
 ## Approved specifications
 
-The **permanent core game foundation** follows the completed combat foundation. These three specifications record CF1–CF31 as approved design. F1–F10 are planned milestones.
+The **permanent core game foundation** follows the completed combat foundation. These three specifications record CF1–CF31 as approved design and define the F1–F10 milestones.
 
 - [Architecture](design/CORE_GAME_FOUNDATION_ARCHITECTURE.md) defines the shared player, session and location lifetimes, stable identities, input priority and save contracts.
 - [Gameplay](design/CORE_GAME_FOUNDATION_GAMEPLAY.md) defines the handcrafted region and home base, interaction, inventory and general storage, and manual mining.
@@ -29,6 +29,14 @@ When implementation suggests a design change, identify the affected specificatio
 ## Implementation documentation
 
 Implementation documentation describes how the current code works. Refactors that preserve approved behavior can update implementation documentation as needed while leaving the design baseline intact.
+
+### Permanent game entry and session lifecycle
+
+Run Project (F5 in the editor) opens the permanent entry with **Start Session**. Starting displays the temporary F1 location. **End Session** returns to the entry screen. [Permanent game entry](../scenes/game/permanent_game_entry.tscn)
+
+The entry builds a session off-tree. The session root instantiates the placeholder under its `ActiveLocation` child. Only after that succeeds does the entry attach the session and show **End Session**. A failed start frees the candidate, displays an error and enables another attempt. On end, the session frees its location and the entry frees the session before enabling **Start Session**. Each start creates both instances anew. [Entry lifecycle](../scenes/game/permanent_game_entry.gd) · [Session root](../scenes/game/game_session_root.gd) · [Placeholder scene](../scenes/game/f1_placeholder_location.tscn)
+
+### Standalone combat arena
 
 The [combat test arena](../scenes/combat/combat_test_arena.tscn) is a standalone scene. Open it in the Godot editor and press F6 to run it. The [player coordinator](../scenes/combat/combat_test_player.gd) samples screen-relative WASD with normalized diagonals and passes that intent to the Movement FSM each physics step. It also aims the facing marker independently of movement. Within 4 pixels of the player's center in world coordinates, the marker keeps its previous heading. The Player's exported `movement_speed` defaults to a provisional 220 pixels per second.
 

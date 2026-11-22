@@ -153,8 +153,7 @@ Examples:
 
 ## 11. Immediate next steps
 
-1. Independently review the documentation PR for CF1–CF31. The owner controls merge and cleanup.
-2. After that PR is merged and cleaned up, F1 requires a fresh Codex session and separate owner authorization from synchronized `main`. Use the [F1–F10 plan](design/CORE_GAME_FOUNDATION_IMPLEMENTATION.md) to review readiness and close each milestone.
+PR #31 established the approved CF1–CF31 specifications. The F1 feature branch adds the permanent entry and session lifecycle. Independent review, owner runtime acceptance of repeated sessions and standalone arena reset, and manual merge are pending. [F1–F10 plan](design/CORE_GAME_FOUNDATION_IMPLEMENTATION.md) · [Launch and lifecycle](README.md#permanent-game-entry-and-session-lifecycle)
 
 ## 12. Roadmap maintenance
 

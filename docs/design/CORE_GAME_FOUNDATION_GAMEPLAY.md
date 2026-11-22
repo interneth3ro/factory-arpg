@@ -10,7 +10,9 @@ Approved design for the first permanent playable region and home base. This is t
 
 ## Interaction and targeting
 
-**CF10, CF11.** Use a common way to identify a target, report its available interaction and dispatch the chosen action. Proximity makes nearby physical interactions, such as an entrance or container, discoverable. Cursor targeting expresses intent when an action needs a specific object. The specialized action checks its own eligibility and owns its effects. For example, the player can approach storage to access it, while the selected laser needs the indicated deposit, range and sight. An overlapping entrance, deposit or panel must not cause one input to activate two targets. Exact bindings, radii and tie-breaking rules remain open. [Input contexts](CORE_GAME_FOUNDATION_ARCHITECTURE.md#shared-player-and-input)
+**CF10.** Use a common way to identify a target, report its available interaction and dispatch the chosen action. Each specialized action checks its own eligibility and owns its effects. An overlapping entrance, deposit or panel must not cause one input to activate two targets. [Input contexts](CORE_GAME_FOUNDATION_ARCHITECTURE.md#shared-player-and-input)
+
+**CF11.** For ordinary world interactions, an eligible interactable directly under the cursor takes priority, even if another eligible object is closer to the player. When the cursor has no eligible target, use the nearest eligible interactable to the player. Both choices must satisfy interaction range and the action's other requirements. Exact bindings, radii and the handling of equal-priority ties remain implementation details. The mining laser acquires a deposit only by direct cursor targeting within range and clear line of sight. Proximity alone cannot start mining.
 
 ## Items, backpack and general storage
 

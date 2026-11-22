@@ -24,7 +24,11 @@ Two different persistent objects must never register as the same object. Registr
 
 ## Saving and playthrough isolation
 
-**CF6–CF8.** Each independent playthrough slot supports both manual saves and autosaves. Both capture coherent player and world records under the same versioned contract. A save taken around a transfer, travel or mining completion must restore one consistent outcome. Validate data and version on load before adopting the recovered state. An unsupported version or failed read/write must be visible and must preserve the previous valid save. File format, write strategy, version migration policy, autosave triggers and interval remain implementation or tuning decisions.
+**CF6.** Manual saves and autosaves capture coherent player and world records under the same versioned contract. On load, validate the data and version before adopting the recovered state. Report any read or validation failure and preserve the saved data. File format, write strategy and version migration policy remain implementation choices.
+
+**CF7.** Players can save manually. Autosave after meaningful location transitions have completed and at reasonable intervals during gameplay. The exact interval remains provisional. Returning to the main menu or exiting normally should request a final safe save. Coordinate all save requests so writes cannot overlap. Capture a consistent state in which each item transfer, location change and mining award is either fully applied or still pending. If a write fails, report the failure and preserve the previous valid save.
+
+**CF8.** **New Game** creates an independent playthrough. **Continue** loads the most recently played valid playthrough. **Load Game** lets the player choose an existing playthrough. Manual saves and autosaves update the active playthrough. Deleting or replacing an existing playthrough requires explicit player confirmation, including when its data is invalid or incompatible.
 
 Starting, saving or loading one slot must preserve every other slot. Immutable item definitions may be shared. Player position, inventory stacks, container contents and deposit progress belong exclusively to the selected playthrough, even when two slots use the same authored object IDs.
 

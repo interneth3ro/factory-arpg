@@ -42,19 +42,16 @@ func step(delta: float, pressed: bool, held: bool, on_uncommitted: Callable) -> 
 	shots.clear()
 	times = PackedFloat64Array([0.0])
 	movement_times = PackedFloat64Array([0.0])
+	if pressed and cooldown == 0.0:
+		_fire(0.0)
+		_needs_ready_press = false
 	# A new hold between ordinary shots can repeat at readiness. After a
 	# dodge or activation the first shot must come from a ready press.
 	repeating = held and (repeating or (pressed and not _needs_ready_press))
 	var now := 0.0
 	while true:
-		if cooldown == 0.0 and (pressed or repeating):
-			shots.append(now)
-			shots_fired += 1
-			cooldown = INTERVAL
-			commitment = COMMITMENT
-			_needs_ready_press = false
-			repeating = held
-		pressed = false
+		if repeating and cooldown == 0.0:
+			_fire(now)
 		if now >= delta:
 			break
 		var spent := delta - now
@@ -71,6 +68,13 @@ func step(delta: float, pressed: bool, held: bool, on_uncommitted: Callable) -> 
 		if committed and commitment == 0.0 and on_uncommitted.call():
 			repeating = false
 	return movement_times[-1] / delta if delta > 0.0 else (MOVEMENT if commitment > 0.0 else 1.0)
+
+
+func _fire(offset: float) -> void:
+	shots.append(offset)
+	shots_fired += 1
+	cooldown = INTERVAL
+	commitment = COMMITMENT
 
 
 func _remaining(timer: float, spent: float) -> float:

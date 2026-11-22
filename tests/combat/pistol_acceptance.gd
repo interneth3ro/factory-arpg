@@ -5,6 +5,7 @@ const Player = preload("res://scenes/combat/combat_test_player.gd")
 const Enemy = preload("res://scenes/combat/enemy_health.gd")
 const Attack = preload("res://scenes/combat/enemy_attack.gd")
 const ORIGIN := Vector2(-400, -170)
+const SHOT_INTERVAL := 1.0 / 3.0
 var player: Player
 var pursuer: Enemy
 var heavy: Enemy
@@ -37,6 +38,8 @@ func _run() -> void:
 		enemy.movement.set_physics_process(false)
 	await physics_frame
 	_geometry()
+	_press_at_readiness()
+	_rapid_taps()
 	_timing()
 	_launch_poses()
 	await _strafe()
@@ -114,6 +117,46 @@ func _equip_pistol() -> void:
 	check(player.active_style == Player.Style.PISTOL and player.pistol.shots_fired == 0, "Switch under held primary needs a fresh press")
 
 
+func _press_at_readiness() -> void:
+	var pistol := player.pistol
+	for delta: float in [0.005, 0.015]:
+		_trial()
+		_equip_pistol()
+		player._step_actions(SHOT_INTERVAL - 0.010, true, false)
+		check(is_equal_approx(pistol.cooldown, 0.010), "10 ms remain before the tap")
+		player._step_actions(delta, true, false)
+		check(pistol.shots.is_empty(), "Early tap discarded in a %.0f ms step" % (delta * 1000.0))
+		player._step_actions(0.020, false, false)
+		check(pistol.shots_fired == 1 and pistol.cooldown == 0.0, "Discarded tap stays silent through readiness")
+		player._step_actions(0.005, true, false)
+		check(pistol.shots == PackedFloat64Array([0.0]), "Fresh tap at zero cooldown fires at offset zero")
+
+	_trial()
+	_equip_pistol()
+	player._step_actions(SHOT_INTERVAL - 0.010, true, false)
+	player._step_actions(0.005, true, true)
+	player._step_actions(0.010, false, false)
+	check(pistol.shots_fired == 1, "Releasing an ordinary hold before readiness cancels the repeat")
+	player._step_actions(SHOT_INTERVAL - 0.000001, true, false)
+	player._step_actions(0.010, true, false)
+	check(pistol.shots_fired == 2 and pistol.shots.is_empty(), "Tap one microsecond before readiness expires without firing")
+
+
+func _rapid_taps() -> void:
+	for hz: int in [30, 60, 120, 144]:
+		_trial()
+		_equip_pistol()
+		# Each input sample sees a press already released. All four rates
+		# sample the exact one-third-second boundaries at whole ticks.
+		for tick in hz:
+			player._step_actions(1.0 / hz, true, false)
+			var expected := PackedFloat64Array()
+			if (tick * 3) % hz == 0:
+				expected.append(0.0)
+			check(player.pistol.shots == expected, "Tap offsets at %d Hz, tick %d" % [hz, tick])
+		check(player.pistol.shots_fired == 3, "Three tap shots before one second at %d Hz" % hz)
+
+
 func _timing() -> void:
 	for tick_rate in [30, 60, 120, 144]:
 		_trial()
@@ -163,8 +206,12 @@ func _timing() -> void:
 	player._request_dodge(Vector2.UP, Vector2.RIGHT)
 	check(player.movement_fsm.is_invulnerable() and pistol.commitment == 0.0 and not pistol.repeating, "Successful dodge interrupts immediately")
 	player._physics_process(player.movement_fsm.dodge_duration)
+	player._step_actions(0.005, false, true)
+	player._step_actions(0.005, false, false)
 	player._step_actions(0.01, true, false)
 	check(pistol.shots_fired == 1, "Dodge keeps original cadence")
+	player._step_actions(0.020, true, true)
+	check(pistol.cooldown == 0.0 and pistol.shots.is_empty(), "Early post-dodge press stays ineligible across readiness, even if held")
 	player._step_actions(0.5, false, true)
 	check(pistol.shots_fired == 1, "Held input after dodge stays silent")
 	player._step_actions(0.01, false, false)

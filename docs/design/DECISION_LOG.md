@@ -374,6 +374,44 @@ The [reconciled early-game specification](EARLY_GAME_GATHERING_AND_AUTOMATION.md
 
 FM8–FM13, EG2–EG7, EG14–EG19 and EG21 remain in force. RC6–RC9 extend the extraction and conveyor rules to optional industrial storage, including backpressure in unloaded scenes. EG22 and detailed wireless operation remain undecided.
 
+## Core Foundation decisions
+
+These approvals define the permanent game foundation. CF15–CF16 settle the initial backpack, basic-resource stack and general-storage capacities left open under EG7. CF30 revises the production sequence in the roadmap. The FM, EG, HB and RC supersessions above still govern factory gameplay.
+
+| ID | Approved selection | Rationale | Specification |
+| --- | --- | --- | --- |
+| CF1 | Reusable combat-capable player | Carry the evaluated controls and combat behavior into the permanent game and keep one regression baseline. | [Architecture](CORE_GAME_FOUNDATION_ARCHITECTURE.md#shared-player-and-input) |
+| CF2 | Persistent game root with swappable locations | Give the session a lifetime that spans visits to the world and home base. | [Architecture](CORE_GAME_FOUNDATION_ARCHITECTURE.md#session-locations-and-state) |
+| CF3 | One persistent player instance | Travel preserves the player's identity and avoids duplicate actors. | [Architecture](CORE_GAME_FOUNDATION_ARCHITECTURE.md#session-locations-and-state) |
+| CF4 | Scene-independent authoritative world state | Unloading a location must preserve its gameplay facts. | [Architecture](CORE_GAME_FOUNDATION_ARCHITECTURE.md#session-locations-and-state) |
+| CF5 | Stable object IDs and explicit registration | A fresh scene instance must bind to the right existing record without overwriting another object. | [Architecture](CORE_GAME_FOUNDATION_ARCHITECTURE.md#session-locations-and-state) |
+| CF6 | Versioned structured save data | Restore related records coherently and identify incompatible data before adopting it. | [Architecture](CORE_GAME_FOUNDATION_ARCHITECTURE.md#saving-and-playthrough-isolation) |
+| CF7 | Hybrid manual save and autosave | Support deliberate checkpoints as well as automatic progress protection. | [Architecture](CORE_GAME_FOUNDATION_ARCHITECTURE.md#saving-and-playthrough-isolation) |
+| CF8 | Multiple independent playthrough slots | A player can start or resume one run without affecting another. | [Architecture](CORE_GAME_FOUNDATION_ARCHITECTURE.md#saving-and-playthrough-isolation) |
+| CF9 | Shared player scene with modular gameplay components | Reuse movement, actions and health while allowing specialized capabilities to evolve independently. | [Architecture](CORE_GAME_FOUNDATION_ARCHITECTURE.md#shared-player-and-input) |
+| CF10 | Unified interaction framework with specialized actions | Share target discovery and dispatch while each action enforces its own rules. | [Gameplay](CORE_GAME_FOUNDATION_GAMEPLAY.md#interaction-and-targeting) |
+| CF11 | Hybrid proximity and cursor targeting | Nearby objects remain discoverable and aimed actions can identify the intended target. | [Gameplay](CORE_GAME_FOUNDATION_GAMEPLAY.md#interaction-and-targeting) |
+| CF12 | Layered input contexts with priority | A UI gesture or tool action must have one eligible recipient. | [Architecture](CORE_GAME_FOUNDATION_ARCHITECTURE.md#shared-player-and-input) |
+| CF13 | Data-driven items and independent inventory state | Share type rules while keeping ownership and quantities local to each inventory. | [Gameplay](CORE_GAME_FOUNDATION_GAMEPLAY.md#items-backpack-and-general-storage) |
+| CF14 | Slots with item-specific capacity rules | Represent stackable resources and equipment with different handling needs. | [Gameplay](CORE_GAME_FOUNDATION_GAMEPLAY.md#items-backpack-and-general-storage) |
+| CF15 | 24 backpack slots and 100 units per basic-resource stack | Establish the initial carrying capacity for gathering and transfer checks. | [Gameplay](CORE_GAME_FOUNDATION_GAMEPLAY.md#items-backpack-and-general-storage) |
+| CF16 | Independent physical general storage, initially one 48-slot container | Provide local storage relief while preserving RC5 isolation. | [Gameplay](CORE_GAME_FOUNDATION_GAMEPLAY.md#items-backpack-and-general-storage) |
+| CF17 | Drag-and-drop, quick transfers and partial stacks | Support routine hauling and precise quantity choices within capacity. | [Gameplay](CORE_GAME_FOUNDATION_GAMEPLAY.md#items-backpack-and-general-storage) |
+| CF18 | Capacity-aware partial resource collection | Accept what fits and preserve the uncollected balance without loss or duplication. | [Gameplay](CORE_GAME_FOUNDATION_GAMEPLAY.md#manual-mining) |
+| CF19 | Fully handcrafted starting world and manually placed deposits | Give exploration and resource sites deliberate, repeatable placement. | [Gameplay](CORE_GAME_FOUNDATION_GAMEPLAY.md#world-and-home-base) |
+| CF20 | Small explorable starting region | Make the first trip between resource sites and home playable within foundation scope. | [Gameplay](CORE_GAME_FOUNDATION_GAMEPLAY.md#world-and-home-base) |
+| CF21 | Independent regions with possible future seamless connections | Keep locations independently loadable while leaving later world presentation open. | [Gameplay](CORE_GAME_FOUNDATION_GAMEPLAY.md#world-and-home-base) |
+| CF22 | Permanent home-base shell with reserved functional areas | Give storage and future integrated services a lasting physical home. | [Gameplay](CORE_GAME_FOUNDATION_GAMEPLAY.md#world-and-home-base) |
+| CF23 | Paired transition anchors and saved-position restoration | Travel needs predictable arrivals, while resuming must recover the player's actual saved place safely. | [Architecture](CORE_GAME_FOUNDATION_ARCHITECTURE.md#travel-and-restoration) |
+| CF24 | Dedicated mining capability on the shared player | Use the accepted movement and input behavior for deliberate laser extraction. | [Gameplay](CORE_GAME_FOUNDATION_GAMEPLAY.md#manual-mining) |
+| CF25 | Dependency-driven vertical implementation | Prove each playable capability on the systems it will actually use. | [Implementation](CORE_GAME_FOUNDATION_IMPLEMENTATION.md#sequence-and-authority) |
+| CF26 | Layered acceptance with persistence and regression gates | Combine state checks with owner playtesting and protect previously accepted behavior. | [Implementation](CORE_GAME_FOUNDATION_IMPLEMENTATION.md#sequence-and-authority) |
+| CF27 | Modular specification package | Give ownership, gameplay and delivery criteria distinct references that can be reviewed together. | [Implementation](CORE_GAME_FOUNDATION_IMPLEMENTATION.md#sequence-and-authority) |
+| CF28 | Ten focused milestones in F1–F10 order | Expose integration failures early and give each delivery an observable result. | [Implementation](CORE_GAME_FOUNDATION_IMPLEMENTATION.md#sequence-and-authority) |
+| CF29 | Focused readiness review and closure | Resolve dependencies and acceptance gaps before proceeding to the next scope. | [Implementation](CORE_GAME_FOUNDATION_IMPLEMENTATION.md#sequence-and-authority) |
+| CF30 | Permanent foundation before integrated factory gameplay | Build the opening on lasting systems and supersede the separate factory-loop prototype prerequisite. | [Implementation](CORE_GAME_FOUNDATION_IMPLEMENTATION.md#sequence-and-authority) |
+| CF31 | Deposit-owned persistent manual mining progress | Interrupted work must survive switching targets, scene unloads and save/load. | [Architecture](CORE_GAME_FOUNDATION_ARCHITECTURE.md#deposit-progress) |
+
 ## Recording future decisions
 
 Append decisions in approval order with a stable ID, descriptive title, approved selection, brief summary, and a link to the authoritative specification. Record dates only when supplied. When a decision changes, retain the earlier entry and link it to the approved replacement.

@@ -1,6 +1,6 @@
 # Factory ARPG — Ranged, magic, and combat input
 
-**Implementation status.** PR #26 delivered shared input for slots 1–4. The owner authorized physical pistol combat under P1 Option A. The feature branch implements firing, projectile collision and encounter integration, pending independent review, owner runtime acceptance and merge. Magic implementation is deferred indefinitely pending design review. [Arena controls and pistol implementation](../README.md#physical-pistol)
+**Implementation status.** PR #26 delivered the shared combat-style input foundation for slots 1–4. PR #27 merged Physical Pistol Combat into `main`. The owner completed the Phase 2 combat evaluation and approved **PASS**. All eight trials passed with zero reported findings. No immediate combat correction is required. Magic implementation remains deferred indefinitely pending further design review. [Arena controls and pistol implementation](../README.md#physical-pistol) · [Phase 2 combat evaluation results](PHASE_2_COMBAT_EVALUATION_RESULTS.md)
 
 **Engine:** Godot 4.7.2
 

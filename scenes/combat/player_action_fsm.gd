@@ -105,7 +105,7 @@ func interrupt_attack() -> void:
 
 
 ## Returns the time-weighted ordinary movement multiplier for this physics tick.
-func step(delta: float, pressed: bool, held: bool, aim: Vector2) -> float:
+func step(delta: float, pressed: bool, held: bool, aim: Vector2, on_ready: Callable = Callable()) -> float:
 	active_intervals.clear()
 	if pressed:
 		if state == State.READY:
@@ -157,7 +157,12 @@ func step(delta: float, pressed: bool, held: bool, aim: Vector2) -> float:
 			State.ACTIVE:
 				state = State.RECOVERY
 			State.RECOVERY:
-				if held or _buffer_remaining > 0.0:
+				if on_ready.is_valid():
+					# Yield this boundary before consuming a click or repeating.
+					# Keep completed Active intervals for this tick's sweep.
+					interrupt_attack()
+					on_ready.call()
+				elif held or _buffer_remaining > 0.0:
 					_start_attack(aim)
 				else:
 					interrupt_attack()

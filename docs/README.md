@@ -3,7 +3,7 @@
 Keep design decisions and implementation details versioned alongside the project so contributors can trace what the game should do and how the code delivers it.
 
 - [Combat Prototype v0.1](design/COMBAT_PROTOTYPE_V0.1.md) is the frozen gameplay baseline for the prototype. Consult it before implementing related systems.
-- [Ranged, magic, and combat input](design/RANGED_MAGIC_COMBAT_INPUT.md) specifies the approved extension to the standalone arena. It covers pistol shots, magic field pulses, five combat slots, buffered switching and active-style retention on F5. Implementation is pending.
+- The shared input foundation for slots 1–4 is implemented on the feature branch pending merge and owner runtime acceptance. Pistol is selectable. Firing requires a separate implementation, and magic remains deferred. [Ranged, magic, and combat input](design/RANGED_MAGIC_COMBAT_INPUT.md)
 - [Player health, enemy damage and death](design/PR16_PLAYER_HEALTH_DAMAGE_DEATH.md) records the approved M57–M74 survivability decisions.
 - [Combat impact and feedback](design/PR17_COMBAT_IMPACT_FEEDBACK.md) records the approved M75–M90 requirements for contact bursts, enemy recoil, swing trails and combat audio.
 - [Combat balance and encounter evaluation](design/COMBAT_BALANCE_ENCOUNTER_EVALUATION.md) defines the Phase 1 playtest matrix, observation rubric, and exit criteria.
@@ -28,7 +28,7 @@ The [Movement FSM](../scenes/combat/player_movement_fsm.gd) starts Idle and swit
 
 ### Encounter selection
 
-The standalone arena starts with Pursuer + Heavy. Press F7 for Pursuer only, F10 for Heavy only, or F9 for both. Each press starts a fresh encounter with the dagger, even when selecting the current configuration again. F5 restarts the current selection. Choose the weapon for the attempt with 1, 2, or 3 after the reset.
+The standalone arena starts with Pursuer + Heavy. Press F7 for Pursuer only, F10 for Heavy only, or F9 for both. Each press starts a fresh encounter with the dagger, even when selecting the current configuration again. F5 restarts the current encounter with the combat style active at reset.
 
 The lower-right label shows the selection through death and completion, with F3 open or closed. An excluded enemy stays in the scene with full HP, hidden, with collision and avoidance disabled. Its movement controller parks its navigation target and skips detection and attack updates. F3 identifies it as inactive. The [arena regression fixture](../tests/combat/weapon_feedback_acceptance.gd) exercises switching, reactivation, and completion in all three configurations.
 
@@ -44,9 +44,15 @@ The MovementFSM inspector exposes provisional defaults of 0.24 seconds of moveme
 
 F3 toggles the diagnostic label, which starts hidden. While visible it displays the latest completed physics state each rendered frame, including the Movement and Action FSM states, dodge status (Available, In progress, or Recovering), and whether invulnerability is active.
 
+### Combat style selection
+
+Press 1 for Dagger, 2 for Sword, 3 for Greatsword or 4 for Pistol. The style label above the encounter name shows the active style and any pending choice, with F3 open or closed. All four styles share a normalized world-space aim direction. It starts facing right and retains the last valid heading inside the mouse dead zone or on invalid input. Pistol accepts selection and aim. LMB has no firing behavior in this milestone.
+
+Selection takes effect while Ready. During a swing or dodge movement, the latest request replaces the pending choice. Requests sampled at the same microsecond resolve to the highest slot. Selecting the active style cancels the pending choice. At the end of melee Recovery the pending style activates before a held attack can repeat or a queued click can start another swing, even inside a long physics tick. A different style requires a fresh LMB press.
+
 ### Melee attack timing
 
-Press 1, 2 or 3 while Ready to select a weapon. The player starts with the dagger. Each [weapon definition](../scenes/combat/weapon_attack.gd) supplies three provisional durations for owner evaluation.
+The player starts with the dagger. Each [weapon definition](../scenes/combat/weapon_attack.gd) supplies three provisional durations for owner evaluation.
 
 | Key | Weapon | Wind-up | Active | Recovery |
 | --- | --- | ---: | ---: | ---: |
@@ -56,7 +62,7 @@ Press 1, 2 or 3 while Ready to select a weapon. The player starts with the dagge
 
 A fresh LMB press starts an attack. At the end of Recovery, the [Action FSM](../scenes/combat/player_action_fsm.gd) starts the next attack if LMB is held or a buffered press is still live. Releasing LMB lets the current attack finish. A new press during the final 150 ms of Recovery sets or refreshes a single pending click that expires after 100 ms of physics time. For example, a quick tap with 130 ms remaining expires before the next attack, while a tap with 60 ms remaining starts one more attack. The ActionFSM inspector exposes both buffer settings.
 
-A successful dodge interrupts any phase and clears the buffer. Attack and selection presses during dodge movement are discarded. A fresh LMB press after movement ends can attack during dodge recovery, even if a simultaneous Space request fails. Holding LMB across a dodge requires a new press to restart. Weapon changes during an attack are ignored.
+A successful dodge interrupts any melee phase and clears the queued attack click. It preserves the pending style, which can be replaced or canceled during dodge movement. The pending style activates on the tick dodge movement ends. A fresh LMB press after movement ends can attack during dodge recovery, even if a simultaneous Space request fails.
 
 The player's body shows Ready in cyan, Wind-up in amber, Active in white, and Recovery in violet. F3 shows the current phase, weapon and cumulative attack count, including interrupted attacks.
 
@@ -102,7 +108,7 @@ Each successful hit replaces the target's current flash. A lethal hit immediatel
 
 Contacts resolve after movement. The first successful hit from the attack still in progress schedules its hitstop for the next physics tick. Completed intervals still deal damage when a tick spans attacks. A finished attack cannot pause a later swing. During the paused portion of a tick the attack holds its phase and movement multiplier. The remaining time advances the usual phase loop, with sweep intervals measured from the real tick start. Movement and click-buffer expiry use physics time. A successful dodge clears the pause immediately.
 
-F5 takes priority over gameplay input for that physics tick. It restores spawn positions, health, collision settings, colors, the starting dagger and Ready/Idle states. It clears attack and contact history, hitstop, dodge recovery, flashes and completion while preserving the F3 toggle. Held LMB needs a fresh press to restart.
+F5 takes priority over combat input for that physics tick. It restores spawn positions, health, collision settings, colors and Ready/Idle states. It retains the active style and F3 visibility, and clears pending selection, attack and contact history, hitstop, dodge recovery, flashes and completion. Held LMB needs a fresh press to restart.
 
 ### Weapon impact, recoil, trails and audio
 

@@ -110,7 +110,7 @@ func _has_sight() -> bool:
 func _physics_process(delta: float) -> void:
 	if state in [State.DEFEATED, State.RESTING, State.INACTIVE] or Engine.get_physics_frames() == _reset_frame:
 		return
-	_attack.start_tick()
+	_attack.start_tick(delta)
 	_retry_in = maxf(0.0, _retry_in - delta)
 	var distance := _body.global_position.distance_to(_player.global_position)
 	if state == State.IDLE:

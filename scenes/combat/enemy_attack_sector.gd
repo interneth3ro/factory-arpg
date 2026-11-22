@@ -7,6 +7,11 @@ var _solids: Array[PackedVector2Array] = []
 
 
 func read_arena(tree: SceneTree) -> void:
+	_solids = solid_footprints(tree)
+
+
+static func solid_footprints(tree: SceneTree) -> Array[PackedVector2Array]:
+	var footprints: Array[PackedVector2Array] = []
 	for body in tree.get_nodes_in_group("arena_solid"):
 		for child in body.get_children():
 			var outline := PackedVector2Array()
@@ -17,7 +22,8 @@ func read_arena(tree: SceneTree) -> void:
 				outline = PackedVector2Array([ -half_size, Vector2(half_size.x, -half_size.y),
 					half_size, Vector2(-half_size.x, half_size.y) ])
 			if outline.size() >= 3:
-				_solids.append(child.global_transform * outline)
+				footprints.append(child.global_transform * outline)
+	return footprints
 
 
 static func outline(direction: Vector2, reach: float, degrees: float) -> PackedVector2Array:

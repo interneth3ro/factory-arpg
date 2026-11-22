@@ -141,7 +141,7 @@ func _style_selection(player: Player) -> void:
 	Input.action_press("basic_attack")
 	await physics_frame
 	player._physics_process(0.5)
-	_check(player.action_fsm.attack_count == 0 and player.combat_audio._last_swing == 0, "Pistol press and hold are inert")
+	_check(player.pistol.shots_fired == 2 and player.action_fsm.attack_count == 0 and player.combat_audio._last_swing == 0, "Held Pistol fires twice without a melee swing")
 	await _select(player, KEY_F5)
 	await _key_tick(player, KEY_2)
 	_check(player.action_fsm.weapon == Action.SWORD and player.action_fsm.attack_count == 0, "Held primary cannot transfer from Pistol to Sword")
@@ -190,6 +190,7 @@ func _style_boundaries(player: Player) -> void:
 	_check(fsm.active_intervals.size() == 1 and fsm.active_intervals[0].weapon == Action.GREATSWORD, "Completed interval retains its outgoing weapon")
 	player._step_actions(0.01, true, true)
 	_check(fsm.active_intervals.is_empty() and fsm.attack_count == 1, "Pistol cannot replay an old interval")
+	player._step_actions(0.12, false, false) # Finish the new shot's switching commitment.
 
 	await _key_tick(player, KEY_1)
 	player._step_actions(Action.DAGGER.wind_up, true, false)
@@ -235,6 +236,7 @@ func _select(player: Player, key: Key, solo: Enemy = null) -> void:
 		_check(player.action_fsm.weapon == Player.MELEE_WEAPONS[expected_style], "Reset restores the active melee resource")
 	_check(player.action_fsm.state == Action.State.READY, "Ready after reset")
 	_check(player.action_fsm.hitstop_remaining == 0.0 and player.action_fsm.active_intervals.is_empty(), "No hitstop or attack samples")
+	_check(player.pistol.shots_fired == 0 and player.projectiles.bullets.is_empty() and player.projectiles.sparks.is_empty(), "Reset clears pistol and projectiles")
 	_check(player.movement_fsm.can_dodge() and not player.is_invulnerable(), "Fresh dodge availability")
 	_check(not player.death_message.visible and not player.completion.visible and player.facing_marker.visible, "Fresh HUD")
 	_check(player.weapon_effects._bursts.is_empty() and player.weapon_effects._angles.is_empty(), "No previous impact or trail")

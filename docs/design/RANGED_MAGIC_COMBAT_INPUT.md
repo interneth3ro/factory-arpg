@@ -1,6 +1,6 @@
 # Factory ARPG — Ranged, magic, and combat input
 
-**Implementation status.** The owner authorized the shared input foundation for slots 1–4. The feature branch implements style selection, aiming, primary-input transitions, HUD and resets, pending merge and runtime acceptance. Pistol is selectable with firing deferred to a separately authorized PR. Magic implementation is deferred indefinitely pending design review. [Arena controls](../README.md#combat-style-selection)
+**Implementation status.** PR #26 delivered shared input for slots 1–4. The owner authorized physical pistol combat under P1 Option A. The feature branch implements firing, projectile collision and encounter integration, pending independent review, owner runtime acceptance and merge. Magic implementation is deferred indefinitely pending design review. [Arena controls and pistol implementation](../README.md#physical-pistol)
 
 **Engine:** Godot 4.7.2
 
@@ -73,7 +73,7 @@ For ranged planning, apply the shared rules below to slots 1–4. The fifth row 
 
 ## Behavioral acceptance
 
-For a separately authorized ranged implementation, use the pistol checks and the melee and pistol portions of the shared checks at the initial tuning above.
+For this ranged implementation, use the pistol checks and the melee and pistol portions of the shared checks at the initial tuning above.
 
 ### Pistol checks
 

@@ -38,3 +38,26 @@ func at(time: float) -> Vector2:
 		if time <= times[i]:
 			return positions[i - 1].lerp(positions[i], clampf((time - times[i - 1]) / (times[i] - times[i - 1]), 0, 1))
 	return positions[-1]
+
+
+## move_and_slide used one average speed. Put the speed changes and slide
+## vertices on the real tick clock before anyone samples a firing/contact pose.
+func retime(elapsed: PackedFloat64Array, weighted: PackedFloat64Array) -> void:
+	if elapsed.size() < 3:
+		return
+	var average := weighted[-1] / elapsed[-1]
+	var points := PackedVector2Array([positions[0]])
+	var offsets := PackedFloat64Array([0.0])
+	var vertex := 1
+	for i in range(1, elapsed.size()):
+		var start := weighted[i - 1] / average
+		var finish := weighted[i] / average
+		while vertex < times.size() and times[vertex] < finish:
+			if times[vertex] > start:
+				points.append(positions[vertex])
+				offsets.append(remap(times[vertex], start, finish, elapsed[i - 1], elapsed[i]))
+			vertex += 1
+		points.append(at(finish))
+		offsets.append(elapsed[i])
+	positions = points
+	times = offsets

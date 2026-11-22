@@ -12,6 +12,7 @@ const PHASE_BLEND_SECONDS := 0.020
 @export_range(0.0, 12.0, 0.5) var recoil_degrees := 7.0
 
 @onready var health := max_health
+@onready var damage_shape: CollisionShape2D = $CollisionShape2D
 @onready var movement: EnemyMovement = $Movement
 @onready var attack: EnemyAttack = $Attack
 @onready var _start_position := position
@@ -139,25 +140,38 @@ func is_encounter_active() -> bool:
 
 
 func receive_hit(weapon: WeaponAttack, direction := Vector2.ZERO) -> int:
+	var applied := _take_damage(weapon.damage, weapon.flash_strength, weapon.flash_duration)
+	if applied > 0 and health > 0 and not direction.is_zero_approx():
+		_react(direction.normalized(), weapon)
+	return applied
+
+
+func receive_pistol_hit() -> int:
+	var applied := _take_damage(15, 0.45, 0.065, EnemyAttack.PISTOL_HITSTOP)
+	if applied > 0 and health > 0:
+		attack.request_pistol_hitstop()
+	return applied
+
+
+func _take_damage(amount: int, flash_strength: float, flash_duration: float, hold := 0.0) -> int:
 	if not is_encounter_active():
 		return 0
-	var applied := mini(health, weapon.damage)
+	var applied := mini(health, amount)
 	if applied <= 0:
 		return 0
 	health -= applied
 	if health == 0:
 		_clear_recoil()
-		# Called from a direct-space query in the player's physics step.
 		collision_layer = 0
 		collision_mask = 0
 		movement.defeat()
-	elif not direction.is_zero_approx():
-		_react(direction.normalized(), weapon)
 	if _flash:
 		_flash.kill()
-	_flash_strength = weapon.flash_strength
+	_flash_strength = flash_strength
 	_flash = create_tween()
-	_flash.tween_property(self, "_flash_strength", 0.0, weapon.flash_duration)
+	if hold > 0.0:
+		_flash.tween_interval(hold)
+	_flash.tween_property(self, "_flash_strength", 0.0, flash_duration)
 	if health == 0:
 		_flash.tween_property(self, "modulate", _initial_tint * DEFEATED_TINT, 0.08)
 	return applied

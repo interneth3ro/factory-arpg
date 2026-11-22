@@ -178,6 +178,8 @@ The owner approved **Phase 1 — CONDITIONAL PASS** after completing the E1–E1
 
 The owner approved 36 original decisions for the next combat extension, followed by 24 implementation-readiness decisions. The feature specification defines the behavioral contract, initial tuning and [acceptance checks](RANGED_MAGIC_COMBAT_INPUT.md#behavioral-acceptance). Implementation is pending.
 
+**Implementation priority.** Ranged combat is the next planning focus. Shared input initially covers Dagger, Sword, Greatsword and Pistol (slots 1–4). A functional fifth slot is outside this milestone. Magic implementation is deferred pending design review. Its previously approved decisions remain recorded as provisional design work. The owner may revise or replace the underlying approach before deciding whether to implement it. Gameplay work requires separate owner approval.
+
 ### Physical firearm
 
 The [pistol specification](RANGED_MAGIC_COMBAT_INPUT.md#pistol) defines shot resolution and the provisional balance values.

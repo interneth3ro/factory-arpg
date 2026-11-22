@@ -1,12 +1,14 @@
 # Factory ARPG — Ranged, magic, and combat input
 
-**Status:** Approved design for the next standalone combat prototype extension. Implementation and runtime acceptance are pending.
+**Implementation status:** Pistol is the next implementation focus. The owner approved planning for pistol behavior and shared combat input across slots 1–4 (Dagger, Sword, Greatsword and Pistol). Magic combat is deferred pending further design review. Gameplay work on Pistol, shared input or magic requires separate owner approval of an implementation PR.
 
 **Engine:** Godot 4.7.2
 
-The extension adds two ways to fight the existing Pursuer and Heavy. One tests aiming a moving projectile while strafing. The other tests placing a persistent area by direction alone. Both share the three melee weapons' primary attack input and dodge. The [decision log](DECISION_LOG.md#ranged-magic-and-combat-input-decisions) registers the 36 original decisions and 24 implementation-readiness decisions. The [frozen melee baseline](COMBAT_PROTOTYPE_V0.1.md) and [completed Phase 1 evaluation](PHASE_1_COMBAT_EVALUATION_RESULTS.md) describe the earlier milestone.
+The next standalone arena milestone focuses on aiming a traveling projectile while strafing and switching between melee and Pistol. Keep the shared input and normalized aim direction usable by future styles. The milestone excludes a functional fifth slot, placeholder magic infrastructure, controller bindings, radial menus and targeting assistance.
 
-The firing, casting, pulse, switching and reset rules below are approved behavior. Rates, speeds, distances, damage, durations and movement multipliers are approved **initial prototype tuning**, provisional for balance. Use the stated values for first acceptance. Four shared pulses, their ordering, and the limit of one field are behavioral requirements.
+MGC1–MGC12 and the magic-specific portions of the INT and IR decisions preserve the previously approved magic-field design as a provisional exploration. The owner may retain, revise or replace the approach before deciding whether to implement magic. Casting, field placement and effects, damage pulses, and the integration and runtime tests for magic are deferred.
+
+Rates, speeds, distances, damage, durations and movement multipliers are provisional initial tuning. Within the preserved magic design, four shared pulses, their ordering and the one-field limit are behavioral rules. The [decision log](DECISION_LOG.md#ranged-magic-and-combat-input-decisions) records all 60 decisions. The earlier melee milestone is documented in the [frozen melee baseline](COMBAT_PROTOTYPE_V0.1.md) and [completed Phase 1 evaluation](PHASE_1_COMBAT_EVALUATION_RESULTS.md).
 
 ## Pistol
 
@@ -40,6 +42,8 @@ The firing, casting, pulse, switching and reset rules below are approved behavio
 
 ## Combat input and HUD
 
+For ranged planning, apply the shared rules below to slots 1–4. The fifth row and references to casting or fields in the input, HUD and encounter rules document the deferred design.
+
 | Slot (INT1, INT7) | Active style | Universal primary attack (INT5, INT6) |
 | --- | --- | --- |
 | 1 | Dagger | Existing melee press, hold and late-recovery click buffer |
@@ -69,7 +73,7 @@ The firing, casting, pulse, switching and reset rules below are approved behavio
 
 ## Behavioral acceptance
 
-These are checks for a separately authorized implementation, using the initial tuning above.
+For a separately authorized ranged implementation, use the pistol checks and the melee and pistol portions of the shared checks at the initial tuning above.
 
 ### Pistol checks
 
@@ -84,6 +88,8 @@ These are checks for a separately authorized implementation, using the initial t
 
 ### Magic field checks
 
+**Deferred pending magic design review.** These scenarios are retained for future reference and are excluded from ranged implementation acceptance.
+
 | Exercise | Observable result |
 | --- | --- |
 | Start a cast walking east on open ground, turn aim north before completion, then turn again afterward. Repeat with near and far cursor positions along the same valid heading. | During the 450 ms cast, speed is 132 px/s at full input. No field appears early. Its center is 220 px north of the completion position on both trials and stays there after the player turns. |
@@ -97,24 +103,24 @@ These are checks for a separately authorized implementation, using the initial t
 
 ### Shared input, timing and encounter lifecycle checks
 
-| Exercise | Observable result |
-| --- | --- |
-| While Ready, select each slot. During a committed greatsword swing request Pistol, then Magic Field. Repeat with a dodge after queuing Pistol and request Magic Field during dodge movement. | Ready selections are immediate. During commitment the HUD keeps Greatsword active and shows only the latest pending choice. Dodge preserves the queued choice until replaced and completes normally. Magic Field becomes active at the first permitted opportunity and the pending indicator clears. |
-| Hold primary across an immediate or buffered switch. Check a transition into each of melee, Pistol and Magic Field, including a late buffered click in the outgoing melee style. | The new style activates without attacking. Release alone produces no attack. The next press starts the selected style's own attack, with its own hold behavior. |
-| Before first valid aim, use neutral input. Then aim diagonally, move the pointer into the existing dead zone, and supply an invalid direction at the aim interface. | Initial heading is consistent across styles. Later neutral or invalid samples preserve the last normalized diagonal. Pistol heading, spell placement and melee tracking all receive the same valid direction. |
-| Fire once and request a switch 60 ms later. Separately fire and immediately dodge while holding primary, keeping Pistol selected through the next ready shot time. | The HUD shows a pending choice at 60 ms and the new active style at 120 ms, before another shot is ready. In the dodge trial, holding produces no second shot. Release and a fresh press when ready fire one. |
-| During a committed sword swing queue Pistol, then select Sword. Repeat the Sword request. | The pending indicator clears on the first Sword request. The second changes nothing. Sword stays active when commitment ends. |
-| During commitment request slots 4 and 5 at exactly the same instant. Repeat with slot 4 requested strictly later. | Only slot 5 is pending and then active in the tied trial. Slot 4 wins the later-request trial. |
-| In separate trials, overlap localized hitstop with open bullet flight, the end of a cast and a scheduled field pulse. | The bullet covers 1 px per elapsed ms throughout hitstop. The cast still completes at 450 ms. A visible eligible target loses 15 at the scheduled field age even during hitstop. |
-| Fire at a distant enemy and switch to melee before impact. Separately switch away from a field after its first pulse with a healthy Heavy in clear sight inside it. | The bullet continues on its original heading and deals 15 on first enemy contact within its original range. The field deals 15 at ages 1.50, 2.25 and 3.00 s, then expires. |
-| With Magic Field active, start a recast over an existing field, queue Pistol and press F5 while holding primary. Repeat with F3 both open and closed. | The HUD shows Magic Field, with nothing pending. HP and positions reset, F3 retains its setting, neither cast nor field can later deal damage, and holding primary does not start a cast. |
-| With a bullet in flight and a field still due to pulse, trigger player death. Repeat with F5. Include damage awaiting delivery when each transition occurs. | Both effects disappear immediately. Neither later contacts, scheduled pulses nor queued damage change enemy HP in the terminal or restarted encounter. |
-| Observe a confirmed pistol hit, then a magic pulse with one visible enemy and one fully occluded enemy in radius. Repeat the pulse with neither enemy exposed. | The shot gives a small contact spark, a brief target flash and restrained localized hitstop without heavy recoil or knockback. Both field pulses are visible. Only the damaged enemy flashes, and neither pulse causes hitstop or recoil. |
-| Exercise each melee weapon with tap, hold, late recovery click and dodge interruption. Toggle F3, then defeat the last selected enemy with a bullet or pulse. | Melee timing, aim locks, one hit per target per swing, hitstop and weapon feedback follow the baseline. F3 still reports combat state and damage history. HP, encounter labels, defeat and completion remain accurate, including in solo encounters. |
+| Exercise | Observable result | Milestone scope |
+| --- | --- | --- |
+| While Ready, select each slot. During a committed greatsword swing request Pistol, then Magic Field. Repeat with a dodge after queuing Pistol and request Magic Field during dodge movement. | Ready selections are immediate. During commitment the HUD keeps Greatsword active and shows only the latest pending choice. Dodge preserves the queued choice until replaced and completes normally. Magic Field becomes active at the first permitted opportunity and the pending indicator clears. | Check ready and buffered selection across slots 1–4, including requests during dodge. Defer the Magic Field selection. |
+| Hold primary across an immediate or buffered switch. Check a transition into each of melee, Pistol and Magic Field, including a late buffered click in the outgoing melee style. | The new style activates without attacking. Release alone produces no attack. The next press starts the selected style's own attack, with its own hold behavior. | Check transitions into melee and Pistol. Defer the transition into Magic Field. |
+| Before first valid aim, use neutral input. Then aim diagonally, move the pointer into the existing dead zone, and supply an invalid direction at the aim interface. | Initial heading is consistent across styles. Later neutral or invalid samples preserve the last normalized diagonal. Pistol heading, spell placement and melee tracking all receive the same valid direction. | Check shared aim for melee and Pistol. Defer spell placement. |
+| Fire once and request a switch 60 ms later. Separately fire and immediately dodge while holding primary, keeping Pistol selected through the next ready shot time. | The HUD shows a pending choice at 60 ms and the new active style at 120 ms, before another shot is ready. In the dodge trial, holding produces no second shot. Release and a fresh press when ready fire one. | Ranged milestone. |
+| During a committed sword swing queue Pistol, then select Sword. Repeat the Sword request. | The pending indicator clears on the first Sword request. The second changes nothing. Sword stays active when commitment ends. | Ranged milestone. |
+| During commitment request slots 4 and 5 at exactly the same instant. Repeat with slot 4 requested strictly later. | Only slot 5 is pending and then active in the tied trial. Slot 4 wins the later-request trial. | Check the same tie and later-request rules with two valid slots among 1–4. Defer the slot 5 trial. |
+| In separate trials, overlap localized hitstop with open bullet flight, the end of a cast and a scheduled field pulse. | The bullet covers 1 px per elapsed ms throughout hitstop. The cast still completes at 450 ms. A visible eligible target loses 15 at the scheduled field age even during hitstop. | Check bullet travel during hitstop. Defer cast and pulse timing. |
+| Fire at a distant enemy and switch to melee before impact. Separately switch away from a field after its first pulse with a healthy Heavy in clear sight inside it. | The bullet continues on its original heading and deals 15 on first enemy contact within its original range. The field deals 15 at ages 1.50, 2.25 and 3.00 s, then expires. | Check the in-flight bullet after switching. Defer the active-field trial. |
+| With Magic Field active, start a recast over an existing field, queue Pistol and press F5 while holding primary. Repeat with F3 both open and closed. | The HUD shows Magic Field, with nothing pending. HP and positions reset, F3 retains its setting, neither cast nor field can later deal damage, and holding primary does not start a cast. | Deferred. This setup requires Magic Field as the active style and a recast in progress. |
+| With a bullet in flight and a field still due to pulse, trigger player death. Repeat with F5. Include damage awaiting delivery when each transition occurs. | Both effects disappear immediately. Neither later contacts, scheduled pulses nor queued damage change enemy HP in the terminal or restarted encounter. | Check death and F5 with the bullet and its pending damage. Defer field setup and pulse cleanup. |
+| Observe a confirmed pistol hit, then a magic pulse with one visible enemy and one fully occluded enemy in radius. Repeat the pulse with neither enemy exposed. | The shot gives a small contact spark, a brief target flash and restrained localized hitstop without heavy recoil or knockback. Both field pulses are visible. Only the damaged enemy flashes, and neither pulse causes hitstop or recoil. | Check pistol impact feedback. Defer pulse feedback. |
+| Exercise each melee weapon with tap, hold, late recovery click and dodge interruption. Toggle F3, then defeat the last selected enemy with a bullet or pulse. | Melee timing, aim locks, one hit per target per swing, hitstop and weapon feedback follow the baseline. F3 still reports combat state and damage history. HP, encounter labels, defeat and completion remain accurate, including in solo encounters. | Check melee, F3 and encounter completion with a bullet. Defer completion by pulse. |
 
 ## Open questions
 
-The exact wall-clearance margin remains an implementation detail. Choose a small margin that keeps the field center clear on the accessible side of the first wall. Clearance for the full field radius is unnecessary.
+If the owner retains the magic-field approach, the exact wall-clearance margin remains an implementation detail. The center must stay clear on the accessible side of the first wall. Clearance for the full field radius is unnecessary.
 
 ## Deferred features
 

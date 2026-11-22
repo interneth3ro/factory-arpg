@@ -282,7 +282,7 @@ The owner approved the following decisions for the four-style combat evaluation.
 
 ## Construction and material handling
 
-The [early-game design specification](EARLY_GAME_GATHERING_AND_AUTOMATION.md) records the approved construction and recovery rules.
+The table preserves the original construction approvals. FM8–FM13 remain in force. For FM14, apply the [revised storage eligibility and provisional reservation rules](EARLY_GAME_GATHERING_AND_AUTOMATION.md#3-construction-recovery-and-inventory-fm8fm14-eg7-rc3-rc5).
 
 | ID | Decision | Approved selection |
 | --- | --- | --- |
@@ -296,7 +296,7 @@ The [early-game design specification](EARLY_GAME_GATHERING_AND_AUTOMATION.md) re
 
 ## Early-game gathering, workshop, and automation
 
-The [early-game specification](EARLY_GAME_GATHERING_AND_AUTOMATION.md) gives the operating rules and identifies provisional tuning.
+These entries preserve the original EG approvals. The [supersession map](#early-game-reconciliation) identifies which rules still apply. The [reconciled specification](EARLY_GAME_GATHERING_AND_AUTOMATION.md) governs current design.
 
 | ID | Decision | Approved selection |
 | --- | --- | --- |
@@ -322,7 +322,57 @@ The [early-game specification](EARLY_GAME_GATHERING_AND_AUTOMATION.md) gives the
 | EG20 | Remote hauling | B — Carry output home and bulk-deposit eligible resources into accessible storage up to capacity. |
 | EG21 | Wireless research | C — Make basic transportation a visible goal reachable through normal research and workshop production. Exploration can contribute discoveries and reveal advanced capabilities. |
 
-EG22 remains undecided. Pairing and operational details are deferred. [Wireless research boundary](EARLY_GAME_GATHERING_AND_AUTOMATION.md#11-wireless-research-boundary-eg21-only)
+EG22 remains undecided. Pairing and operational details are deferred. [Wireless research boundary](EARLY_GAME_GATHERING_AND_AUTOMATION.md#10-wireless-research-boundary-eg21-only)
+
+## Home-base decisions
+
+The [integrated production rules](EARLY_GAME_GATHERING_AND_AUTOMATION.md#6-integrated-smelting-crafting-and-production-goals-hb1hb11) cover orders, priorities, and final assembly.
+
+| ID | Selection | Approved direction |
+|---|---|---|
+| HB1 | C | Integrated basic smelting/component crafting; specialized manufacturing remains physical. |
+| HB2 | C | Dedicated raw/refined/component storage and automatic eligible downstream access. |
+| HB3 | B | Round-robin smelting instructions; finite and continuous orders. |
+| HB4 | B | Partially funded finite orders automatically reserve eligible incoming inputs; continuous orders do not reserve. |
+| HB5 | C | Progressive smelting speed, batch and parallel-channel upgrades. |
+| HB6 | C | Finite/continuous integrated component orders; equipment goals prepare components, not final weapons/armor. |
+| HB7 | B | Recursive preparation of eligible intermediate components, with specialized needs reported. |
+| HB8 | B | Player-initiated final equipment crafting with configurable bounded randomness; advanced experimentation deferred. |
+| HB9 | C | Player-ordered goal priorities for material allocation, independent of round-robin processing time. |
+| HB10 | B | Persistent goal reservations and Ready for Assembly status until player crafts, changes or cancels. |
+| HB11 | C | Integrated standardized crafting expands with research; specialized processes require physical machinery. |
+| HB12 | C | Physical conveyor connections and convenient storage interfaces for specialized manufacturing. |
+| HB13 | C | Future goal-aware routing direction; detailed advanced logistics mechanics deferred and not initially unlocked. |
+
+## Reconciliation decisions
+
+These decisions revise the [opening progression](EARLY_GAME_GATHERING_AND_AUTOMATION.md#7-revised-opening-progression-rc1-rc6rc8) and its material-handling rules.
+
+| ID | Selection | Approved direction |
+|---|---|---|
+| RC1 | B | First automated extractor replaces smelter-to-crafter conveyor as major opening automation milestone. |
+| RC2 | B | Preserve EG10–EG13's general safety/compatibility principles; defer specialized-machine-specific rules. |
+| RC3 | C | Provisional reservation protection with explicit player override for construction/manual crafting; may be superseded in future cross-system design. |
+| RC4 | A | Player deposits into chosen dedicated storage, no automatic sorting at start; future sorting research possible. |
+| RC5 | Owner clarification | General-purpose home-base storage is entirely isolated from production, construction, reservations and conveyor access at start. |
+| RC6 | B | Extractor manually collectable; optional early conveyor to nearby industrial storage. |
+| RC7 | B | Separate conveyor-capable industrial storage containers, manufactured at base and deployed at remote ore deposits; no initial wireless link. |
+| RC8 | B | Integrated crafting manufactures complete basic deployable equipment using deterministic recipes. |
+| RC9 | B | Remote extractor/conveyor/storage obey physical backpressure and finite capacity in loaded and unloaded areas. |
+
+## Early-game reconciliation
+
+The [reconciled early-game specification](EARLY_GAME_GATHERING_AND_AUTOMATION.md) governs the opening progression. The original FM and EG selections above remain part of the decision history.
+
+| Earlier decision | Current scope |
+|---|---|
+| EG1, EG9 | HB1–HB2 and RC1 supersede the original opening milestone and teaching sequence. The player uses integrated base services and deploys a remote extractor. The first optional conveyor carries extractor output to nearby industrial storage (RC6–RC7). |
+| EG8 | The two-material introduction remains. HB1–HB2 replace separate stations and ingot transfers with integrated smelting and component crafting. |
+| EG10–EG13 | HB3–HB11 govern integrated production. RC2 retains compatibility, material safety, predictable transitions, finite capacity and backpressure. The original single-recipe, switching and buffer rules no longer prescribe machine behavior. Specialized-machine details remain provisional under HB11–HB13. |
+| EG20 | The player still hauls output home. RC4–RC5 narrow bulk deposit to compatible items in one player-chosen inventory. General-purpose storage stays isolated. |
+| FM14 | RC5 excludes general storage from automatic construction access. Remote construction still requires physically available supplies. RC3 provisionally protects reservations and requires explicit player approval to reallocate reserved materials. |
+
+FM8–FM13, EG2–EG7, EG14–EG19 and EG21 remain in force. RC6–RC9 extend the extraction and conveyor rules to optional industrial storage, including backpressure in unloaded scenes. EG22 and detailed wireless operation remain undecided.
 
 ## Recording future decisions
 

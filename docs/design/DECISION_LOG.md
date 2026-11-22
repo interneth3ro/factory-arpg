@@ -176,7 +176,9 @@ The owner approved **Phase 1 — CONDITIONAL PASS** after completing the E1–E1
 
 ## Ranged, magic and combat input decisions
 
-The owner approved the following 36 decisions for the next combat extension. The feature specification defines the behavioral contract, initial tuning and [acceptance checks](RANGED_MAGIC_COMBAT_INPUT.md#behavioral-acceptance). Implementation is pending.
+The owner approved 36 original decisions for the next combat extension, followed by 24 implementation-readiness decisions. The feature specification defines the behavioral contract, initial tuning and [acceptance checks](RANGED_MAGIC_COMBAT_INPUT.md#behavioral-acceptance). Implementation is pending.
+
+**Implementation priority.** Ranged combat is the next planning focus. Shared input initially covers Dagger, Sword, Greatsword and Pistol (slots 1–4). A functional fifth slot is outside this milestone. Magic implementation is deferred pending design review. Its previously approved decisions remain recorded as provisional design work. The owner may revise or replace the underlying approach before deciding whether to implement it. Gameplay work requires separate owner approval.
 
 ### Physical firearm
 
@@ -234,6 +236,37 @@ The [combat input and HUD specification](RANGED_MAGIC_COMBAT_INPUT.md#combat-inp
 | INT10 | Held attack across a switch | Allow switching while held. Require release and a fresh press to attack with the newly active style. |
 | INT11 | HUD | Display the active style and any pending selection. |
 | INT12 | F5 reset | Preserve active style. Clear pending selection, unfinished casting and active player-created fields. |
+
+### Implementation readiness
+
+These decisions refine the approved [pistol](RANGED_MAGIC_COMBAT_INPUT.md#pistol), [magic field](RANGED_MAGIC_COMBAT_INPUT.md#magic-field), [combat input](RANGED_MAGIC_COMBAT_INPUT.md#combat-input-and-hud) and [encounter integration](RANGED_MAGIC_COMBAT_INPUT.md#integration-with-existing-combat) rules.
+
+| ID | Decision | Approved selection |
+| --- | --- | --- |
+| IR1 | Muzzle origin | Offset the muzzle forward along aim. Check the initial segment from the player's combat origin to the muzzle. |
+| IR2 | Muzzle offset | Start with a provisional 20 px offset. |
+| IR3 | Bullet geometry | Sweep a circle along the entire path, including the initial segment. |
+| IR4 | Bullet radius | Start with a provisional 4 px collision radius. |
+| IR5 | Range origin | Allow 600 px of center travel from the muzzle. The initial checked segment costs zero range. |
+| IR6 | Tied bullet contacts | At exactly equal earliest contact distances, the solid stops the bullet and blocks enemy damage. |
+| IR7 | Range boundary | Resolve the final clipped sweep before expiration. Contacts up to and including the maximum center travel qualify. |
+| IR8 | Blocked field placement | Complete the cast on the accessible side of the first blocking solid wall. |
+| IR9 | Pulse eligibility | Require both radius eligibility and unobstructed sight from the field center. |
+| IR10 | Radius boundary | Overlap or exact contact between the field circle and the enemy's damage-receiving shape qualifies. |
+| IR11 | Partial visibility | At least one point on or within the damage-receiving shape must be both in radius and unobstructed from the field center. |
+| IR12 | Center clearance | Keep only the center clear by a small collision-safe margin. Visual wall overlap is allowed. Visibility still governs damage. The exact margin is unspecified. |
+| IR13 | Localized hitstop | Projectile movement, casting and field pulse clocks continue during hitstop. |
+| IR14 | Dodge at cast completion | A successful dodge wins the exact tie. Cancel the cast and preserve any existing field on its schedule. |
+| IR15 | Pulse at replacement | Resolve the old field's tied pulse first, including its final pulse. Start the replacement at age zero with no immediate damage. |
+| IR16 | Pistol switching commitment | Each shot buffers switching for its 120 ms slowdown. A successful dodge interrupts immediately. The approximately 333 ms firing interval is separate. |
+| IR17 | Held fire after dodge | Dodge ends the held sequence. Resuming fire requires release and a fresh press, subject to cadence. |
+| IR18 | Active slot selection | Selecting the active style clears a pending switch. With nothing pending it has no effect. |
+| IR19 | Simultaneous slots | The highest-numbered valid slot wins an exact tie. Otherwise the latest valid request wins. |
+| IR20 | Bullet after switching | In-flight bullets retain their collision, damage, direction and range after a style change. |
+| IR21 | Field after switching | The active field retains its pulse schedule, damage and expiration after a style change. |
+| IR22 | Player death | Immediately remove player-created bullets and fields and prevent pending damage from affecting the terminal encounter. F5 still clears effects and stale damage on reset. |
+| IR23 | Pistol impact | Confirmed hits produce a small contact spark, brief enemy flash and restrained localized hitstop. Reuse existing feedback where practical. Exclude heavy recoil and knockback. |
+| IR24 | Magic impact | Show each field pulse and briefly flash only damaged enemies. Field damage causes neither hitstop nor recoil. |
 
 ## Recording future decisions
 

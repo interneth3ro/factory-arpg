@@ -2,6 +2,7 @@ extends Node2D
 
 const Sector = preload("res://scenes/combat/enemy_attack_sector.gd")
 const SlideTrace = preload("res://scenes/combat/slide_trace.gd")
+const PISTOL_HITSTOP := 0.016
 
 ## Movement advances this clock inside its avoidance callback. An Active
 ## interval is resolved synchronously, before the next phase or execution.
@@ -62,6 +63,8 @@ var execution := 0
 var contacted := false # The arena has exactly one player target.
 var displacement := Vector2.ZERO
 var paused_this_tick := 0.0
+var _pistol_pause_left := 0.0
+var _pistol_pause_from := -1
 var debug_visible := false
 var _acquired := false
 var _heading := Vector2.RIGHT
@@ -88,9 +91,20 @@ func _on_hitstop_consumed(seconds: float) -> void:
 	paused_this_tick = seconds
 
 
-func start_tick() -> void:
+func request_pistol_hitstop() -> void:
+	# Contact is resolved after player motion. Hold this target's attack
+	# clock on its next tick, without pausing the player's weapon or world.
+	_pistol_pause_left = PISTOL_HITSTOP
+	_pistol_pause_from = Engine.get_physics_frames() + 1
+
+
+func start_tick(delta: float) -> void:
 	if _pause_frame != Engine.get_physics_frames():
 		paused_this_tick = 0.0
+	if Engine.get_physics_frames() >= _pistol_pause_from:
+		var local_pause := minf(delta, _pistol_pause_left)
+		_pistol_pause_left -= local_pause
+		paused_this_tick = maxf(paused_this_tick, local_pause)
 
 
 func acquire() -> void:
@@ -122,6 +136,7 @@ func cancel_execution() -> void:
 	_region_origin = Vector2.INF
 	paused_this_tick = 0.0
 	_pause_frame = -1
+	_pistol_pause_left = 0.0
 	refresh()
 
 

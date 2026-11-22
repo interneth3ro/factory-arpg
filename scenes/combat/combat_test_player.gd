@@ -10,6 +10,8 @@ const SlideTrace = preload("res://scenes/combat/slide_trace.gd")
 const EnemyHealth = preload("res://scenes/combat/enemy_health.gd")
 const EnemyAttack = preload("res://scenes/combat/enemy_attack.gd")
 const PlayerHealth = preload("res://scenes/combat/player_health.gd")
+const PistolFiring = preload("res://scenes/combat/pistol_firing.gd")
+const PistolProjectiles = preload("res://scenes/combat/pistol_projectiles.gd")
 const HUD_RED := Color(0.84, 0.20, 0.25)
 const DAMAGE_RED := Color(1.0, 0.09, 0.11)
 enum Style { NONE, DAGGER, SWORD, GREATSWORD, PISTOL }
@@ -43,6 +45,7 @@ const PHASE_COLORS := {
 @onready var melee_sweep: MeleeSweep = $MeleeSweep
 @onready var weapon_effects: WeaponEffects = $WeaponEffects
 @onready var combat_audio: CombatAudio = $CombatAudio
+@onready var projectiles: PistolProjectiles = $PistolProjectiles
 @onready var enemies: Array[EnemyHealth] = [$"../Pursuer", $"../Heavy"]
 @onready var encounter_label: Label = $Diagnostics/Encounter
 @onready var style_label: Label = $Diagnostics/CombatStyle
@@ -50,6 +53,7 @@ const PHASE_COLORS := {
 @onready var start_position := position
 var last_damage := "None"
 var motion_trace := SlideTrace.new()
+var pistol := PistolFiring.new()
 var encounter_generation := 0
 var active_style := Style.DAGGER
 var pending_style := Style.NONE
@@ -68,6 +72,7 @@ var _resolving_interval: ActionFSM.ActiveInterval
 
 
 func _ready() -> void:
+	projectiles.configure(enemies, _apply_pistol_contact)
 	melee_sweep.contacted.connect(_apply_contact)
 	player_health.health_changed.connect(_update_health_hud)
 	player_health.damaged.connect(_show_damage)
@@ -127,6 +132,8 @@ func _clear_style_requests() -> void:
 func _activate_pending_style() -> bool:
 	if pending_style == Style.NONE:
 		return false
+	if active_style == Style.PISTOL:
+		pistol.interrupt()
 	active_style = pending_style
 	pending_style = Style.NONE
 	if MELEE_WEAPONS.has(active_style):
@@ -147,6 +154,7 @@ func _physics_process(delta: float) -> void:
 	_flash_left = maxf(0.0, _flash_left - delta)
 	_emphasis_left = maxf(0.0, _emphasis_left - delta)
 	var movement_input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var cursor := get_global_mouse_position()
 	_update_facing()
 	if Input.is_action_just_pressed("dodge"):
 		_request_dodge(movement_input, aim_direction)
@@ -161,16 +169,33 @@ func _physics_process(delta: float) -> void:
 	if attacking_allowed:
 		movement_multiplier = _step_actions(delta,
 			Input.is_action_just_pressed("basic_attack"), Input.is_action_pressed("basic_attack"))
+	else:
+		pistol.idle(delta)
 	var start := global_position
 	movement_fsm.step(movement_input, movement_speed, delta, movement_multiplier)
 	if not attacking_allowed and not movement_fsm.is_dodging():
 		_activate_pending_style()
 	motion_trace.record(self, start, 0.0, delta, delta)
+	motion_trace.retime(pistol.times, pistol.movement_times)
+	_step_projectiles(delta, cursor)
 	melee_sweep.begin_tick()
 	if attacking_allowed:
 		_resolve_swings(start, delta)
 	melee_sweep.select_attack(action_fsm.attack_count)
 	_update_presentation()
+
+
+func _step_projectiles(delta: float, cursor: Vector2) -> void:
+	var advanced := 0.0
+	for offset in pistol.shots:
+		projectiles.advance(offset - advanced)
+		var origin := motion_trace.at(offset)
+		var direction := cursor - origin
+		if direction.length_squared() > AIM_DEAD_ZONE_RADIUS * AIM_DEAD_ZONE_RADIUS:
+			_sample_aim_direction(direction)
+		projectiles.launch(origin, aim_direction, encounter_generation)
+		advanced = offset
+	projectiles.advance(delta - advanced)
 
 
 func _resolve_swings(start: Vector2, delta: float) -> void:
@@ -206,7 +231,11 @@ func _update_presentation() -> void:
 
 
 func _step_actions(delta: float, pressed: bool, held: bool) -> float:
-	var switched := action_fsm.state == ActionFSM.State.READY and _activate_pending_style()
+	var switched := action_fsm.state == ActionFSM.State.READY and pistol.commitment == 0.0 and _activate_pending_style()
+	if active_style == Style.PISTOL:
+		action_fsm.step(delta, false, false, aim_direction)
+		return pistol.step(delta, pressed and not switched, held, _activate_pending_style)
+	pistol.idle(delta)
 	# Ready starts only on a press edge after the activation tick.
 	var melee_input := MELEE_WEAPONS.has(active_style) and not switched
 	var on_ready := Callable()
@@ -263,12 +292,15 @@ func _update_state_diagnostics() -> void:
 			action_fsm.weapon.display_name if MELEE_WEAPONS.has(active_style) else "Pistol",
 			action_fsm.attack_count,
 			String(ActionFSM.AimState.keys()[action_fsm.get_aim_state()]).capitalize(),
-			action_fsm.get_movement_multiplier(),
+			PistolFiring.MOVEMENT if pistol.commitment > 0.0 else action_fsm.get_movement_multiplier(),
 			dodge_status,
 			"Active" if is_invulnerable() else "Inactive",
 		]
 		state_diagnostics.text += "\nContacts (%d): %s\nSweep overlay: On" % [
 			melee_sweep.contacts.size(), ", ".join(melee_sweep.contacts.values()) if not melee_sweep.contacts.is_empty() else "None",
+		]
+		state_diagnostics.text += "\nPistol: %d shots | %d in flight | commit %.0f ms | ready in %.0f ms" % [
+			pistol.shots_fired, projectiles.bullets.size(), pistol.commitment * 1000.0, pistol.cooldown * 1000.0,
 		]
 
 		for enemy in enemies:
@@ -333,6 +365,7 @@ func _show_damage(contact: EnemyAttack.Contact) -> void:
 
 func _request_dodge(movement_input: Vector2, facing: Vector2) -> void:
 	if movement_fsm.request_dodge(movement_input, facing):
+		pistol.interrupt()
 		_interrupt_swing()
 
 
@@ -345,6 +378,8 @@ func _interrupt_swing() -> void:
 
 
 func _on_death() -> void:
+	projectiles.clear(encounter_generation, false)
+	pistol.reset()
 	_interrupt_swing()
 	_clear_style_requests()
 	combat_audio.reset()
@@ -380,13 +415,30 @@ func _apply_contact(target: CollisionObject2D, interval: ActionFSM.ActiveInterva
 		action_fsm.request_hitstop(interval)
 		weapon_effects.burst(point, direction, interval.weapon)
 		combat_audio.impact(interval.attack_id, interval.weapon)
-		if enemy.health == 0:
-			completion.visible = enemies.all(func(candidate: EnemyHealth) -> bool:
-				return not candidate.is_encounter_active() or candidate.health == 0)
+		_check_completion(enemy)
+
+
+func _apply_pistol_contact(enemy: EnemyHealth, shot: int, generation: int) -> bool:
+	if generation != encounter_generation or player_health.health == 0:
+		return false
+	var applied := enemy.receive_pistol_hit()
+	if applied == 0:
+		return false
+	last_damage = "%d to %s from Pistol (#%d)" % [applied, enemy.name, shot]
+	_check_completion(enemy)
+	return true
+
+
+func _check_completion(enemy: EnemyHealth) -> void:
+	if enemy.health == 0:
+		completion.visible = enemies.all(func(candidate: EnemyHealth) -> bool:
+			return not candidate.is_encounter_active() or candidate.health == 0)
 
 
 func _reset_encounter(start_with_dagger := false) -> void:
 	encounter_generation += 1
+	projectiles.clear(encounter_generation, true)
+	pistol.reset()
 	_resolving_interval = null
 	weapon_effects.reset()
 	combat_audio.reset()

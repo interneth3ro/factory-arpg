@@ -178,7 +178,7 @@ The owner approved **Phase 1 — CONDITIONAL PASS** after completing the E1–E1
 
 The owner approved 36 original decisions for the next combat extension, followed by 24 implementation-readiness decisions. The feature specification defines the behavioral contract, initial tuning and [acceptance checks](RANGED_MAGIC_COMBAT_INPUT.md#behavioral-acceptance).
 
-**Implementation priority.** The owner authorized shared input for Dagger, Sword, Greatsword and selectable Pistol (slots 1–4). Pistol firing requires separate authorization. Magic implementation, including a fifth slot, is deferred indefinitely pending design review. Its previously approved decisions remain recorded as provisional design work. The owner may revise or replace the underlying approach before deciding whether to implement it.
+**Implementation priority.** After PR #26 delivered shared input for slots 1–4, the owner authorized physical pistol combat. P1 Option A assigns input and encounter ordering to the player coordinator, cadence and commitment to a dedicated pistol controller, and bullet flight and contacts to an independent projectile simulation. Magic implementation, including a fifth slot, is deferred indefinitely pending design review. Its previously approved decisions remain recorded as provisional design work. The owner may revise or replace the underlying approach before deciding whether to implement it.
 
 ### Physical firearm
 

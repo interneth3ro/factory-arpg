@@ -52,7 +52,7 @@ Prove that the current combat mechanics feel responsive, legible, and enjoyable 
 
 The owner completed all 18 baseline attempts and approved **Phase 1 — CONDITIONAL PASS**. EVAL-01 (greatsword timing against the Pursuer) is Minor, deferred, and non-blocking. Further combat tuning is unnecessary before Phase 2 planning. [Evaluation results and owner disposition](design/PHASE_1_COMBAT_EVALUATION_RESULTS.md)
 
-The owner subsequently authorized the shared combat input foundation for slots 1–4 in the standalone arena. Pistol firing requires a separate implementation decision. Magic is deferred pending design review. The Phase 1 result and Phase 2 planning gate retain their recorded status. [Extension design and implementation status](design/RANGED_MAGIC_COMBAT_INPUT.md)
+PR #26 delivered the shared combat input foundation for slots 1–4 in the standalone arena. The owner subsequently authorized physical pistol combat. Its feature branch awaits independent review, owner runtime acceptance and merge. Magic is deferred pending design review. [Extension design and implementation status](design/RANGED_MAGIC_COMBAT_INPUT.md)
 
 ### Exit gate
 

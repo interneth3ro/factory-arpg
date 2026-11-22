@@ -3,7 +3,7 @@
 Keep design decisions and implementation details versioned alongside the project so contributors can trace what the game should do and how the code delivers it.
 
 - [Combat Prototype v0.1](design/COMBAT_PROTOTYPE_V0.1.md) is the frozen gameplay baseline for the prototype. Consult it before implementing related systems.
-- The shared input foundation for slots 1–4 is implemented on the feature branch pending merge and owner runtime acceptance. Pistol is selectable. Firing requires a separate implementation, and magic remains deferred. [Ranged, magic, and combat input](design/RANGED_MAGIC_COMBAT_INPUT.md)
+- PR #26 delivered shared input for slots 1–4. The physical pistol feature branch adds firing and traveling bullets, pending independent review, owner runtime acceptance and merge. Magic remains deferred. [Ranged, magic, and combat input](design/RANGED_MAGIC_COMBAT_INPUT.md)
 - [Player health, enemy damage and death](design/PR16_PLAYER_HEALTH_DAMAGE_DEATH.md) records the approved M57–M74 survivability decisions.
 - [Combat impact and feedback](design/PR17_COMBAT_IMPACT_FEEDBACK.md) records the approved M75–M90 requirements for contact bursts, enemy recoil, swing trails and combat audio.
 - [Combat balance and encounter evaluation](design/COMBAT_BALANCE_ENCOUNTER_EVALUATION.md) defines the Phase 1 playtest matrix, observation rubric, and exit criteria.
@@ -46,9 +46,15 @@ F3 toggles the diagnostic label, which starts hidden. While visible it displays 
 
 ### Combat style selection
 
-Press 1 for Dagger, 2 for Sword, 3 for Greatsword or 4 for Pistol. The style label above the encounter name shows the active style and any pending choice, with F3 open or closed. All four styles share a normalized world-space aim direction. It starts facing right and retains the last valid heading inside the mouse dead zone or on invalid input. Pistol accepts selection and aim. LMB has no firing behavior in this milestone.
+Press 1 for Dagger, 2 for Sword, 3 for Greatsword or 4 for Pistol. The style label above the encounter name shows the active style and any pending choice, with F3 open or closed. All four styles share a normalized world-space aim direction. It starts facing right and retains the last valid heading inside the mouse dead zone or on invalid input.
 
 Selection takes effect while Ready. During a swing or dodge movement, the latest request replaces the pending choice. Requests sampled at the same microsecond resolve to the highest slot. Selecting the active style cancels the pending choice. At the end of melee Recovery the pending style activates before a held attack can repeat or a queued click can start another swing, even inside a long physics tick. A different style requires a fresh LMB press.
+
+### Physical pistol
+
+With slot 4 active, press LMB to fire a ready shot and hold to repeat. Each shot slows full-input movement to 176 px/s for 120 ms. A queued style activates when that window ends. A successful dodge interrupts it immediately, preserves the pending choice and ends held fire. F3 shows shot count, bullets in flight, commitment and time until the next shot. The firing controller records each shot offset and each speed change. The player uses those times along its resolved slide path and aims from each launch position toward the cursor sampled for that tick. [Firing controller](../scenes/combat/pistol_firing.gd)
+
+The projectile simulation sweeps a 4 px disk through the muzzle offset and along each flight interval. It uses the arena's static collision footprints and each participating enemy's circular collider at its current physics pose. The earliest contact stops the shot, with cover winning an exact tie. A hit deals 15 damage, shows a contact spark and target flash, and holds the surviving target's attack clock for 16 ms starting next tick. Bullets advance during hitstop and after switching styles. Death and encounter resets clear bullets and sparks. F5 retains the active style. The configuration keys restore Dagger. [Projectile simulation](../scenes/combat/pistol_projectiles.gd) · [Pistol regression fixture](../tests/combat/pistol_acceptance.gd) · [Approved tuning and acceptance checks](design/RANGED_MAGIC_COMBAT_INPUT.md#pistol-checks)
 
 ### Melee attack timing
 

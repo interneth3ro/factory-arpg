@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://scenes/combat/combat_test_player.gd" id="1_player"]
 [ext_resource type="Script" path="res://scenes/combat/player_movement_fsm.gd" id="2_movement"]
@@ -13,6 +13,7 @@
 [ext_resource type="Script" path="res://scenes/combat/player_health.gd" id="11_health"]
 [ext_resource type="Script" path="res://scenes/combat/weapon_effects.gd" id="12_effects"]
 [ext_resource type="Script" path="res://scenes/combat/combat_audio.gd" id="13_audio"]
+[ext_resource type="Script" path="res://scenes/combat/pistol_projectiles.gd" id="14_bullets"]
 
 [sub_resource type="StyleBoxFlat" id="HealthTrack"]
 bg_color = Color(0.25, 0.15, 0.18, 1)
@@ -338,6 +339,11 @@ script = ExtResource("4_sweep")
 [node name="WeaponEffects" type="Node2D" parent="ArenaObjects/Player"]
 z_index = 1
 script = ExtResource("12_effects")
+
+[node name="PistolProjectiles" type="Node2D" parent="ArenaObjects/Player"]
+top_level = true
+z_index = 4
+script = ExtResource("14_bullets")
 
 [node name="CombatAudio" type="Node" parent="ArenaObjects/Player"]
 script = ExtResource("13_audio")

@@ -268,6 +268,18 @@ These decisions refine the approved [pistol](RANGED_MAGIC_COMBAT_INPUT.md#pistol
 | IR23 | Pistol impact | Confirmed hits produce a small contact spark, brief enemy flash and restrained localized hitstop. Reuse existing feedback where practical. Exclude heavy recoil and knockback. |
 | IR24 | Magic impact | Show each field pulse and briefly flash only damaged enemies. Field damage causes neither hitstop nor recoil. |
 
+## Phase 2 combat evaluation decisions
+
+The owner approved the following decisions for the four-style combat evaluation. [Trial results and owner disposition](PHASE_2_COMBAT_EVALUATION_RESULTS.md)
+
+| ID | Decision | Approved selection |
+| --- | --- | --- |
+| EVAL2-1 | Evaluation depth | A — Quick validation using eight focused trials. |
+| EVAL2-2 | Minor findings | B — Record and defer minor issues. A minor finding alone does not require corrective implementation. |
+| EVAL2-3 | Final evaluation plan | A — Approve the eight-trial owner-led runtime evaluation. |
+| EVAL2-4 | Final disposition | A — Phase 2 PASS. Eight of eight trials passed with zero findings. |
+| EVAL2-5 | Documentation scope | A — Record the evaluation in a focused four-file documentation-only PR. |
+
 ## Recording future decisions
 
 Append decisions in approval order with a stable ID, descriptive title, approved selection, brief summary, and a link to the authoritative specification. Record dates only when supplied. When a decision changes, retain the earlier entry and link it to the approved replacement.

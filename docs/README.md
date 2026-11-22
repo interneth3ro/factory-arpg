@@ -3,11 +3,12 @@
 Keep design decisions and implementation details versioned alongside the project so contributors can trace what the game should do and how the code delivers it.
 
 - [Combat Prototype v0.1](design/COMBAT_PROTOTYPE_V0.1.md) is the frozen gameplay baseline for the prototype. Consult it before implementing related systems.
-- PR #26 delivered shared input for slots 1–4. The physical pistol feature branch adds firing and traveling bullets, pending independent review, owner runtime acceptance and merge. Magic remains deferred. [Ranged, magic, and combat input](design/RANGED_MAGIC_COMBAT_INPUT.md)
+- PR #26 delivered shared input for slots 1–4. PR #27 delivered physical pistol firing and traveling bullets. Magic remains deferred. [Ranged, magic, and combat input](design/RANGED_MAGIC_COMBAT_INPUT.md)
 - [Player health, enemy damage and death](design/PR16_PLAYER_HEALTH_DAMAGE_DEATH.md) records the approved M57–M74 survivability decisions.
 - [Combat impact and feedback](design/PR17_COMBAT_IMPACT_FEEDBACK.md) records the approved M75–M90 requirements for contact bursts, enemy recoil, swing trails and combat audio.
 - [Combat balance and encounter evaluation](design/COMBAT_BALANCE_ENCOUNTER_EVALUATION.md) defines the Phase 1 playtest matrix, observation rubric, and exit criteria.
-- The owner approved **Phase 1 — CONDITIONAL PASS**. EVAL-01 is Minor, deferred, and non-blocking. Phase 2 planning is next. [Phase 1 evaluation results](design/PHASE_1_COMBAT_EVALUATION_RESULTS.md) · [Development roadmap](DEVELOPMENT_ROADMAP.md#11-immediate-next-steps)
+- The owner approved **Phase 1 — CONDITIONAL PASS**. EVAL-01 is Minor, deferred, and non-blocking. [Phase 1 evaluation results](design/PHASE_1_COMBAT_EVALUATION_RESULTS.md)
+- The authoritative owner-approved Phase 2 combat evaluation records **PASS** for all eight trials. [Phase 2 evaluation results](design/PHASE_2_COMBAT_EVALUATION_RESULTS.md) · [Development roadmap](DEVELOPMENT_ROADMAP.md#11-immediate-next-steps)
 - [Development-only encounter selector](design/COMBAT_ENCOUNTER_SELECTOR.md) records E11–E16 and the Decision 17 amendment to the Heavy-only key. PR #22 delivered the [standalone arena controls](#encounter-selection) used for the evaluation.
 - [Decision log](design/DECISION_LOG.md) indexes approved gameplay and evaluation decisions and links to their specifications.
 - [Godot metadata policy](GODOT_METADATA.md) describes how to handle resource metadata and run the read-only validator.

@@ -1,7 +1,7 @@
 # Factory ARPG — Development Roadmap
 
 **Status:** Planning reference — proposed roadmap, subject to owner approval and revision  
-**Updated:** 2026-11-21\
+**Updated:** 2026-11-22\
 **Repository:** `interneth3ro/factory-arpg`  
 **Target path:** `docs/DEVELOPMENT_ROADMAP.md`  
 **Engine:** Godot 4.7.2
@@ -52,7 +52,9 @@ Prove that the current combat mechanics feel responsive, legible, and enjoyable 
 
 The owner completed all 18 baseline attempts and approved **Phase 1 — CONDITIONAL PASS**. EVAL-01 (greatsword timing against the Pursuer) is Minor, deferred, and non-blocking. Further combat tuning is unnecessary before Phase 2 planning. [Evaluation results and owner disposition](design/PHASE_1_COMBAT_EVALUATION_RESULTS.md)
 
-PR #26 delivered the shared combat input foundation for slots 1–4 in the standalone arena. The owner subsequently authorized physical pistol combat. Its feature branch awaits independent review, owner runtime acceptance and merge. Magic is deferred pending design review. [Extension design and implementation status](design/RANGED_MAGIC_COMBAT_INPUT.md)
+PR #26 delivered the shared combat-style input foundation for slots 1–4 in the standalone arena. PR #27 delivered Physical Pistol Combat. Magic implementation remains deferred indefinitely pending further design review. [Combat extension design](design/RANGED_MAGIC_COMBAT_INPUT.md)
+
+The owner completed all eight trials of the **Phase 2 combat evaluation — PASS**. No immediate combat correction is required. Broader gameplay planning may proceed. The roadmap's integrated factory-loop exit gate remains open. [Phase 2 combat evaluation results](design/PHASE_2_COMBAT_EVALUATION_RESULTS.md)
 
 ### Exit gate
 

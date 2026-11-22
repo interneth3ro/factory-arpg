@@ -1,6 +1,6 @@
 # Factory ARPG — Development Roadmap
 
-**Status:** Planning reference — proposed roadmap, subject to owner approval and revision  
+**Status:** Phase sequence approved under CF30. Later content examples remain provisional.\
 **Updated:** 2026-11-22\
 **Repository:** `interneth3ro/factory-arpg`  
 **Target path:** `docs/DEVELOPMENT_ROADMAP.md`  
@@ -34,15 +34,15 @@ PR #16 is merged and cleaned up. PR #18 documented the [combat impact and feedba
 
 | Phase | Focus | Exit gate |
 | --- | --- | --- |
-| 1. Finish combat prototype | Readable, satisfying, testable melee combat | **CONDITIONAL PASS** — owner evaluation complete |
-| 2. Validate integrated factory loop | Exploration → Combat → Resources → Automation → Upgrades → Further exploration | The two defining gameplay pillars reinforce one another |
-| 3. Begin actual game production | Permanent opening region, home base, systems and content | A playable opening exists with persistent progression |
+| 1. Completed combat foundation | Three melee styles and the physical pistol in the standalone arena | Owner evaluated melee (conditional pass) and all eight follow-up combat trials (pass) |
+| 2. Permanent core game foundation | F1–F10 in the actual game | Explore, mine, store, save and resume safely with independent slots and a working regression arena |
+| 3. Integrated factory gameplay | Extend the permanent opening from manual gathering to integrated processing and remote extraction | A useful output or upgrade feeds further exploration or combat |
 | 4. Complete a vertical slice | A cohesive, representative segment of the intended game | A polished end-to-end experience demonstrates the game’s identity |
 | 5. Expand the game | Content, progression depth, world and systems | Iterative production against approved scope and quality gates |
 
-**Production transition:** The default switches from isolated prototypes to permanent game development **after Phase 2's integrated-loop gate**. This is a proposed transition policy, not a fixed date. Earlier integration into the permanent starting region remains a viable owner-approved alternative.
+**CF30 supersession.** Earlier planning placed a separate integrated factory-loop prototype gate before permanent production. CF30 moves that validation into the permanent game after its core foundation. The combat evaluations retain their historical phase names and outcomes. [Core Foundation decisions](design/DECISION_LOG.md#core-foundation-decisions)
 
-## 4. Phase 1 — Finish the combat prototype
+## 4. Phase 1 — Completed combat foundation
 
 ### Goal
 
@@ -50,11 +50,11 @@ Prove that the current combat mechanics feel responsive, legible, and enjoyable 
 
 ### Completed evaluation
 
-The owner completed all 18 baseline attempts and approved **Phase 1 — CONDITIONAL PASS**. EVAL-01 (greatsword timing against the Pursuer) is Minor, deferred, and non-blocking. Further combat tuning is unnecessary before Phase 2 planning. [Evaluation results and owner disposition](design/PHASE_1_COMBAT_EVALUATION_RESULTS.md)
+The owner completed all 18 baseline attempts and approved **Phase 1 — CONDITIONAL PASS**. EVAL-01 (greatsword timing against the Pursuer) is Minor, deferred, and non-blocking. The owner deferred further tuning unless integrated play reveals a responsiveness issue. [Evaluation results and owner disposition](design/PHASE_1_COMBAT_EVALUATION_RESULTS.md)
 
 PR #26 delivered the shared combat-style input foundation for slots 1–4 in the standalone arena. PR #27 delivered Physical Pistol Combat. Magic implementation remains deferred indefinitely pending further design review. [Combat extension design](design/RANGED_MAGIC_COMBAT_INPUT.md)
 
-The owner completed all eight trials of the **Phase 2 combat evaluation — PASS**. No immediate combat correction is required. Broader gameplay planning may proceed. The roadmap's integrated factory-loop exit gate remains open. [Phase 2 combat evaluation results](design/PHASE_2_COMBAT_EVALUATION_RESULTS.md)
+The owner completed all eight trials of the **Phase 2 combat evaluation — PASS**. No immediate combat correction is required. This completes the combat foundation for reuse in the permanent game. [Phase 2 combat evaluation results](design/PHASE_2_COMBAT_EVALUATION_RESULTS.md)
 
 ### Exit gate
 
@@ -68,63 +68,23 @@ The owner completed all eight trials of the **Phase 2 combat evaluation — PASS
 
 Full class rosters, bosses, every weapon category, large skill trees, exhaustive enemy variety, and final art/audio polish. These can be built in production unless a particular risk requires isolated validation.
 
-## 5. Phase 2 — Validate the integrated factory loop
+## 5. Phase 2 — Permanent core game foundation
 
-### Goal
+Build the permanent session and reusable combat-capable player, then give them persistent world records and a small handcrafted region connected to a separate home base. Prove player location and position restore early. Add the backpack, physical general storage and manual mining before completing autosaves and independent playthrough slots. The starting world is free of enemies during this phase. The standalone arena remains the combat regression environment.
 
-Test Factory ARPG's central proposition: **combat and exploration provide reasons to automate, while automation meaningfully changes what the player can do next**.
+**Exit gate.** F10 demonstrates the full trip from gathering to home storage and back, including interrupted mining, conservation of items and safe resume. The owner verifies independent slots and accepted arena behavior. The ten milestones and their individual acceptance gates are defined in the [foundation implementation plan](design/CORE_GAME_FOUNDATION_IMPLEMENTATION.md).
 
-### Minimal playable loop
+## 6. Phase 3 — Integrated factory gameplay
 
-1. Explore a small area and confront an obstacle or enemy.
-2. Discover or acquire a resource.
-3. Haul the resource home for integrated smelting and standardized component crafting.
-4. Produce a useful upgrade or capability.
-5. Return to exploration and experience a meaningful difference.
+Build on the accepted permanent foundation. Preserve the approved loop of exploration, combat, resources, automation, upgrades and further exploration. The [reconciled opening progression](design/EARLY_GAME_GATHERING_AND_AUTOMATION.md#7-revised-opening-progression-rc1-rc6rc8) governs the factory sequence.
 
-### Suggested minimal scope (provisional)
+1. Haul the two introductory materials home and deposit them into the chosen eligible storage. The base integrates smelting and standard component crafting through dedicated inventories. RC5 keeps general storage isolated.
+2. Use integrated crafting to manufacture the first remote extractor, the first major automation milestone. Deploy it by a compatible deposit, collect its output and haul ore home.
+3. Optionally extend local output capacity with a conveyor to nearby industrial storage. Preserve finite capacity and backpressure. Specialized physical manufacturing follows when a process warrants it.
 
-- One resource type, with additional resources only if the test cannot be meaningful otherwise.
-- Test the remote extractor as the first major automation milestone. The player can collect its output and haul it home. A conveyor to nearby industrial storage is optional.
-- Basic placement, interaction, production status, and recovery of mistakes.
-- One upgrade with an observable gameplay consequence.
-- A compact exploration/combat objective that closes the loop.
+**Exit gate.** The player can explain the benefit of automation, operate the loop without developer intervention and use its output for an observable gain in subsequent exploration or combat. Detailed factory implementation still requires scoped approval.
 
-Prototype only the base services needed to demonstrate the upgrade. The full home-base order, reservation, and upgrade systems can be introduced progressively in production. Avoid complete logistics networks, research trees, recipe catalogs, or broad base-building systems at this stage.
-
-### Exit gate
-
-- The player understands why to gather resources and automate.
-- Production operates reliably and can be understood without developer intervention.
-- The upgrade has an observable effect on subsequent exploration or combat.
-- The loop is interesting enough to justify expanding into permanent game content.
-- Major architectural risks affecting production are identified and addressed or explicitly accepted.
-
-**Integration choice:** This may be tested in a contained prototype area or built directly into the future opening region if the owner prefers to reduce disposable work. Decide before implementation.
-
-## 6. Phase 3 — Begin actual game production
-
-### Goal
-
-Move from proving systems to building the real opening experience. **Production begins here; the game need not be feature-complete.**
-
-### Initial production targets
-
-- Permanent opening environment and small explorable region.
-- First home base or shelter with room for early expansion.
-- Reusable combat, resource, and production foundations adapted from prototypes.
-- Introduce permanent recipes and a small set of upgrades as the player progresses from integrated smelting and component crafting to remote extraction. See the [approved opening progression](design/EARLY_GAME_GATHERING_AND_AUTOMATION.md#7-revised-opening-progression-rc1-rc6rc8).
-- Introductory objectives connecting exploration, fighting, and reconstruction.
-- Basic progression choices and persistent save/load behavior.
-- Maintainable content and testing workflows appropriate for ongoing production.
-
-### Exit gate
-
-A player can start a new game, follow an introductory objective, explore, fight, automate a useful product, make meaningful progress, save, and resume. The experience uses permanent content rather than relying on a standalone test arena.
-
-**Policy shift:** From this phase onward, build features in the actual game by default. Use isolated experiments only for a specific high-risk uncertainty, and plan their integration or retirement.
-
-## 7. Phase 4 — Complete a vertical slice
+## 7. Phase 4 — Representative vertical slice
 
 ### Goal
 
@@ -173,8 +133,8 @@ Examples:
 | Feature | Default approach |
 | --- | --- |
 | Core melee and enemy behavior | Existing prototype foundation |
-| Combat feel and balance | Use the completed Phase 1 evaluation as the baseline |
-| Minimal integrated automation loop | Essential focused validation |
+| Combat feel and balance | Use the completed melee and follow-up combat evaluations as the baseline |
+| Minimal integrated automation loop | Validate in the permanent game after the foundation |
 | Every class, weapon, and enemy | Build incrementally in production |
 | Complete crafting and technology trees | Build incrementally in production |
 | Advanced logistics | Prototype only a specific unresolved risk |
@@ -193,8 +153,8 @@ Examples:
 
 ## 11. Immediate next steps
 
-1. Begin Phase 2 planning. Scope the minimal integrated loop and decide whether to use a separate test space or the permanent opening region. Implementation requires separate owner approval.
-2. At Phase 2 exit, explicitly approve the production transition and begin building the actual game.
+1. Independently review the documentation PR for CF1–CF31. The owner controls merge and cleanup.
+2. After that PR is merged and cleaned up, F1 requires a fresh Codex session and separate owner authorization from synchronized `main`. Use the [F1–F10 plan](design/CORE_GAME_FOUNDATION_IMPLEMENTATION.md) to review readiness and close each milestone.
 
 ## 12. Roadmap maintenance
 

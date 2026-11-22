@@ -16,6 +16,12 @@ Keep design decisions and implementation details versioned alongside the project
 
 ## Approved specifications
 
+The **permanent core game foundation** follows the completed combat foundation. These three specifications record CF1–CF31 as approved design. F1–F10 are planned milestones.
+
+- [Architecture](design/CORE_GAME_FOUNDATION_ARCHITECTURE.md) defines the shared player, session and location lifetimes, stable identities, input priority and save contracts.
+- [Gameplay](design/CORE_GAME_FOUNDATION_GAMEPLAY.md) defines the handcrafted region and home base, interaction, inventory and general storage, and manual mining.
+- [Implementation and acceptance](design/CORE_GAME_FOUNDATION_IMPLEMENTATION.md) sets the dependency order, evidence and owner runtime checks for each milestone. [Decision register](design/DECISION_LOG.md#core-foundation-decisions) · [Roadmap](DEVELOPMENT_ROADMAP.md#3-roadmap-at-a-glance)
+
 Frozen specifications describe approved behavior and its rationale. They guide implementation and acceptance checks. Proposed approaches, provisional tuning, and deferred features are labeled separately. Keep the approved baseline intact when implementation behavior differs.
 
 When implementation suggests a design change, identify the affected specification and decision, describe the proposed deviation, and obtain owner approval before changing approved behavior. After approval, update the specification and decision log together and preserve the history of any superseded decisions.

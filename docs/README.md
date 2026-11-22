@@ -32,7 +32,7 @@ Implementation documentation describes how the current code works. Refactors tha
 
 ### Permanent game entry and session lifecycle
 
-F1 is implemented on the feature branch and awaits owner runtime acceptance and merge. Run Project (F5 in the editor) opens the permanent entry with **Start Session**. Starting displays the temporary F1 location. **End Session** returns to the entry screen. [Permanent game entry](../scenes/game/permanent_game_entry.tscn)
+Run Project (F5 in the editor) opens the permanent entry with **Start Session**. Starting displays the temporary F1 location. **End Session** returns to the entry screen. [Permanent game entry](../scenes/game/permanent_game_entry.tscn)
 
 The entry builds a session off-tree. The session root instantiates the placeholder under its `ActiveLocation` child. Only after that succeeds does the entry attach the session and show **End Session**. A failed start frees the candidate, displays an error and enables another attempt. On end, the session frees its location and the entry frees the session before enabling **Start Session**. Each start creates both instances anew. [Entry lifecycle](../scenes/game/permanent_game_entry.gd) · [Session root](../scenes/game/game_session_root.gd) · [Placeholder scene](../scenes/game/f1_placeholder_location.tscn)
 

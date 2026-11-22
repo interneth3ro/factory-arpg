@@ -1,67 +1,51 @@
-# Factory ARPG — Early-Game Gathering, Workshop, and Automation Design
+# Factory ARPG — Early-Game Gathering, Integrated Home Base, and Automation Design
 
-**Status:** Approved design decisions consolidated for a documentation-only PR\
-**Decision scope:** FM8–FM14 and EG1–EG21\
+**Status:** Approved design decisions\
+**Decision scope:** FM8–FM14, EG1–EG21, HB1–HB13, RC1–RC9\
 **Project:** `interneth3ro/factory-arpg` (Godot 4.7.2)\
-**Last consolidated:** 2026-11-22\
-**Implementation status:** Design only; no implementation authorized by this document.
+**Reconciled:** 2026-11-22\
+**Implementation status:** Design only. This specification does not authorize implementation.
 
-> This specification records decisions approved during brainstorming. Illustrative item names, recipe quantities, pixel distances, capacities, and production rates are **not** approved balance values. EG22 (wireless pairing and operation) and subsequent wireless mechanics are explicitly out of scope.
+> This is the current intended design, not an additive appendix to the old workshop plan. The [decision log](DECISION_LOG.md#early-game-reconciliation) preserves the original approvals and traces their revisions. Illustrative recipes, quantities, capacities, rates, and distances are **not** approved balance values. Advanced manufacturing and logistics remain provisional. EG22 is not approved.
 
-## 1. Vision and design principles
+## 1. Vision and governing architecture
 
-Factory ARPG is an isometric post-apocalyptic fantasy action RPG and factory automation hybrid. Players explore handcrafted regions and dungeons, fight enemies, discover technology, collect resources, and build a persistent home-base factory.
+Factory ARPG is an isometric post-apocalyptic fantasy action RPG. Players explore handcrafted regions and dungeons, fight enemies, discover technology, and develop a persistent home-base factory. **Adventure reveals possibilities. Automation makes those possibilities reproducible. Engineering gives the player control over the outcome.**
 
-**Adventure reveals possibilities. Automation makes those possibilities reproducible. Engineering gives the player control over the outcome.**
+- Prioritize responsive combat, intuitive controls, legible systems, practical construction, and manageable implementation complexity; no tower-defense obligation, forced factory defense, recurring recapture chores, or troop management.
+- Use handcrafted finite world scenes. Basic resources are inexhaustible but throughput-limited; rare resources may be finite. Exhausted deposits remain visible and machinery recoverable.
+- Remote production persists while scenes are unloaded under the same throughput, capacity, and material-conservation constraints as loaded areas.
+- The home base is a persistent scene and connected buildable area, with **integrated smelting and standardized component crafting**, not an obligatory separate smelter-to-crafter conveyor chain.
+- The home base has distinct raw-material intake, refined-material, and component storage; integrated services can access eligible downstream storage automatically. Separate **general storage** is completely isolated from production and automatic construction access at the start.
+- Physical conveyor logistics remain important for remote extractors and later specialized manufacturing. The opening conveyor is optional extractor-to-industrial-storage infrastructure, not a required smelter-to-crafter link.
+- Integrated crafting can manufacture complete **basic deployable industrial equipment**, including early extractors, industrial containers, and conveyor segments. Advanced industrial manufacturing mechanics are deliberately deferred.
+- Equipment preparation and final RPG equipment engineering are separate: the base may prepare and reserve components, but **never automatically final-crafts a weapon or armor item**.
+- Basic wireless transportation is a future visible research direction, not an early-game transport mechanism. EG22 and detailed wireless operation remain undecided.
 
-- Prioritize intuitive controls, responsive combat, straightforward construction, and manageable implementation complexity.
-- Factory development supports exploration; it is not tower defense. Do not impose forced factory defense, recurring recapture chores, or troop-management systems.
-- Use handcrafted, finite world scenes rather than infinite procedural terrain.
-- Basic resources remain inexhaustible but throughput-limited; rare resources may be finite. Exhausted deposits remain visible, and installed machinery can be recovered.
-- Remote production persists while scenes are unloaded, subject to the same constraints as loaded production.
-- The home base is a dedicated persistent scene with a continuous connected buildable area, initially containing a smelter, crafting/assembly station, and storage.
-- Favor physical, conveyor-first logistics with fixed machine ports, explicit splitters/mergers and round-robin distribution; conveyor construction supports drag-to-build, automatic corners, and switchable horizontal-first/vertical-first L-shaped routes.
-- Basic wireless transportation eventually uses physical transmitter/receiver machines, dedicated pairs, finite buffers, throughput and backpressure. Detailed wireless mechanics are deferred.
+## 2. Reconciliation authority and historical decisions
 
-## 2. Previously approved construction and material handling (FM8–FM14)
+The following supersessions apply to the original early-game specification. They preserve the historical approvals without making obsolete workshop behavior normative:
 
-| ID | Approved option | Decision |
+| Original decision | Current authority | Effect |
 |---|---|---|
-| FM8 | B | Preserve materials during compatible conveyor modifications; safely recover contents during removal. |
-| FM9 | B | Dismantling recovers machines intact rather than converting them into raw construction materials. |
-| FM10 | C | Hybrid machine transport: smaller machinery is portable; larger industrial machinery eventually requires specialized construction/transport capabilities. |
-| FM11 | C | Committed local relocation safely cancels active production, returns unconsumed materials, and discards partial production progress. Canceling an uncommitted move leaves the original machine unchanged. |
-| FM12 | B | Dismantling recovers into player inventory or accessible storage. Insufficient capacity blocks dismantling without loss. |
-| FM13 | A | Recovered/dismantled machines reset recipes, operating settings, and connections when redeployed. Local relocation is distinct and preserves configuration. |
-| FM14 | B | Home-base construction draws from player inventory and accessible local storage; remote construction uses physically available materials, not unrestricted global storage. |
+| EG1 | HB1–HB2, RC1 | First major automation milestone is the remote extractor, not a smelter-to-crafter conveyor. |
+| EG8 | HB1–HB2, RC1 | Preserve a two-material introduction but process through integrated base services. |
+| EG9 | HB2, RC1 | No manual ingot transfer or conveyor between integrated smelting and crafting. |
+| EG10–EG13 | HB3–HB11, RC2 | Original single-recipe machine/buffer specifics do not govern integrated production or bind future specialized machinery. Preserve broad compatibility, safety, predictable transitions, finite capacity and backpressure principles. |
+| EG20 | RC4–RC5 | Player deposits into a chosen dedicated storage; no initial automatic sorting. General storage is isolated. |
+| FM14 | RC3, RC5 | Construction draws from player inventory and **eligible** connected local storage, never isolated general storage. Reservation override details are provisional. |
 
-These decisions remain in force alongside the early-game rules below. In particular, **local relocation** and **dismantle/redeploy** are distinct operations.
+**Still operative:** FM8–FM13; EG2–EG7; EG14–EG19; EG21, except where their descriptions refer to the obsolete first-workshop conveyor. RC9 extends EG19's backpressure behavior to connected industrial storage.
 
-## 3. Approved early-game decisions (EG1–EG21)
+## 3. Construction, recovery, and inventory (FM8–FM14, EG7, RC3, RC5)
 
-| ID | Approved option | Decision |
-|---|---|---|
-| EG1 | C | Small integrated automation milestone: manual gathering and processing, a short home-base conveyor connection, then a modest automated extractor initially requiring manual output collection. |
-| EG2 | B | Discrete manual extraction cycles; interrupted partial-cycle progress is retained on the deposit. |
-| EG3 | A | Stationary mining; movement interrupts extraction without losing saved deposit progress. |
-| EG4 | A | Direct cursor targeting of eligible deposits, subject to range and unobstructed line of sight. |
-| EG5 | B | Lock mining target while primary input is held; cursor movement alone does not switch deposits. |
-| EG6 | B | Contextual world-space mining feedback rather than a persistent detailed mining HUD. |
-| EG7 | C | Hybrid slot-based inventory with item-handling distinctions and automatic mining collection. |
-| EG8 | B | Two-material opening workshop chain with processing and component assembly. |
-| EG9 | B | Guided manual-to-automated workshop transition. |
-| EG10 | B | Continuous production of one selected machine recipe whenever operating conditions permit. |
-| EG11 | C | Strict recipe-based conveyor acceptance; flexible manual insertion of machine-supported materials. |
-| EG12 | B | Finish an active production cycle before switching recipes; idle machines switch immediately. |
-| EG13 | C | Shared machine buffers with active-recipe input-capacity protection. |
-| EG14 | B | Physical conveyor delivery and backpressure with clear blockage feedback and recovery. |
-| EG15 | B | Contextual conveyor inspection and item retrieval. |
-| EG16 | B | Adjacent extractor placement with a visible direct connection to a compatible deposit. |
-| EG17 | B | Shared deposit throughput, equal allocation among active automated extractors, redistribution of unused capacity. |
-| EG18 | C | Manual mining receives temporary priority within the same deposit throughput limit. |
-| EG19 | B | Moderate fixed extractor output buffer with safe backpressure and unattended operation. |
-| EG20 | B | Player-carried remote resources with convenient home-base bulk unloading. |
-| EG21 | C | Hybrid wireless research unlock: foundational transportation visible through normal research, with exploration contributions and advanced discoveries. |
+- Compatible conveyor edits preserve contents; removal recovers contents safely (FM8). Dismantling recovers intact machines (FM9). Smaller machinery can be portable; larger industrial machinery eventually requires specialized transport or construction capabilities (FM10).
+- Committed local relocation safely cancels production, returns unconsumed materials and discards partial progress; canceling an uncommitted move leaves the machine unchanged (FM11).
+- Dismantling requires enough player-inventory or eligible storage capacity and must not destroy items (FM12). Dismantled/redeployed machinery resets recipe, settings, and connections; local relocation preserves configuration (FM13).
+- Home-base construction can use carried items and eligible accessible **production-connected** local storage; remote construction requires physically available materials. Isolated general storage is not automatically eligible (FM14, RC5).
+- Use hybrid slot-based inventory with stackable resources and ordinary components, with differentiated handling for weapons, armor, tools, portable machines, and large machinery. Exact slot and stack counts are open.
+- Manual mining awards enter inventory automatically when space permits. Full inventory pauses safely; recovery, retrieval, and transfer operations must not lose or duplicate materials.
+- **Provisional RC3:** Automatic production respects reservations; direct construction/crafting ordinarily uses unreserved materials. If reserved materials are needed, present an explicit player-approved reallocation with clear consequences. Protect ready-for-assembly commitments and preserve state if a transaction fails. Future cross-system design may supersede the detailed interaction.
 
 ## 4. Handheld mining laser and deposits (EG2–EG6, EG18)
 
@@ -89,78 +73,68 @@ These decisions remain in force alongside the early-game rules below. In particu
 
 **Unapproved tuning:** An approximately **120-world-pixel** mining range was proposed solely as a starting point for testing. Measure range against a valid mineable point on deposit geometry rather than automatically using the deposit center; collision geometry, line-of-sight details, and exact range need runtime validation.
 
-## 5. Inventory, recovery, and collection (EG7, FM10–FM14)
+## 5. Home-base storage and manual material handling (HB2, RC4–RC5, RC7)
 
-- Use familiar slot-based inventory with stackable raw resources and ordinary components.
-- Weapons, armor, tools, portable machines, and large industrial machinery have appropriate distinct handling rules. Exact slot counts, stack sizes, and machine-carrying capacity are undecided.
-- Completed manual mining cycles collect automatically when capacity allows. Do not silently discard or drop resources when full.
-- All retrieval and recovery operations preserve items: failed transfers leave source items intact, with no loss or duplication.
-- Home-base construction can access inventory and eligible local storage; remote construction cannot access global storage without physical logistics.
-- Dismantling and local relocation obey FM8–FM13, including safe material recovery and the distinction between preserved configuration on relocation and reset configuration on redeployment.
+| Storage | Initial role | Automatic access |
+|---|---|---|
+| Raw-material intake | Player-deposited ore and other smelting feedstock | Integrated smelting |
+| Refined-material storage | Smelting output and refined inputs | Integrated crafting |
+| Component storage | Standard and prepared components | Eligible integrated production goals |
+| General-purpose storage | Inventory relief, spare materials, loot and safekeeping | **None**: no smelting, crafting, research, reservations, construction or conveyor access |
+| Industrial storage container | Deployable local factory storage, including remote extraction sites | Physical conveyor input/output; not a global link to home base |
 
-## 6. First workshop chain and teaching sequence (EG1, EG8–EG9)
+- Players select the appropriate storage and may bulk-deposit compatible items into that chosen inventory. **No automatic category sorting or central deposit routing at the start.** Bulk deposit leaves equipped items, tools, portable machines, and player-protected items in inventory.
+- General storage is deliberately independent. Materials there must be manually retrieved and moved into eligible production storage before integrated services can use them. A future limited research-enabled connection is only a possibility, not an approved feature.
+- Transfers obey capacity, preserve items, and leave non-fitting items at their source. General storage is not a hidden construction or research material source.
+- Dedicated inventories have visible physical identities; integrated smelting can deposit refined output into refined storage and integrated crafting can draw from it without a player carrying ingots between facilities.
 
-### Two-material introductory chain
+## 6. Integrated smelting, crafting, and production goals (HB1–HB11)
 
-The player manually gathers two basic resources, processes them at the starting smelter, and manufactures components at the crafting/assembly station. An **illustrative, unapproved** example is:
+### Integrated smelting
 
-- Iron Ore → Iron Ingot → Metal Plate
-- Copper Ore → Copper Ingot → Conductive Wire
-- Metal Plate + Conductive Wire → Basic Mechanism
+- Smelting operates as a home-base service with dedicated raw input and refined output storage (HB1–HB2).
+- Players may create **finite** processing instructions (e.g., process a specified amount) or **continuous** instructions (process while eligible unreserved inputs and output space exist).
+- One initial processing channel schedules eligible instructions **round-robin**; missing input or blocked output is skipped without deleting instructions. Finite quantities count down; continuous instructions persist (HB3).
+- Finite instructions reserve available raw inputs and automatically reserve later deposits up to outstanding requirements; they may be created before fully funded. Continuous instructions reserve nothing and use only unreserved inputs. Reducing/canceling an order releases unused reservations (HB4).
+- Upgrades may improve processing speed, batch capacity, and parallel channels; smaller batches remain possible. Active cycles finish under their starting parameters when upgrades occur. Multiple channels share inputs/outputs and observe fair scheduling (HB5). Exact rates and upgrade tiers are open.
 
-Names, ingredient quantities, recipes, and times remain provisional.
+### Integrated component crafting
 
-### Opening progression
+- Supports finite and continuous basic/standard component orders; finite orders reserve ingredients and continuous orders use unreserved inputs (HB6).
+- Research and base upgrades may expand the set of **standardized** components supported, separately from speed, batch and parallel-capacity upgrades. Recipes requiring genuinely specialized processes remain physical-manufacturing candidates (HB11).
+- Integrated crafting can also produce **complete basic deployable industrial equipment**, such as extractors, industrial storage containers, and conveyor segments, through deterministic recipes (RC8). This does not define the fabrication method for advanced industrial machinery.
 
-1. Discover and inspect the starting smelter, crafting/assembly station, and storage.
-2. Gather two basic resources manually and process an initial batch in the smelter.
-3. Manually carry processed materials to the crafting station and make useful initial components.
-4. Build a short conveyor from the smelter output port to the crafting station input port.
-5. Run another compatible batch and visibly observe automated material transfer.
-6. Manufacture and deploy the first modest automated extractor; initially collect its output manually.
+### Goal-directed preparation and reservations
 
-The first conveyor must replace a real manual transfer. Keep the opening route simple and single-material when needed; do not require splitters, mergers, filters, or complicated routing to complete the introductory milestone. Teach through usable machines and visible goals rather than lengthy forced tutorials.
+- A selected equipment design can recursively identify required refined materials, intermediate parts and standard components. The base queues eligible integrated work and identifies missing specialized requirements, without claiming automatic control of advanced machines (HB7).
+- Multiple goals have **player-ordered material-allocation priorities**. Higher-priority goals receive available materials first; changing priority may reallocate unconsumed reservations with clear feedback, but does not interrupt active production cycles. Smelting processing time remains governed by HB3 round-robin scheduling (HB9).
+- Prepared components remain in ordinary component storage **reserved for the goal**. When all requirements are present, the goal becomes **Ready for Assembly**; ready reservations persist across priority changes until the player crafts, modifies, or cancels the goal (HB10).
+- Canceling a goal releases unused reservations while preserving manufactured components. Partially funded goals wait for new eligible deposits. Exact multi-goal allocation edge cases remain open.
+- The player deliberately initiates **final weapon/armor crafting**, selecting blueprint, materials and available engineering methods; these influence visible bounded random outcome ranges. Preparation alone never produces the final RPG equipment (HB6–HB8). Exact RNG, item statistics and advanced experimentation are not finalized.
 
-## 7. Machine recipes, buffers, and production (EG10–EG13)
+## 7. Revised opening progression (RC1, RC6–RC8)
 
-### Continuous operation
+1. Discover the home base's dedicated storage and integrated processing interfaces.
+2. Mine two introductory resource types manually with the handheld mining laser; deposit each into the appropriate raw-material intake.
+3. Configure smelting instructions and use integrated crafting to produce standard components. Example only: Iron Ore → Iron Ingot → Metal Plate; Copper Ore → Copper Ingot → Conductive Wire; both → Basic Mechanism.
+4. Manufacture the first **extractor** through integrated crafting; transport and deploy it beside a compatible ore deposit in the world.
+5. Observe unattended ore production into the extractor's finite output buffer; manually collect and haul ore back to the home base, depositing it into raw-material storage.
+6. Optionally craft and deploy **industrial storage containers** and conveyor segments to extend local extractor output capacity. The extractor works without these additions.
+7. Introduce specialized physical manufacturing when it offers a meaningful process. No initial smelter-to-crafter conveyor is required.
 
-- Each machine has one active recipe. It automatically repeats production while required inputs, output capacity, and operating conditions are available.
-- The machine pauses on missing inputs, blocked output, or other unmet operating requirements; it resumes when conditions permit.
-- Manual insertion and removal remain possible when conveyors are attached.
-- Machine interfaces should expose the active recipe, inputs, outputs, progress, and understandable operating/blockage states.
+The **first major automation milestone is the extractor**. Integrated processing teaches automated transformation beforehand. Keep opening goals useful and avoid excessive hauling or forced tutorials.
 
-### Input compatibility
+## 8. Physical conveyors and industrial storage (EG14–EG15, RC6–RC9)
 
-- Conveyor-delivered materials are accepted only if required by the **currently active recipe**; incompatible items remain on the conveyor and obey backpressure.
-- Players may manually insert other materials supported by the machine. Such materials remain stored, unconsumed by unrelated recipes, and manually retrievable.
+- Build conveyors by dragging between fixed ports, with automatic corners and a choice of horizontal-first or vertical-first L-shaped routes. Explicit splitters and mergers support branching, with round-robin distribution at splits.
+- Physical conveyors move items between compatible ports and industrial containers; incompatible or blocked destinations cause visible backpressure, not deletion, bypass or teleportation.
+- Inspect any segment, even an empty one, to see its direction, contents, and the cause of a blockage. Retrieving an item transfers it in full to inventory if it fits. Otherwise it stays on the belt. Whether inspection pauses moving items is provisional.
+- The first optional conveyor connects a remote extractor to nearby industrial storage. Industrial storage is **not** the isolated home-base general storage and has no implicit link to base production.
+- Extractor output may move into connected storage while capacity and physical throughput permit. If its internal buffer fills because downstream transport or storage cannot accept more, extraction pauses and resumes when capacity frees (RC9).
+- Loaded and unloaded operation must conserve materials and respect extraction rate, conveyor transfer capacity, finite storage, and backpressure. Unloaded simulation may be aggregated rather than per-item if observable behavior is equivalent.
+- Detailed port filtering, route algorithms, advanced goal-aware routing and specialized machine buffering are **deferred** (RC2, HB13).
 
-### Recipe switching
-
-- A requested change during an active cycle becomes pending. The machine completes only that current cycle, safely deposits its output, then activates the new recipe.
-- If no cycle is active, the change takes effect immediately.
-- A blocked completed output delays the pending switch until it can be deposited; nothing is deleted.
-- Previously stored inputs and outputs remain in their buffers across recipe changes.
-
-### Buffer allocation
-
-- Inputs and outputs use shared capacity. The active recipe receives automatic protection of sufficient input space for its required ingredients, initially targeting one complete cycle.
-- Ingredients already present count toward that protection. Players need not configure reservations manually.
-- Recipe changes update protection without deleting or ejecting contents. If existing contents prevent the required protected capacity, retain them and clearly report the blocked condition.
-- Output buffers use shared capacity without automatic per-recipe reservations; full outputs impose backpressure.
-
-Exact machine buffer sizes, reserved-space calculations in edge cases, and production timing are not approved numbers.
-
-## 8. First conveyor and direct interaction (EG14–EG15)
-
-- The first conveyor connects a smelter output port to a compatible crafting-station input port and physically moves completed items.
-- Incompatible items stop at the destination and remain on the conveyor; blocked deliveries create backpressure upstream. No automatic bypass, teleportation, deletion, or implicit diversion occurs.
-- Contextual feedback identifies the blocked item and cause. Recovery can involve changing the recipe, retrieving the item, or changing the route.
-- Players use standard contextual interaction on a conveyor segment to inspect its contents, direction/status, and blockages, and retrieve an item without dismantling the belt.
-- Retrieval is capacity-checked and atomic: the item moves completely to inventory or remains on the conveyor. Empty segments remain inspectable.
-- Whether opening inspection temporarily holds a moving item is **provisional**, not a finalized timing/concurrency rule.
-
-## 9. First automated extractor and deposit capacity (EG16–EG19)
+## 9. Automated extractors and deposit capacity (EG16–EG19, RC9)
 
 ### Placement and operation
 
@@ -168,7 +142,7 @@ Exact machine buffer sizes, reserved-space calculations in edge cases, and produ
 - Placement requires a clear footprint, a deposit within extraction reach, and an unobstructed direct connection. The connection forms automatically and is visibly represented.
 - The extractor autonomously advances discrete extraction cycles and places completed resources in an internal output buffer.
 - A full buffer pauses production safely; freeing capacity automatically resumes it without losing materials or partial-cycle progress.
-- The extractor can later feed conveyors and wireless logistics without replacement.
+- The same extractor can feed an optional early conveyor to nearby industrial storage and can support wireless logistics once researched.
 
 ### Shared throughput
 
@@ -183,20 +157,11 @@ Exact machine buffer sizes, reserved-space calculations in edge cases, and produ
 - The basic extractor has a **moderate fixed** output buffer, sized through testing to support useful unattended production while leaving later logistics meaningful.
 - **Collect Available** transfers as much output as the player's inventory can accommodate; leftovers remain in the extractor.
 - Production obeys the same throughput, capacity, and pause rules in loaded and unloaded scenes. Being away cannot bypass limits or create extra resources.
-- A full remote extractor is a normal paused state, not an emergency demanding intrusive alerts or mandatory maintenance.
+- A full remote extractor or connected industrial storage is a normal paused state, not an emergency demanding intrusive alerts or mandatory maintenance.
 
 **Unapproved tuning:** Extractor rates, deposit capacities, buffer sizes, reach, and unattended-duration targets remain provisional. Prior examples such as 20/30/60 ore per minute or 40-item buffers were illustrative only.
 
-## 10. Early remote collection and home-base unloading (EG20)
-
-- Before wireless logistics, players physically visit remote extractors, collect available resources into inventory, and carry them home.
-- At the home base, **Deposit Resources** bulk-transfers eligible raw materials and ordinary components into accessible storage, subject to capacity.
-- Equipped items, tools, portable machines, and player-protected items are excluded from automatic bulk depositing.
-- Items that do not fit remain in inventory; nothing is dropped, lost, or duplicated.
-- Remote storage is physically local; it cannot access home-base inventory through an implicit global link.
-- Early resource and crafting requirements should avoid excessive repeated hauling trips.
-
-## 11. Wireless research boundary (EG21 only)
+## 10. Wireless research boundary (EG21 only)
 
 - **Approved:** Basic wireless resource transportation is a visible, achievable goal in the technology tree, unlockable through normal research and workshop production.
 - Exploration discoveries may contribute to foundational understanding and reveal specialized or advanced wireless technologies, without making one obscure artifact a mandatory bottleneck for basic transportation.
@@ -204,19 +169,26 @@ Exact machine buffer sizes, reserved-space calculations in edge cases, and produ
 - **Not decided here:** Pairing interaction, endpoint relocation/removal behavior, transmission timing, energy requirements, range, network routing, connection UI, and other wireless operational rules.
 - **EG22 is not approved and must not be inferred from illustrative diagrams or earlier brainstorming suggestions.**
 
-## 12. Open questions and provisional details
+## 11. Specialized manufacturing and future logistics boundary (HB11–HB13, RC2–RC3)
 
-The following are not approved implementation requirements:
+- The direction in HB11–HB13 is approved. Detailed advanced manufacturing and logistics mechanics remain provisional.
+- Integrated standardized manufacturing expands with research, but some processes require dedicated physical machines and material transportation. Classify by required process rather than rarity (HB11).
+- Specialized machines use physical conveyor connections and convenient storage interfaces; their detailed behavior is **not** specified here (HB12).
+- Automatic **goal-aware routing** is a future capability direction, not an opening-game requirement or a finalized routing algorithm. The player initially builds and configures physical infrastructure; later research may enable coordination (HB13).
+- Do not infer exact port filtering, machine discovery, buffer structures, reservation tracking in transit, cancellation handling, or factory-wide priority algorithms from the conceptual direction.
+- Preserve material safety and clear feedback; revisit cross-system rules during dedicated advanced-manufacturing design.
 
-- Exact mining range (120 world pixels was an illustrative starting point), target geometry, collision/LOS tolerances, and visual-effect timings.
-- Inventory size, stack limits, portable-machine capacity, and precise protected-item UX.
-- Final resource/component names, recipes, ingredient ratios, machine rates, and production times.
-- Machine input/output capacities, precise reservation edge cases, and item-buffer transaction timing.
-- Conveyor speed, per-segment item occupancy, interaction pauses, and detailed blockage/retrieval UX.
-- Extractor footprint, connection reach, output capacity, throughput numbers, and balancing of unattended collection intervals.
-- Exact loaded/unloaded production simulation architecture and numerical integration behavior.
-- Wireless pairing, operation, endpoint management, and subsequent wireless-network decisions (beginning with EG22).
+## 12. Open questions, provisional details and authority limits
+
+- Exact resource names, recipes, crafting costs, smelting/crafting throughput, batch sizes, channel counts, storage capacity, extractor output capacity, conveyor speed and physical dimensions.
+- Mining range (approximately 120 world pixels was only a proposed test starting point), valid target geometry, LOS/collision tolerance, and VFX timing.
+- Inventory size, stack rules, protected-item UI, deployable-equipment transport constraints, and industrial container dimensions.
+- Detailed reservation contention, partial funding, reallocation UX, goal cancellation during active production, and atomicity edge cases.
+- Eligible construction inventories beyond the isolation of general storage; detailed RC3 override flow is provisional.
+- Specialized machinery recipes, production cycles, buffers, routing and advanced engineering; no detailed advanced-manufacturing implementation is authorized by HB11–HB13.
+- Loaded/unloaded remote simulation algorithm and exact numerical integration behavior; equivalence of outcomes is required.
+- Timing and details of wireless transport, including EG22 pairing, endpoint relocation/removal, range, energy, network UI and operation.
 
 ## 13. Documentation and implementation boundary
 
-This document is intended for a **documentation-only specification PR**. It does not authorize gameplay implementation, new assets, Codex work, or other repository changes. After the specification is reviewed and merged, implementation must be separately authorized from synchronized `main`, following the project's normal PR, independent review, and Godot runtime-acceptance workflow.
+This revision records design decisions only. It does **not** authorize gameplay implementation, new assets, or other code changes. After documentation review and owner merge, implementation requires separate authorization from synchronized `main`, independent review, and Godot runtime acceptance according to the project's workflow.

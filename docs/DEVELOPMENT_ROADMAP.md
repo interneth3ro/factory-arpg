@@ -78,19 +78,19 @@ Test Factory ARPG's central proposition: **combat and exploration provide reason
 
 1. Explore a small area and confront an obstacle or enemy.
 2. Discover or acquire a resource.
-3. Extract and process it with a minimal machine chain.
+3. Haul the resource home for integrated smelting and standardized component crafting.
 4. Produce a useful upgrade or capability.
 5. Return to exploration and experience a meaningful difference.
 
 ### Suggested minimal scope (provisional)
 
 - One resource type, with additional resources only if the test cannot be meaningful otherwise.
-- One or two machines and a simple production connection or transfer method.
+- Test the remote extractor as the first major automation milestone. The player can collect its output and haul it home. A conveyor to nearby industrial storage is optional.
 - Basic placement, interaction, production status, and recovery of mistakes.
 - One upgrade with an observable gameplay consequence.
 - A compact exploration/combat objective that closes the loop.
 
-Choose the smallest implementation that proves the interaction. Avoid complete logistics networks, research trees, recipe catalogs, or broad base-building systems at this stage.
+Prototype only the base services needed to demonstrate the upgrade. The full home-base order, reservation, and upgrade systems can be introduced progressively in production. Avoid complete logistics networks, research trees, recipe catalogs, or broad base-building systems at this stage.
 
 ### Exit gate
 
@@ -113,7 +113,7 @@ Move from proving systems to building the real opening experience. **Production 
 - Permanent opening environment and small explorable region.
 - First home base or shelter with room for early expansion.
 - Reusable combat, resource, and production foundations adapted from prototypes.
-- First permanent machines, recipes, and a small set of upgrades. See the approved [opening workshop chain and teaching sequence](design/EARLY_GAME_GATHERING_AND_AUTOMATION.md#opening-progression).
+- Introduce permanent recipes and a small set of upgrades as the player progresses from integrated smelting and component crafting to remote extraction. See the [approved opening progression](design/EARLY_GAME_GATHERING_AND_AUTOMATION.md#7-revised-opening-progression-rc1-rc6rc8).
 - Introductory objectives connecting exploration, fighting, and reconstruction.
 - Basic progression choices and persistent save/load behavior.
 - Maintainable content and testing workflows appropriate for ongoing production.

@@ -32,6 +32,7 @@ func _step(player: Player, delta: float, pressed := false, held := false, aim :=
 func _run() -> void:
 	var arena := Arena.instantiate()
 	var player: Player = arena.get_node("ArenaObjects/Player")
+	_check(player.aim_direction == Vector2.RIGHT, "Initial shared aim faces right")
 	player.position = Vector2(-180, 144)
 	arena.get_node("ArenaObjects/Pursuer").position = player.position + Vector2(34, -18)
 	arena.get_node("ArenaObjects/Heavy").position = player.position + Vector2(47, 21)
@@ -41,6 +42,10 @@ func _run() -> void:
 		enemy.movement.set_physics_process(false)
 	await physics_frame
 	await physics_frame
+	await _style_selection(player)
+	await _style_boundaries(player)
+	await _style_dodge(player)
+	player._reset_encounter(true)
 	await _encounter_selector(player)
 	await physics_frame
 
@@ -123,15 +128,112 @@ func _toggle_debug() -> void:
 	root.push_input(event)
 
 
+func _style_selection(player: Player) -> void:
+	await _key_tick(player, KEY_4)
+	_check(player.active_style == Player.Style.PISTOL and player.style_label.text == "Style: Pistol", "4 selects Pistol with F3 closed")
+	player._sample_aim_direction(Vector2(3, 4))
+	var diagonal := Vector2(0.6, 0.8)
+	player._sample_aim_direction(Vector2.ZERO)
+	player._sample_aim_direction(Vector2(NAN, INF))
+	player.global_position = player.get_global_mouse_position() - Vector2(4, 0)
+	player._update_facing()
+	_check(player.aim_direction.is_equal_approx(diagonal), "Pistol retains normalized aim on invalid, neutral and dead-zone samples")
+	Input.action_press("basic_attack")
+	await physics_frame
+	player._physics_process(0.5)
+	_check(player.action_fsm.attack_count == 0 and player.combat_audio._last_swing == 0, "Pistol press and hold are inert")
+	await _select(player, KEY_F5)
+	await _key_tick(player, KEY_2)
+	_check(player.action_fsm.weapon == Action.SWORD and player.action_fsm.attack_count == 0, "Held primary cannot transfer from Pistol to Sword")
+	Input.action_release("basic_attack")
+	await physics_frame
+	Input.action_press("basic_attack")
+	await physics_frame
+	player._physics_process(0.01)
+	_check(player.action_fsm.attack_count == 1, "Fresh press starts the selected sword")
+	await _key_tick(player, KEY_4)
+	_check(player.style_label.text.contains("Pending: Pistol"), "Committed sword queues Pistol")
+	_toggle_debug()
+	_check(player.style_label.is_visible_in_tree() and player.style_label.text.contains("Pending: Pistol"), "Pending visible with F3 open")
+	await _select(player, KEY_F5)
+	_check(player.state_diagnostics.visible and player.style_label.text == "Style: Sword", "F5 preserves active sword and F3, discards pending Pistol")
+	await physics_frame
+	player._physics_process(0.5)
+	_check(player.action_fsm.attack_count == 0, "Held primary stays idle after F5")
+	Input.action_release("basic_attack")
+	_toggle_debug()
+
+
+func _style_boundaries(player: Player) -> void:
+	player._reset_encounter(true)
+	var fsm := player.action_fsm
+	# Two distinct samples in one physics tick: the later lower slot wins.
+	_send_key(KEY_4, true)
+	await _key_tick(player, KEY_3)
+	_send_key(KEY_4, false)
+	_check(player.active_style == Player.Style.GREATSWORD, "Later slot 3 supersedes slot 4 before polling")
+	player._step_actions(0.0, true, true)
+	player._record_style_request(Player.Style.PISTOL, 10)
+	player._record_style_request(Player.Style.SWORD, 10)
+	player._physics_process(0.01)
+	_check(player.pending_style == Player.Style.PISTOL and player.active_style == Player.Style.GREATSWORD, "Highest slot wins a tied sample during commitment")
+	await _key_tick(player, KEY_2)
+	_check(player.pending_style == Player.Style.SWORD, "Later request replaces pending style")
+	await _key_tick(player, KEY_3)
+	await _key_tick(player, KEY_3)
+	_check(player.pending_style == Player.Style.NONE and not player.style_label.text.contains("Pending"), "Active slot cancels pending and repeat selection stays clear")
+	player._step_actions(0.01, false, true)
+	await _key_tick(player, KEY_4)
+	# Cross wind-up, active and recovery in one step. Outgoing samples survive.
+	player._step_actions(1.2, false, true)
+	_check(player.active_style == Player.Style.PISTOL and fsm.state == Action.State.READY and fsm.attack_count == 1, "Recovery yields to Pistol before held repeat inside a long tick")
+	_check(fsm.active_intervals.size() == 1 and fsm.active_intervals[0].weapon == Action.GREATSWORD, "Completed interval retains its outgoing weapon")
+	player._step_actions(0.01, true, true)
+	_check(fsm.active_intervals.is_empty() and fsm.attack_count == 1, "Pistol cannot replay an old interval")
+
+	await _key_tick(player, KEY_1)
+	player._step_actions(Action.DAGGER.wind_up, true, false)
+	fsm.request_hitstop(fsm.active_intervals[0])
+	await _key_tick(player, KEY_2)
+	_check(fsm.hitstop_remaining > 0.0 and player.pending_style == Player.Style.SWORD, "Hitstop keeps the committed style")
+	player._step_actions(fsm.hitstop_remaining + Action.DAGGER.active + 0.12, false, false)
+	var to_ready := Action.DAGGER.recovery - fsm._phase_elapsed
+	player._step_actions(to_ready, true, false)
+	_check(player.active_style == Player.Style.SWORD and fsm.state == Action.State.READY and fsm.attack_count == 2, "Exact tick-end switch wins over live late click")
+	_check(player.style_label.text == "Style: Sword", "Activation immediately clears pending HUD")
+	player._step_actions(1.0, false, false)
+	_check(fsm.attack_count == 2, "Outgoing click cannot start Sword")
+	player._step_actions(0.75, true, true)
+	_check(fsm.attack_count == 4, "Fresh sword press repeats within a long tick when no switch is pending")
+
+
+func _style_dodge(player: Player) -> void:
+	player._reset_encounter(true)
+	player._step_actions(0.01, true, true)
+	await _key_tick(player, KEY_3)
+	player._request_dodge(Vector2.UP, Vector2.RIGHT)
+	player._physics_process(0.01)
+	_check(player.pending_style == Player.Style.GREATSWORD and player.action_fsm.state == Action.State.READY, "Successful dodge clears swing and preserves selection")
+	await _key_tick(player, KEY_4)
+	_check(player.pending_style == Player.Style.PISTOL and player.active_style == Player.Style.DAGGER, "Dodge accepts replacement without changing active style")
+	_check(player.movement_fsm.is_dodging() and player.velocity.normalized().is_equal_approx(Vector2.UP), "Style request preserves dodge direction and movement")
+	player._physics_process(player.movement_fsm.dodge_duration)
+	_check(player.active_style == Player.Style.PISTOL and not player.movement_fsm.can_dodge(), "Switch activates on final dodge tick while recovery is running")
+
+
 func _select(player: Player, key: Key, solo: Enemy = null) -> void:
 	var generation := player.encounter_generation
+	var expected_style := player.active_style if key == KEY_F5 else Player.Style.DAGGER
 	await _key_tick(player, key)
 	_check(player.encounter_generation == generation + 1, "Exactly one fresh encounter per reset key")
 	var title := "%s only" % solo.name if solo else "Pursuer + Heavy"
 	_check(player.encounter_label.text == "Encounter: " + title and player.encounter_label.is_visible_in_tree(), "Persistent label for " + title)
 	_check(player.position == player.start_position and player.velocity == Vector2.ZERO, "Player spawn and velocity")
 	_check(player.player_health.health == player.player_health.max_health and player.player_health.history.is_empty(), "Fresh player HP")
-	_check(player.action_fsm.weapon == Action.DAGGER and player.action_fsm.state == Action.State.READY, "Starting dagger and Ready")
+	_check(player.active_style == expected_style and player.pending_style == Player.Style.NONE, "Reset selects the expected style and clears pending")
+	if Player.MELEE_WEAPONS.has(expected_style):
+		_check(player.action_fsm.weapon == Player.MELEE_WEAPONS[expected_style], "Reset restores the active melee resource")
+	_check(player.action_fsm.state == Action.State.READY, "Ready after reset")
 	_check(player.action_fsm.hitstop_remaining == 0.0 and player.action_fsm.active_intervals.is_empty(), "No hitstop or attack samples")
 	_check(player.movement_fsm.can_dodge() and not player.is_invulnerable(), "Fresh dodge availability")
 	_check(not player.death_message.visible and not player.completion.visible and player.facing_marker.visible, "Fresh HUD")
@@ -154,7 +256,7 @@ func _complete_with_swings(player: Player, solo: Enemy = null) -> void:
 	var pursuer := player.enemies[0]
 	var heavy := player.enemies[1]
 	var other := heavy if solo == pursuer else pursuer
-	player.action_fsm.select_weapon(Action.GREATSWORD)
+	await _key_tick(player, KEY_3)
 	# Both disks are in this blade's path. Pursuer falls on the second swing and Heavy on the fourth.
 	var last_swing := 2 if solo == pursuer else 4
 	for swing in range(1, last_swing + 1):

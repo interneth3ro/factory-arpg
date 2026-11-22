@@ -1,6 +1,6 @@
 # Factory ARPG — Ranged, magic, and combat input
 
-**Implementation status:** Pistol is the next implementation focus. The owner approved planning for pistol behavior and shared combat input across slots 1–4 (Dagger, Sword, Greatsword and Pistol). Magic combat is deferred pending further design review. Gameplay work on Pistol, shared input or magic requires separate owner approval of an implementation PR.
+**Implementation status.** The owner authorized the shared input foundation for slots 1–4. The feature branch implements style selection, aiming, primary-input transitions, HUD and resets, pending merge and runtime acceptance. Pistol is selectable with firing deferred to a separately authorized PR. Magic implementation is deferred indefinitely pending design review. [Arena controls](../README.md#combat-style-selection)
 
 **Engine:** Godot 4.7.2
 

@@ -12,6 +12,14 @@ const EnemyAttack = preload("res://scenes/combat/enemy_attack.gd")
 const PlayerHealth = preload("res://scenes/combat/player_health.gd")
 const HUD_RED := Color(0.84, 0.20, 0.25)
 const DAMAGE_RED := Color(1.0, 0.09, 0.11)
+enum Style { NONE, DAGGER, SWORD, GREATSWORD, PISTOL }
+const SLOT_ACTIONS := {
+	&"weapon_1": Style.DAGGER, &"weapon_2": Style.SWORD,
+	&"weapon_3": Style.GREATSWORD, &"weapon_4": Style.PISTOL,
+}
+const MELEE_WEAPONS := {
+	Style.DAGGER: ActionFSM.DAGGER, Style.SWORD: ActionFSM.SWORD, Style.GREATSWORD: ActionFSM.GREATSWORD,
+}
 const PHASE_COLORS := {
 	ActionFSM.State.READY: Color(0.3, 0.82, 0.95),
 	ActionFSM.State.WIND_UP: Color(1.0, 0.72, 0.16),
@@ -37,11 +45,17 @@ const PHASE_COLORS := {
 @onready var combat_audio: CombatAudio = $CombatAudio
 @onready var enemies: Array[EnemyHealth] = [$"../Pursuer", $"../Heavy"]
 @onready var encounter_label: Label = $Diagnostics/Encounter
+@onready var style_label: Label = $Diagnostics/CombatStyle
 @onready var completion: Label = $Diagnostics/Completion
 @onready var start_position := position
 var last_damage := "None"
 var motion_trace := SlideTrace.new()
 var encounter_generation := 0
+var active_style := Style.DAGGER
+var pending_style := Style.NONE
+var aim_direction := Vector2.RIGHT
+var _requested_style := Style.NONE
+var _request_time_usec := -1
 var _solo_enemy: EnemyHealth # Null selects the combined encounter.
 var _pending: Array[EnemyAttack.Contact] = []
 var _contact_frame := -1
@@ -59,6 +73,7 @@ func _ready() -> void:
 	player_health.damaged.connect(_show_damage)
 	player_health.died.connect(_on_death)
 	_update_encounter_label()
+	_update_style_label()
 	_update_health_hud()
 	_update_presentation()
 
@@ -80,9 +95,50 @@ func _update_encounter_label() -> void:
 	encounter_label.text = "Encounter: " + configuration
 
 
+func _input(event: InputEvent) -> void:
+	if not event.is_pressed() or event.is_echo() or player_health.health == 0:
+		return
+	# Physics edge flags alone lose the order of distinct presses between ticks.
+	var sample_time := Time.get_ticks_usec()
+	for action: StringName in SLOT_ACTIONS:
+		if event.is_action_pressed(action):
+			_record_style_request(SLOT_ACTIONS[action], sample_time)
+
+
+func _record_style_request(slot: Style, sample_time: int) -> void:
+	if sample_time > _request_time_usec or (sample_time == _request_time_usec and slot > _requested_style):
+		_requested_style = slot
+		_request_time_usec = sample_time
+
+
+func _update_style_label() -> void:
+	style_label.text = "Style: " + String(Style.keys()[active_style]).capitalize()
+	if pending_style != Style.NONE:
+		style_label.text += "   |   Pending: " + String(Style.keys()[pending_style]).capitalize()
+
+
+func _clear_style_requests() -> void:
+	_requested_style = Style.NONE
+	_request_time_usec = -1
+	pending_style = Style.NONE
+	_update_style_label()
+
+
+func _activate_pending_style() -> bool:
+	if pending_style == Style.NONE:
+		return false
+	active_style = pending_style
+	pending_style = Style.NONE
+	if MELEE_WEAPONS.has(active_style):
+		action_fsm.select_weapon(MELEE_WEAPONS[active_style])
+	_update_style_label()
+	return true
+
+
 func _physics_process(delta: float) -> void:
-	if _select_encounter_from_input() or Input.is_action_just_pressed("reset_combat_test"):
-		_reset_encounter()
+	var fresh_configuration := _select_encounter_from_input()
+	if fresh_configuration or Input.is_action_just_pressed("reset_combat_test"):
+		_reset_encounter(fresh_configuration)
 		return
 	if player_health.health == 0:
 		return
@@ -92,16 +148,23 @@ func _physics_process(delta: float) -> void:
 	_emphasis_left = maxf(0.0, _emphasis_left - delta)
 	var movement_input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	_update_facing()
-	var facing_direction := Vector2.RIGHT.rotated(facing_marker.global_rotation)
 	if Input.is_action_just_pressed("dodge"):
-		_request_dodge(movement_input, facing_direction)
-	# Sample before advancing movement so the final dodge tick still discards input.
+		_request_dodge(movement_input, aim_direction)
+	if _requested_style != Style.NONE:
+		pending_style = Style.NONE if _requested_style == active_style else _requested_style
+		_requested_style = Style.NONE
+		_request_time_usec = -1
+		_update_style_label()
+	# Attack presses on the final dodge tick still belong to the dodge.
 	var movement_multiplier := 1.0
 	var attacking_allowed := not movement_fsm.is_dodging()
 	if attacking_allowed:
-		movement_multiplier = _step_actions(delta, facing_direction)
+		movement_multiplier = _step_actions(delta,
+			Input.is_action_just_pressed("basic_attack"), Input.is_action_pressed("basic_attack"))
 	var start := global_position
 	movement_fsm.step(movement_input, movement_speed, delta, movement_multiplier)
+	if not attacking_allowed and not movement_fsm.is_dodging():
+		_activate_pending_style()
 	motion_trace.record(self, start, 0.0, delta, delta)
 	melee_sweep.begin_tick()
 	if attacking_allowed:
@@ -142,14 +205,14 @@ func _update_presentation() -> void:
 		attack_marker.global_rotation = action_fsm.attack_direction.angle()
 
 
-func _step_actions(delta: float, aim: Vector2) -> float:
-	if Input.is_action_just_pressed("weapon_1"):
-		action_fsm.select_weapon(ActionFSM.DAGGER)
-	elif Input.is_action_just_pressed("weapon_2"):
-		action_fsm.select_weapon(ActionFSM.SWORD)
-	elif Input.is_action_just_pressed("weapon_3"):
-		action_fsm.select_weapon(ActionFSM.GREATSWORD)
-	return action_fsm.step(delta, Input.is_action_just_pressed("basic_attack"), Input.is_action_pressed("basic_attack"), aim)
+func _step_actions(delta: float, pressed: bool, held: bool) -> float:
+	var switched := action_fsm.state == ActionFSM.State.READY and _activate_pending_style()
+	# Ready starts only on a press edge after the activation tick.
+	var melee_input := MELEE_WEAPONS.has(active_style) and not switched
+	var on_ready := Callable()
+	if pending_style != Style.NONE:
+		on_ready = _activate_pending_style
+	return action_fsm.step(delta, pressed and melee_input, held and melee_input, aim_direction, on_ready)
 
 
 func _process(_delta: float) -> void:
@@ -165,7 +228,15 @@ func is_invulnerable() -> bool:
 func _update_facing() -> void:
 	var aim_offset := get_global_mouse_position() - global_position
 	if aim_offset.length_squared() > AIM_DEAD_ZONE_RADIUS * AIM_DEAD_ZONE_RADIUS:
-		facing_marker.global_rotation = aim_offset.angle()
+		_sample_aim_direction(aim_offset)
+	facing_marker.global_rotation = aim_direction.angle()
+
+
+func _sample_aim_direction(direction: Vector2) -> void:
+	if direction.is_finite():
+		var heading := direction.normalized()
+		if heading.is_normalized():
+			aim_direction = heading
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -189,7 +260,7 @@ func _update_state_diagnostics() -> void:
 		state_diagnostics.text = "Movement: %s\nAction / phase: %s\nWeapon: %s\nAttack count: %d\nAttack aim: %s\nOrdinary speed: %.2fx\nDodge: %s\nInvulnerability: %s" % [
 			movement_fsm.get_state_name(),
 			action_fsm.get_state_name(),
-			action_fsm.weapon.display_name,
+			action_fsm.weapon.display_name if MELEE_WEAPONS.has(active_style) else "Pistol",
 			action_fsm.attack_count,
 			String(ActionFSM.AimState.keys()[action_fsm.get_aim_state()]).capitalize(),
 			action_fsm.get_movement_multiplier(),
@@ -275,6 +346,7 @@ func _interrupt_swing() -> void:
 
 func _on_death() -> void:
 	_interrupt_swing()
+	_clear_style_requests()
 	combat_audio.reset()
 	movement_fsm.reset_encounter()
 	melee_sweep.begin_tick()
@@ -313,7 +385,7 @@ func _apply_contact(target: CollisionObject2D, interval: ActionFSM.ActiveInterva
 				return not candidate.is_encounter_active() or candidate.health == 0)
 
 
-func _reset_encounter() -> void:
+func _reset_encounter(start_with_dagger := false) -> void:
 	encounter_generation += 1
 	_resolving_interval = null
 	weapon_effects.reset()
@@ -334,9 +406,14 @@ func _reset_encounter() -> void:
 		enemy.reset_encounter(encounter_generation, _solo_enemy == null or enemy == _solo_enemy)
 	position = start_position
 	motion_trace.record(self, global_position, 0.0, 0.0, 0.0)
-	facing_marker.rotation = 0.0
+	aim_direction = Vector2.RIGHT
 	_update_facing()
 	action_fsm.reset_encounter()
+	if start_with_dagger:
+		active_style = Style.DAGGER
+	elif MELEE_WEAPONS.has(active_style):
+		action_fsm.select_weapon(MELEE_WEAPONS[active_style])
+	_clear_style_requests()
 	movement_fsm.reset_encounter()
 	melee_sweep.select_attack(0)
 	melee_sweep.begin_tick()

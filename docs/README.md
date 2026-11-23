@@ -34,7 +34,7 @@ Implementation documentation describes how the current code works. Refactors tha
 
 ### Permanent game entry and session lifecycle
 
-Run Project (F5 in the editor) opens the permanent entry. **Start Session** opens the F1 placeholder with one combat-capable player. **End Session** returns to the entry screen. The F2 implementation on this branch is pending independent review, owner runtime acceptance and merge. [Permanent game entry](../scenes/game/permanent_game_entry.tscn)
+Run Project (F5 in the editor) opens the permanent entry. **Start Session** opens the F1 placeholder with one combat-capable player. **End Session** returns to the entry screen. The owner accepted F2 runtime behavior at `ba9f5b6f4586a3e323e48676442062d93a226ca8` after independent static review. PR #34 awaits manual merge. [Permanent game entry](../scenes/game/permanent_game_entry.tscn)
 
 The entry prepares each candidate session off-tree. The session validates its player and HUD references and instantiates the placeholder under `ActiveLocation`. A failed start frees the candidate and re-enables **Start Session**. After attachment, the session supplies empty combat targets and cover, binds its HUD to player health and style changes, and reads the initial values. The session camera follows the player. The backdrop sits behind the world and the session controls sit above the HUD. Ending frees the location and the session subtree, including its player, effects and HUD. [Entry lifecycle](../scenes/game/permanent_game_entry.gd) · [Session scene](../scenes/game/game_session_root.tscn) · [Session root](../scenes/game/game_session_root.gd)
 

@@ -22,10 +22,10 @@ const ENDPOINT_EPSILON := 0.5
 @export var peer: CharacterBody2D
 
 @onready var _body: CharacterBody2D = get_parent()
-@onready var _player: CharacterBody2D = $"../../Player"
+var _player: CharacterBody2D
 @onready var _avoidance: NavigationAgent2D = $"../Avoidance"
 @onready var _attack: EnemyAttack = $"../Attack"
-@onready var _player_trace: SlideTrace = _player.get("motion_trace")
+var _player_trace: SlideTrace
 
 var state := State.IDLE
 var _retry_in := 0.0
@@ -54,6 +54,11 @@ func _ready() -> void:
 	_attack.active_interval.connect(_strike)
 	_attack.standstill_requested.connect(_stand_still)
 	_attack.recovery_finished.connect(_after_recovery)
+
+
+func bind_player(player: CharacterBody2D, trace: SlideTrace) -> void:
+	_player = player
+	_player_trace = trace
 
 
 func defeat() -> void:

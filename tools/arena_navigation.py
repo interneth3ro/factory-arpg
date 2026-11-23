@@ -30,7 +30,8 @@ def scene_geometry():
         elif header.startswith("node "):
             parent = attrs.get("parent")
             path = attrs["name"] if parent == "." else f"{parent}/{attrs['name']}"
-            nodes[path if parent else "."] = (attrs["type"], props)
+            # Instanced actors have no inline type or static floor geometry.
+            nodes[path if parent else "."] = (attrs.get("type", "PackedScene"), props)
 
     def origin(path):
         x = y = 0.0

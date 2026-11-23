@@ -1,5 +1,6 @@
 extends SceneTree
 
+const ArenaController = preload("res://scenes/combat/combat_test_arena.gd")
 const Arena = preload("res://scenes/combat/combat_test_arena.tscn")
 const Player = preload("res://scenes/combat/combat_test_player.gd")
 const Enemy = preload("res://scenes/combat/enemy_health.gd")
@@ -10,6 +11,7 @@ var player: Player
 var pursuer: Enemy
 var heavy: Enemy
 var barrier := CollisionShape2D.new()
+var arena: ArenaController
 var failures := 0
 
 
@@ -23,18 +25,26 @@ func check(ok: bool, label: String) -> void:
 		push_error(label)
 
 
+func _primary(pressed: bool) -> void:
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.pressed = pressed
+	Input.parse_input_event(event)
+	Input.flush_buffered_events()
+
+
 func _run() -> void:
-	var arena := Arena.instantiate()
+	arena = Arena.instantiate()
 	var thin := RectangleShape2D.new()
 	thin.size = Vector2(1, 16)
 	barrier.shape = thin
 	arena.get_node("Boundaries").add_child(barrier)
 	root.add_child(arena)
 	player = arena.get_node("ArenaObjects/Player")
-	pursuer = player.enemies[0]
-	heavy = player.enemies[1]
+	pursuer = arena.enemies[0]
+	heavy = arena.enemies[1]
 	player.set_physics_process(false)
-	for enemy in player.enemies:
+	for enemy in arena.enemies:
 		enemy.movement.set_physics_process(false)
 	await physics_frame
 	_geometry()
@@ -51,14 +61,14 @@ func _run() -> void:
 
 
 func _trial(wall_x := -300.0, wall_gap := 0.0) -> void:
-	player._solo_enemy = null
-	player._reset_encounter(true)
+	arena._solo_enemy = null
+	arena.reset_encounter(true)
 	player.global_position = ORIGIN
 	pursuer.global_position = ORIGIN + Vector2(200, 90)
 	heavy.global_position = ORIGIN + Vector2(350, 90)
 	# The argument locates the nearest corner relative to the shot line.
 	barrier.global_position = ORIGIN + Vector2(wall_x + 0.5, wall_gap + 8.0)
-	player.projectiles.configure(player.enemies, player._apply_pistol_contact)
+	player.configure_combat(arena.enemies, ArenaController.Sector.solid_footprints(arena))
 
 
 func _fire() -> void:
@@ -254,12 +264,12 @@ func _strafe() -> void:
 	var delta := 1.0 / Engine.physics_ticks_per_second
 	var ticks := ceili(0.15 / delta)
 	Input.action_press("move_right")
-	Input.action_press("basic_attack")
+	_primary(true)
 	for i in ticks:
 		await physics_frame
 		player._physics_process(delta)
 	Input.action_release("move_right")
-	Input.action_release("basic_attack")
+	_primary(false)
 	var distance := 176.0 * 0.12 + 220.0 * (ticks * delta - 0.12)
 	check(player.pistol.shots_fired == 1 and absf(player.position.x - ORIGIN.x - distance) < 0.001, "Input path integrates committed and ordinary strafe distance")
 
@@ -288,14 +298,14 @@ func _lifecycle() -> void:
 	heavy.attack.start_tick(0.02)
 	check(is_equal_approx(pursuer.attack.paused_this_tick, 0.016) and heavy.attack.paused_this_tick == 0.0, "Ranged hitstop applies only to struck enemy")
 	_trial()
-	player._solo_enemy = heavy
-	player._reset_encounter(true)
+	arena._solo_enemy = heavy
+	arena.reset_encounter(true)
 	pursuer.global_position = ORIGIN + Vector2(60, 0)
 	heavy.global_position = ORIGIN + Vector2(100, 0)
 	heavy.health = 15
 	_fire()
 	player.projectiles.advance(0.15)
-	check(pursuer.health == 75 and heavy.health == 0 and player.completion.visible, "Excluded target is transparent and pistol completes solo encounter")
+	check(pursuer.health == 75 and heavy.health == 0 and arena.completion.visible, "Excluded target is transparent and pistol completes solo encounter")
 	_fire()
 	player.projectiles.advance(0.15)
 	check(player.projectiles.bullets.size() == 1 and heavy.receive_pistol_hit() == 0 and pursuer.receive_pistol_hit() == 0, "Defeated and excluded enemies ignore damage")
@@ -304,7 +314,7 @@ func _lifecycle() -> void:
 	_fire()
 	var generation := player.encounter_generation
 	player.pending_style = Player.Style.SWORD
-	player._reset_encounter()
+	arena.reset_encounter()
 	player.projectiles.launch(ORIGIN, Vector2.RIGHT, generation)
 	check(player.projectiles.bullets.is_empty() and not player._apply_pistol_contact(pursuer, 1, generation), "F5 rejects old shot and damage")
 	player._step_actions(0.5, false, true)
@@ -317,5 +327,5 @@ func _lifecycle() -> void:
 	player.projectiles.launch(ORIGIN, Vector2.RIGHT, player.encounter_generation)
 	check(player.player_health.health == 0 and player.projectiles.bullets.is_empty() and player.projectiles.sparks.is_empty(), "Death removes bullets and blocks later launches")
 	check(not player._apply_pistol_contact(pursuer, 1, player.encounter_generation) and pursuer.health == 75, "Terminal encounter rejects pending damage")
-	player._reset_encounter(true)
+	arena.reset_encounter(true)
 	check(player.active_style == Player.Style.DAGGER and player.pistol.shots_fired == 0, "Configuration reset restores Dagger")

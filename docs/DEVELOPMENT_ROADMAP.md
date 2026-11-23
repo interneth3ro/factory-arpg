@@ -155,7 +155,7 @@ Examples:
 
 PR #31 established CF1–CF31. The owner accepted the F1 permanent entry and session lifecycle at `fbed32b8b24f5cedbbc1e5787a4d3a046bc9dc37` and manually merged PR #32. [Launch and lifecycle](README.md#permanent-game-entry-and-session-lifecycle)
 
-F2 is the next implementation milestone. Its approved design shares the combat-capable player between the permanent session and standalone arena, with each context owning its HUD. Implementation awaits separate authorization. [F2 specification](design/FOUNDATION_F2_SHARED_PLAYER.md) · [F1–F10 plan](design/CORE_GAME_FOUNDATION_IMPLEMENTATION.md)
+The F2 feature branch implements the shared combat-capable player and context-owned HUDs in the permanent session and standalone arena. Independent static review and owner runtime acceptance passed for PR #34 at `ba9f5b6f4586a3e323e48676442062d93a226ca8`. Manual merge is pending. [F2 specification](design/FOUNDATION_F2_SHARED_PLAYER.md) · [F1–F10 plan](design/CORE_GAME_FOUNDATION_IMPLEMENTATION.md)
 
 ## 12. Roadmap maintenance
 

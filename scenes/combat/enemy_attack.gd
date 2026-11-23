@@ -2,6 +2,7 @@ extends Node2D
 
 const Sector = preload("res://scenes/combat/enemy_attack_sector.gd")
 const SlideTrace = preload("res://scenes/combat/slide_trace.gd")
+const ActionFSM = preload("res://scenes/combat/player_action_fsm.gd")
 const PISTOL_HITSTOP := 0.016
 
 ## Movement advances this clock inside its avoidance callback. An Active
@@ -73,15 +74,16 @@ var _sector := Sector.new()
 var _visible_region: Array[PackedVector2Array] = []
 var _region_origin := Vector2.INF
 var _region_direction := Vector2.ZERO
-@onready var _player_shape: CollisionShape2D = $"../../Player/CollisionShape2D"
+var _player_shape: CollisionShape2D
 @onready var _body: CharacterBody2D = get_parent()
-@onready var _player: CharacterBody2D = _player_shape.get_parent()
+var _player: CharacterBody2D
 
 
-func _ready() -> void:
-	_sector.read_arena(get_tree())
-	var actions: Node = $"../../Player/ActionFSM"
-	actions.connect("hitstop_consumed", _on_hitstop_consumed)
+func bind_player(shape: CollisionShape2D, actions: ActionFSM, solids: Array[PackedVector2Array]) -> void:
+	_player_shape = shape
+	_player = shape.get_parent()
+	_sector.solids = solids
+	actions.hitstop_consumed.connect(_on_hitstop_consumed)
 
 
 func _on_hitstop_consumed(seconds: float) -> void:

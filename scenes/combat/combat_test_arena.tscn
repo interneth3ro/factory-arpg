@@ -1,19 +1,12 @@
-[gd_scene load_steps=22 format=3]
+[gd_scene format=3]
 
-[ext_resource type="Script" path="res://scenes/combat/combat_test_player.gd" id="1_player"]
-[ext_resource type="Script" path="res://scenes/combat/player_movement_fsm.gd" id="2_movement"]
-[ext_resource type="Script" path="res://scenes/combat/player_action_fsm.gd" id="3_action"]
-[ext_resource type="Script" path="res://scenes/combat/melee_sweep.gd" id="4_sweep"]
+[ext_resource type="PackedScene" path="res://scenes/combat/shared_player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scenes/combat/enemy_health.gd" id="5_enemy"]
 [ext_resource type="Script" path="res://scenes/combat/enemy_movement.gd" id="6_motion"]
-[ext_resource type="Script" path="res://scenes/combat/arena_navigation.gd" id="7_maps"]
+[ext_resource type="Script" path="res://scenes/combat/combat_test_arena.gd" id="7_arena"]
 [ext_resource type="NavigationPolygon" path="res://scenes/combat/pursuer_navigation.tres" id="8_small"]
 [ext_resource type="NavigationPolygon" path="res://scenes/combat/heavy_navigation.tres" id="9_large"]
 [ext_resource type="Script" path="res://scenes/combat/enemy_attack.gd" id="10_attack"]
-[ext_resource type="Script" path="res://scenes/combat/player_health.gd" id="11_health"]
-[ext_resource type="Script" path="res://scenes/combat/weapon_effects.gd" id="12_effects"]
-[ext_resource type="Script" path="res://scenes/combat/combat_audio.gd" id="13_audio"]
-[ext_resource type="Script" path="res://scenes/combat/pistol_projectiles.gd" id="14_bullets"]
 
 [sub_resource type="StyleBoxFlat" id="HealthTrack"]
 bg_color = Color(0.25, 0.15, 0.18, 1)
@@ -27,9 +20,6 @@ size = Vector2(996, 18)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_vertical_wall"]
 size = Vector2(18, 480)
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_player"]
-radius = 18.0
-
 [sub_resource type="CircleShape2D" id="CircleShape2D_pursuer"]
 radius = 14.0
 
@@ -37,7 +27,7 @@ radius = 14.0
 radius = 25.0
 
 [node name="CombatTestArena" type="Node2D"]
-script = ExtResource("7_maps")
+script = ExtResource("7_arena")
 
 [node name="PursuerRegion" type="NavigationRegion2D" parent="."]
 navigation_polygon = ExtResource("8_small")
@@ -286,82 +276,12 @@ default_color = Color(0.48, 0.67, 0.69, 0.85)
 closed = true
 antialiased = true
 
-[node name="Player" type="CharacterBody2D" parent="ArenaObjects"]
-process_physics_priority = -1
+[node name="Player" parent="ArenaObjects" instance=ExtResource("1_player")]
 position = Vector2(-318, 132)
-motion_mode = 1
-script = ExtResource("1_player")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="ArenaObjects/Player"]
-shape = SubResource("CircleShape2D_player")
+[node name="Diagnostics" type="CanvasLayer" parent="."]
 
-[node name="Body" type="Polygon2D" parent="ArenaObjects/Player"]
-color = Color(0.3, 0.82, 0.95, 1)
-polygon = PackedVector2Array(-10, -16, 10, -16, 17, -8, 17, 8, 10, 16, -10, 16, -17, 8, -17, -8)
-
-[node name="FacingMarker" type="Polygon2D" parent="ArenaObjects/Player"]
-color = Color(0.07, 0.21, 0.26, 1)
-polygon = PackedVector2Array(-7, 5, 10, 0, -7, -5, -4, 0)
-
-[node name="AttackMarker" type="Polygon2D" parent="ArenaObjects/Player"]
-visible = false
-color = Color(1, 0.83, 0.32, 1)
-polygon = PackedVector2Array(19, -4, 27, 0, 19, 4)
-
-[node name="NameLabel" type="Label" parent="ArenaObjects/Player"]
-offset_left = -60.0
-offset_top = -54.0
-offset_right = 60.0
-offset_bottom = -29.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.93, 0.96, 0.96, 1)
-theme_override_colors/font_outline_color = Color(0.055, 0.077, 0.092, 1)
-theme_override_constants/outline_size = 5
-text = "Player"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="MovementFSM" type="Node" parent="ArenaObjects/Player"]
-script = ExtResource("2_movement")
-
-[node name="ActionFSM" type="Node" parent="ArenaObjects/Player"]
-script = ExtResource("3_action")
-
-[node name="Health" type="Node" parent="ArenaObjects/Player"]
-script = ExtResource("11_health")
-
-[node name="MeleeSweep" type="Node2D" parent="ArenaObjects/Player"]
-visible = false
-top_level = true
-z_index = 2
-script = ExtResource("4_sweep")
-
-[node name="WeaponEffects" type="Node2D" parent="ArenaObjects/Player"]
-z_index = 1
-script = ExtResource("12_effects")
-
-[node name="PistolProjectiles" type="Node2D" parent="ArenaObjects/Player"]
-top_level = true
-z_index = 4
-script = ExtResource("14_bullets")
-
-[node name="CombatAudio" type="Node" parent="ArenaObjects/Player"]
-script = ExtResource("13_audio")
-
-[node name="Swing" type="AudioStreamPlayer" parent="ArenaObjects/Player/CombatAudio"]
-volume_db = -12.0
-max_polyphony = 2
-
-[node name="Primary" type="AudioStreamPlayer" parent="ArenaObjects/Player/CombatAudio"]
-volume_db = -8.0
-max_polyphony = 2
-
-[node name="Secondary" type="AudioStreamPlayer" parent="ArenaObjects/Player/CombatAudio"]
-volume_db = -20.0
-
-[node name="Diagnostics" type="CanvasLayer" parent="ArenaObjects/Player"]
-
-[node name="CombatStyle" type="Label" parent="ArenaObjects/Player/Diagnostics"]
+[node name="CombatStyle" type="Label" parent="Diagnostics"]
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
@@ -374,7 +294,7 @@ mouse_filter = 2
 theme_override_font_sizes/font_size = 14
 theme_override_constants/outline_size = 4
 
-[node name="Encounter" type="Label" parent="ArenaObjects/Player/Diagnostics"]
+[node name="Encounter" type="Label" parent="Diagnostics"]
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
@@ -387,7 +307,7 @@ mouse_filter = 2
 theme_override_font_sizes/font_size = 14
 theme_override_constants/outline_size = 4
 
-[node name="HealthBar" type="ProgressBar" parent="ArenaObjects/Player/Diagnostics"]
+[node name="HealthBar" type="ProgressBar" parent="Diagnostics"]
 offset_left = 16.0
 offset_top = 16.0
 offset_right = 196.0
@@ -397,7 +317,7 @@ show_percentage = false
 theme_override_styles/background = SubResource("HealthTrack")
 theme_override_styles/fill = SubResource("HealthFill")
 
-[node name="Value" type="Label" parent="ArenaObjects/Player/Diagnostics/HealthBar"]
+[node name="Value" type="Label" parent="Diagnostics/HealthBar"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 horizontal_alignment = 1
@@ -405,7 +325,7 @@ vertical_alignment = 1
 mouse_filter = 2
 theme_override_constants/outline_size = 3
 
-[node name="Completion" type="Label" parent="ArenaObjects/Player/Diagnostics"]
+[node name="Completion" type="Label" parent="Diagnostics"]
 visible = false
 anchor_left = 0.5
 anchor_right = 0.5
@@ -416,7 +336,7 @@ theme_override_constants/outline_size = 5
 text = "Encounter complete   |   F5 to reset"
 horizontal_alignment = 1
 
-[node name="StateLabel" type="Label" parent="ArenaObjects/Player/Diagnostics"]
+[node name="StateLabel" type="Label" parent="Diagnostics"]
 theme_override_font_sizes/font_size = 14
 theme_override_constants/line_spacing = 0
 visible = false
@@ -428,7 +348,7 @@ mouse_filter = 2
 theme_override_colors/font_outline_color = Color(0.055, 0.077, 0.092, 1)
 theme_override_constants/outline_size = 5
 
-[node name="DamageLabel" type="Label" parent="ArenaObjects/Player/Diagnostics"]
+[node name="DamageLabel" type="Label" parent="Diagnostics"]
 visible = false
 anchor_left = 1.0
 anchor_right = 1.0
@@ -440,7 +360,7 @@ mouse_filter = 2
 theme_override_font_sizes/font_size = 14
 theme_override_constants/outline_size = 4
 
-[node name="Death" type="Label" parent="ArenaObjects/Player/Diagnostics"]
+[node name="Death" type="Label" parent="Diagnostics"]
 visible = false
 anchor_left = 0.5
 anchor_right = 0.5

@@ -1,5 +1,8 @@
 extends CharacterBody2D
 
+signal physics_tick_started
+signal style_changed
+
 const AIM_DEAD_ZONE_RADIUS: float = 4.0
 const MovementFSM = preload("res://scenes/combat/player_movement_fsm.gd")
 const ActionFSM = preload("res://scenes/combat/player_action_fsm.gd")
@@ -12,7 +15,6 @@ const EnemyAttack = preload("res://scenes/combat/enemy_attack.gd")
 const PlayerHealth = preload("res://scenes/combat/player_health.gd")
 const PistolFiring = preload("res://scenes/combat/pistol_firing.gd")
 const PistolProjectiles = preload("res://scenes/combat/pistol_projectiles.gd")
-const HUD_RED := Color(0.84, 0.20, 0.25)
 const DAMAGE_RED := Color(1.0, 0.09, 0.11)
 enum Style { NONE, DAGGER, SWORD, GREATSWORD, PISTOL }
 const SLOT_ACTIONS := {
@@ -37,19 +39,10 @@ const PHASE_COLORS := {
 @onready var movement_fsm: MovementFSM = $MovementFSM
 @onready var action_fsm: ActionFSM = $ActionFSM
 @onready var player_health: PlayerHealth = $Health
-@onready var health_bar: ProgressBar = $Diagnostics/HealthBar
-@onready var health_label: Label = $Diagnostics/HealthBar/Value
-@onready var death_message: Label = $Diagnostics/Death
-@onready var damage_diagnostics: Label = $Diagnostics/DamageLabel
-@onready var state_diagnostics: Label = $Diagnostics/StateLabel
 @onready var melee_sweep: MeleeSweep = $MeleeSweep
 @onready var weapon_effects: WeaponEffects = $WeaponEffects
 @onready var combat_audio: CombatAudio = $CombatAudio
 @onready var projectiles: PistolProjectiles = $PistolProjectiles
-@onready var enemies: Array[EnemyHealth] = [$"../Pursuer", $"../Heavy"]
-@onready var encounter_label: Label = $Diagnostics/Encounter
-@onready var style_label: Label = $Diagnostics/CombatStyle
-@onready var completion: Label = $Diagnostics/Completion
 @onready var start_position := position
 var last_damage := "None"
 var motion_trace := SlideTrace.new()
@@ -60,7 +53,10 @@ var pending_style := Style.NONE
 var aim_direction := Vector2.RIGHT
 var _requested_style := Style.NONE
 var _request_time_usec := -1
-var _solo_enemy: EnemyHealth # Null selects the combined encounter.
+var _targets: Array[EnemyHealth] = []
+var _attack_pressed := false
+var _attack_held := false
+var _dodge_pressed := false
 var _pending: Array[EnemyAttack.Contact] = []
 var _contact_frame := -1
 var _feedback_frame := -1
@@ -72,37 +68,31 @@ var _resolving_interval: ActionFSM.ActiveInterval
 
 
 func _ready() -> void:
-	projectiles.configure(enemies, _apply_pistol_contact)
 	melee_sweep.contacted.connect(_apply_contact)
-	player_health.health_changed.connect(_update_health_hud)
 	player_health.damaged.connect(_show_damage)
 	player_health.died.connect(_on_death)
-	_update_encounter_label()
-	_update_style_label()
-	_update_health_hud()
 	_update_presentation()
 
 
-func _select_encounter_from_input() -> bool:
-	if Input.is_action_just_pressed("combat_test_pursuer_only"):
-		_solo_enemy = $"../Pursuer"
-	elif Input.is_action_just_pressed("combat_test_heavy_only"):
-		_solo_enemy = $"../Heavy"
-	elif Input.is_action_just_pressed("combat_test_combined"):
-		_solo_enemy = null
-	else:
-		return false
-	return true
+func configure_combat(targets: Array[EnemyHealth], solids: Array[PackedVector2Array]) -> void:
+	_targets = targets
+	projectiles.configure(targets, solids, _apply_pistol_contact)
 
 
-func _update_encounter_label() -> void:
-	var configuration := "%s only" % _solo_enemy.name if _solo_enemy else "Pursuer + Heavy"
-	encounter_label.text = "Encounter: " + configuration
-
-
+# GUI clicks and releases retire any prior world hold. Only a world press claims the new one.
 func _input(event: InputEvent) -> void:
+	if event.is_action("basic_attack"):
+		_attack_held = false
+
+
+func _unhandled_input(event: InputEvent) -> void:
 	if not event.is_pressed() or event.is_echo() or player_health.health == 0:
 		return
+	if event.is_action_pressed("basic_attack"):
+		_attack_pressed = true
+		_attack_held = true
+	if event.is_action_pressed("dodge"):
+		_dodge_pressed = true
 	# Physics edge flags alone lose the order of distinct presses between ticks.
 	var sample_time := Time.get_ticks_usec()
 	for action: StringName in SLOT_ACTIONS:
@@ -116,17 +106,18 @@ func _record_style_request(slot: Style, sample_time: int) -> void:
 		_request_time_usec = sample_time
 
 
-func _update_style_label() -> void:
-	style_label.text = "Style: " + String(Style.keys()[active_style]).capitalize()
-	if pending_style != Style.NONE:
-		style_label.text += "   |   Pending: " + String(Style.keys()[pending_style]).capitalize()
+static func style_name(style: Style) -> String:
+	return String(Style.keys()[style]).capitalize()
 
 
-func _clear_style_requests() -> void:
+func _clear_combat_input() -> void:
+	_attack_pressed = false
+	_attack_held = false
+	_dodge_pressed = false
 	_requested_style = Style.NONE
 	_request_time_usec = -1
 	pending_style = Style.NONE
-	_update_style_label()
+	style_changed.emit()
 
 
 func _activate_pending_style() -> bool:
@@ -138,14 +129,15 @@ func _activate_pending_style() -> bool:
 	pending_style = Style.NONE
 	if MELEE_WEAPONS.has(active_style):
 		action_fsm.select_weapon(MELEE_WEAPONS[active_style])
-	_update_style_label()
+	style_changed.emit()
 	return true
 
 
 func _physics_process(delta: float) -> void:
-	var fresh_configuration := _select_encounter_from_input()
-	if fresh_configuration or Input.is_action_just_pressed("reset_combat_test"):
-		_reset_encounter(fresh_configuration)
+	var generation := encounter_generation
+	physics_tick_started.emit()
+	# A context reset consumes this tick before movement or combat.
+	if generation != encounter_generation:
 		return
 	if player_health.health == 0:
 		return
@@ -156,21 +148,23 @@ func _physics_process(delta: float) -> void:
 	var movement_input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var cursor := get_global_mouse_position()
 	_update_facing()
-	if Input.is_action_just_pressed("dodge"):
+	if _dodge_pressed:
+		_dodge_pressed = false
 		_request_dodge(movement_input, aim_direction)
 	if _requested_style != Style.NONE:
 		pending_style = Style.NONE if _requested_style == active_style else _requested_style
 		_requested_style = Style.NONE
 		_request_time_usec = -1
-		_update_style_label()
+		style_changed.emit()
 	# Attack presses on the final dodge tick still belong to the dodge.
 	var movement_multiplier := 1.0
 	var attacking_allowed := not movement_fsm.is_dodging()
 	if attacking_allowed:
 		movement_multiplier = _step_actions(delta,
-			Input.is_action_just_pressed("basic_attack"), Input.is_action_pressed("basic_attack"))
+			_attack_pressed, _attack_held and Input.is_action_pressed("basic_attack"))
 	else:
 		pistol.idle(delta)
+	_attack_pressed = false
 	var start := global_position
 	movement_fsm.step(movement_input, movement_speed, delta, movement_multiplier)
 	if not attacking_allowed and not movement_fsm.is_dodging():
@@ -217,17 +211,22 @@ func _update_presentation() -> void:
 	var color: Color = PHASE_COLORS[action_fsm.state]
 	if movement_fsm.is_dodging():
 		color = Color(0.55, 0.96, 1.0)
-	health_bar.self_modulate = HUD_RED
 	if _flash_left > 0.0:
-		var strength := _flash_strength
-		if _emphasis_left > 0.0:
-			strength = minf(1.0, strength + 0.18)
-		color = color.lerp(DAMAGE_RED, strength)
-		health_bar.self_modulate = HUD_RED.lerp(Color.WHITE, strength * (0.85 if _emphasis_left > 0.0 else 0.35))
+		color = color.lerp(DAMAGE_RED, _damage_strength())
 	body_marker.color = color
 	attack_marker.visible = action_fsm.state != ActionFSM.State.READY
 	if attack_marker.visible:
 		attack_marker.global_rotation = action_fsm.attack_direction.angle()
+
+
+func _damage_strength() -> float:
+	return minf(1.0, _flash_strength + 0.18) if _emphasis_left > 0.0 else _flash_strength
+
+
+func damage_emphasis() -> float:
+	if _flash_left <= 0.0:
+		return 0.0
+	return _damage_strength() * (0.85 if _emphasis_left > 0.0 else 0.35)
 
 
 func _step_actions(delta: float, pressed: bool, held: bool) -> float:
@@ -247,7 +246,6 @@ func _step_actions(delta: float, pressed: bool, held: bool) -> float:
 func _process(_delta: float) -> void:
 	if player_health.health > 0:
 		_update_facing()
-	_update_state_diagnostics()
 
 
 func is_invulnerable() -> bool:
@@ -266,64 +264,6 @@ func _sample_aim_direction(direction: Vector2) -> void:
 		var heading := direction.normalized()
 		if heading.is_normalized():
 			aim_direction = heading
-
-
-func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("toggle_combat_debug"):
-		state_diagnostics.visible = not state_diagnostics.visible
-		damage_diagnostics.visible = state_diagnostics.visible
-		melee_sweep.visible = state_diagnostics.visible
-		for enemy in enemies:
-			enemy.attack.debug_visible = state_diagnostics.visible
-			enemy.attack.queue_redraw()
-		_update_state_diagnostics()
-
-
-func _update_state_diagnostics() -> void:
-	if state_diagnostics.visible:
-		var dodge_status := "Available" if movement_fsm.can_dodge() else "Recovering"
-		if player_health.health == 0:
-			dodge_status = "Disabled"
-		elif movement_fsm.is_dodging():
-			dodge_status = "In progress"
-		state_diagnostics.text = "Movement: %s\nAction / phase: %s\nWeapon: %s\nAttack count: %d\nAttack aim: %s\nOrdinary speed: %.2fx\nDodge: %s\nInvulnerability: %s" % [
-			movement_fsm.get_state_name(),
-			action_fsm.get_state_name(),
-			action_fsm.weapon.display_name if MELEE_WEAPONS.has(active_style) else "Pistol",
-			action_fsm.attack_count,
-			String(ActionFSM.AimState.keys()[action_fsm.get_aim_state()]).capitalize(),
-			PistolFiring.MOVEMENT if pistol.commitment > 0.0 else action_fsm.get_movement_multiplier(),
-			dodge_status,
-			"Active" if is_invulnerable() else "Inactive",
-		]
-		state_diagnostics.text += "\nContacts (%d): %s\nSweep overlay: On" % [
-			melee_sweep.contacts.size(), ", ".join(melee_sweep.contacts.values()) if not melee_sweep.contacts.is_empty() else "None",
-		]
-		state_diagnostics.text += "\nPistol: %d shots | %d in flight | commit %.0f ms | ready in %.0f ms" % [
-			pistol.shots_fired, projectiles.bullets.size(), pistol.commitment * 1000.0, pistol.cooldown * 1000.0,
-		]
-
-		for enemy in enemies:
-			if not enemy.is_encounter_active():
-				state_diagnostics.text += "\n%s: Inactive" % enemy.name
-				continue
-			state_diagnostics.text += "\n%s: %d/%d HP (%s)" % [
-				enemy.name, enemy.health, enemy.max_health, "Alive" if enemy.health > 0 else "Defeated",
-			]
-			state_diagnostics.text += "\n    " + enemy.movement.diagnostics()
-			state_diagnostics.text += "\n    " + enemy.attack.diagnostics()
-		state_diagnostics.text += "\nLast damage: %s\nHitstop: %.0f ms remaining" % [
-			last_damage, action_fsm.hitstop_remaining * 1000.0,
-		]
-		if action_fsm.last_hitstop_attack > 0:
-			state_diagnostics.text += " (last %.0f ms on #%d)" % [
-				action_fsm.last_hitstop_duration * 1000.0, action_fsm.last_hitstop_attack,
-			]
-		damage_diagnostics.text = "Player %d / %d HP  |  %s  |  I-frames %s\nEnemy contacts (oldest first)\n%s" % [
-			player_health.health, player_health.max_health, "DEAD" if player_health.health == 0 else "ALIVE",
-			"on" if is_invulnerable() else "off",
-			"None" if player_health.history.is_empty() else "\n".join(player_health.history),
-		]
 
 
 func _collect_contact(target: CharacterBody2D, contact: EnemyAttack.Contact) -> void:
@@ -345,12 +285,6 @@ func _resolve_contacts(frame: int, generation: int) -> void:
 	for contact in _pending:
 		player_health.resolve(contact)
 	_pending.clear()
-
-
-func _update_health_hud() -> void:
-	health_bar.max_value = player_health.max_health
-	health_bar.value = player_health.health
-	health_label.text = "%d / %d" % [player_health.health, player_health.max_health]
 
 
 func _show_damage(contact: EnemyAttack.Contact) -> void:
@@ -381,19 +315,15 @@ func _on_death() -> void:
 	projectiles.clear(encounter_generation, false)
 	pistol.reset()
 	_interrupt_swing()
-	_clear_style_requests()
+	_clear_combat_input()
 	combat_audio.reset()
 	movement_fsm.reset_encounter()
 	melee_sweep.begin_tick()
 	_flash_left = 0.0
 	_emphasis_left = 0.0
-	health_bar.self_modulate = HUD_RED
 	body_marker.color = PHASE_COLORS[ActionFSM.State.READY]
 	attack_marker.hide()
 	facing_marker.hide()
-	death_message.show()
-	for enemy in enemies:
-		enemy.rest_after_player_death()
 	_collapse = create_tween().set_parallel(true)
 	_collapse.tween_property(body_marker, "rotation", -0.42, 0.35)
 	_collapse.tween_property(body_marker, "scale", Vector2(1.12, 0.50), 0.35)
@@ -407,7 +337,7 @@ func _apply_contact(target: CollisionObject2D, interval: ActionFSM.ActiveInterva
 	if interval == null or interval != _resolving_interval or player_health.health == 0:
 		return
 	var enemy := target as EnemyHealth
-	if enemy == null:
+	if enemy == null or not _targets.has(enemy):
 		return
 	var applied := enemy.receive_hit(interval.weapon, direction)
 	if applied > 0:
@@ -415,7 +345,6 @@ func _apply_contact(target: CollisionObject2D, interval: ActionFSM.ActiveInterva
 		action_fsm.request_hitstop(interval)
 		weapon_effects.burst(point, direction, interval.weapon)
 		combat_audio.impact(interval.attack_id, interval.weapon)
-		_check_completion(enemy)
 
 
 func _apply_pistol_contact(enemy: EnemyHealth, shot: int, generation: int) -> bool:
@@ -425,18 +354,11 @@ func _apply_pistol_contact(enemy: EnemyHealth, shot: int, generation: int) -> bo
 	if applied == 0:
 		return false
 	last_damage = "%d to %s from Pistol (#%d)" % [applied, enemy.name, shot]
-	_check_completion(enemy)
 	return true
 
 
-func _check_completion(enemy: EnemyHealth) -> void:
-	if enemy.health == 0:
-		completion.visible = enemies.all(func(candidate: EnemyHealth) -> bool:
-			return not candidate.is_encounter_active() or candidate.health == 0)
-
-
-func _reset_encounter(start_with_dagger := false) -> void:
-	encounter_generation += 1
+func reset_combat(generation: int, start_with_dagger: bool) -> void:
+	encounter_generation = generation
 	projectiles.clear(encounter_generation, true)
 	pistol.reset()
 	_resolving_interval = null
@@ -449,13 +371,10 @@ func _reset_encounter(start_with_dagger := false) -> void:
 		_collapse = null
 	body_marker.transform = Transform2D.IDENTITY
 	facing_marker.show()
-	death_message.hide()
 	_flash_left = 0.0
 	_emphasis_left = 0.0
 	_feedback_frame = -1
 	player_health.reset_encounter()
-	for enemy in enemies:
-		enemy.reset_encounter(encounter_generation, _solo_enemy == null or enemy == _solo_enemy)
 	position = start_position
 	motion_trace.record(self, global_position, 0.0, 0.0, 0.0)
 	aim_direction = Vector2.RIGHT
@@ -465,11 +384,9 @@ func _reset_encounter(start_with_dagger := false) -> void:
 		active_style = Style.DAGGER
 	elif MELEE_WEAPONS.has(active_style):
 		action_fsm.select_weapon(MELEE_WEAPONS[active_style])
-	_clear_style_requests()
+	_clear_combat_input()
 	movement_fsm.reset_encounter()
 	melee_sweep.select_attack(0)
 	melee_sweep.begin_tick()
 	last_damage = "None"
-	completion.hide()
-	_update_encounter_label()
 	_update_presentation()

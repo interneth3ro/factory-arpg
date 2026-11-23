@@ -3,16 +3,14 @@ extends RefCounted
 ## The arena's static collision footprints are convex. Project each footprint
 ## away from the attacker and subtract its entire shadow from the sector.
 ## Both rendering and intersection consume the resulting polygons.
-var _solids: Array[PackedVector2Array] = []
+var solids: Array[PackedVector2Array] = []
 
 
-func read_arena(tree: SceneTree) -> void:
-	_solids = solid_footprints(tree)
-
-
-static func solid_footprints(tree: SceneTree) -> Array[PackedVector2Array]:
+static func solid_footprints(arena: Node) -> Array[PackedVector2Array]:
 	var footprints: Array[PackedVector2Array] = []
-	for body in tree.get_nodes_in_group("arena_solid"):
+	for body in arena.get_tree().get_nodes_in_group("arena_solid"):
+		if not arena.is_ancestor_of(body):
+			continue
 		for child in body.get_children():
 			var outline := PackedVector2Array()
 			if child is CollisionPolygon2D and not child.disabled:
@@ -38,7 +36,7 @@ static func outline(direction: Vector2, reach: float, degrees: float) -> PackedV
 
 func visible_region(origin: Vector2, direction: Vector2, reach: float, degrees: float, end_origin: Vector2) -> Array[PackedVector2Array]:
 	var regions: Array[PackedVector2Array] = [outline(direction, reach, degrees)]
-	for solid in _solids:
+	for solid in solids:
 		# In the translating attack's coordinates the solid sweeps a convex
 		# hull. Its shadow is blocked for this entire short movement interval.
 		var footprint := PackedVector2Array()

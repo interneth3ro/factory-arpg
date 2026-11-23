@@ -153,7 +153,9 @@ Examples:
 
 ## 11. Immediate next steps
 
-PR #31 established the approved CF1–CF31 specifications. PR #32 adds the permanent entry and session lifecycle. The owner reported that F1 runtime acceptance passed for the implementation at `fbed32b8b24f5cedbbc1e5787a4d3a046bc9dc37`. The PR awaits final review and manual merge. [F1–F10 plan](design/CORE_GAME_FOUNDATION_IMPLEMENTATION.md) · [Launch and lifecycle](README.md#permanent-game-entry-and-session-lifecycle)
+PR #31 established CF1–CF31. The owner accepted the F1 permanent entry and session lifecycle at `fbed32b8b24f5cedbbc1e5787a4d3a046bc9dc37` and manually merged PR #32. [Launch and lifecycle](README.md#permanent-game-entry-and-session-lifecycle)
+
+F2 is the next implementation milestone. Its approved design shares the combat-capable player between the permanent session and standalone arena, with each context owning its HUD. Implementation awaits separate authorization. [F2 specification](design/FOUNDATION_F2_SHARED_PLAYER.md) · [F1–F10 plan](design/CORE_GAME_FOUNDATION_IMPLEMENTATION.md)
 
 ## 12. Roadmap maintenance
 

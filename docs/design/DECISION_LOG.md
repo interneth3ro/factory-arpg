@@ -412,6 +412,13 @@ These approvals define the permanent game foundation. CF15–CF16 settle the ini
 | CF30 | Permanent foundation before integrated factory gameplay | Build the opening on lasting systems and supersede the separate factory-loop prototype prerequisite. | [Implementation](CORE_GAME_FOUNDATION_IMPLEMENTATION.md#sequence-and-authority) |
 | CF31 | Deposit-owned persistent manual mining progress | Interrupted work must survive switching targets, scene unloads and save/load. | [Architecture](CORE_GAME_FOUNDATION_ARCHITECTURE.md#deposit-progress) |
 
+## Foundation F2 decisions
+
+| ID | Owner-approved selection | Scope |
+| --- | --- | --- |
+| F2-A | Option B — Focused Separation | Share the existing combat-capable player between the permanent session and standalone arena. The arena owns encounter orchestration. [F2 specification](FOUNDATION_F2_SHARED_PLAYER.md#decision-register-and-scope) |
+| F2-B | Option B — Context-Owned HUD | The player owns gameplay state. Each context owns the screen-space presentation of that state. [HUD state contract](FOUNDATION_F2_SHARED_PLAYER.md#hud-state-contract) |
+
 ## Recording future decisions
 
 Append decisions in approval order with a stable ID, descriptive title, approved selection, brief summary, and a link to the authoritative specification. Record dates only when supplied. When a decision changes, retain the earlier entry and link it to the approved replacement.

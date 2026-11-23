@@ -12,7 +12,7 @@
 
 **CF30.** Permanent production begins with F1 after the completed combat foundation. Integrated factory gameplay follows F10, then a representative vertical slice and game expansion. This supersedes the earlier separate integrated-loop prototype prerequisite. [Development roadmap](../DEVELOPMENT_ROADMAP.md#3-roadmap-at-a-glance)
 
-The checks below are planned for separately authorized implementation work. Engine execution, including headless tests, requires explicit owner authorization. After independent review, owner merge and cleanup of the documentation PR, F1 requires a fresh Codex session and separate owner authorization.
+The checks below apply to separately authorized implementation work. Engine execution, including headless tests, requires explicit owner authorization. The owner accepted F1 and merged PR #32. F2 implementation requires separate owner authorization in a fresh Codex session.
 
 ## F1 — Permanent game entry and session lifecycle
 
@@ -23,6 +23,8 @@ The checks below are planned for separately authorized implementation work. Engi
 - **Regression.** Launch the arena directly and exercise its encounter reset independently of the main entry.
 
 ## F2 — Shared combat-capable player
+
+F2-A and F2-B place one player outside the session's active location and keep encounter orchestration in the standalone arena. Each context presents player state through its own HUD. The [detailed F2 specification](FOUNDATION_F2_SHARED_PLAYER.md) defines configuration, lifecycle and regression requirements.
 
 - **Dependencies.** F1 and the accepted arena player, four combat styles and encounter controls.
 - **Deliver.** A reusable player scene with modular movement, action and health responsibilities used by both entry points. Keep arena-only setup in the arena. Exclude new styles, mining, enemies in the permanent world and balance changes.

@@ -2,9 +2,39 @@
 
 [ext_resource type="Script" path="res://scenes/game/game_session_root.gd" id="1_session"]
 [ext_resource type="PackedScene" path="res://scenes/game/f1_placeholder_location.tscn" id="2_location"]
+[ext_resource type="PackedScene" path="res://scenes/combat/shared_player.tscn" id="3_player"]
 
 [node name="ActiveSession" type="Node"]
 script = ExtResource("1_session")
 location_scene = ExtResource("2_location")
 
 [node name="ActiveLocation" type="Node" parent="."]
+
+[node name="Player" parent="." instance=ExtResource("3_player")]
+position = Vector2(0, 80)
+
+[node name="SessionCamera" type="Camera2D" parent="Player"]
+drag_horizontal_enabled = true
+drag_vertical_enabled = true
+
+[node name="SessionHUD" type="CanvasLayer" parent="."]
+
+[node name="Health" type="Label" parent="SessionHUD"]
+offset_left = 16.0
+offset_top = 16.0
+mouse_filter = 2
+
+[node name="Style" type="Label" parent="SessionHUD"]
+offset_left = 16.0
+offset_top = 44.0
+mouse_filter = 2
+
+[node name="Death" type="Label" parent="SessionHUD"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 28
+text = "YOU DIED"
+horizontal_alignment = 1
+vertical_alignment = 1

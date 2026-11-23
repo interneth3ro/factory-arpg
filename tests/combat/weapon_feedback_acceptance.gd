@@ -1,12 +1,14 @@
 extends SceneTree
 
 ## Automated engine assertions. Perceptual checks are in the owner checklist.
+const ArenaController = preload("res://scenes/combat/combat_test_arena.gd")
 const Arena = preload("res://scenes/combat/combat_test_arena.tscn")
 const Player = preload("res://scenes/combat/combat_test_player.gd")
 const Action = preload("res://scenes/combat/player_action_fsm.gd")
 const Weapon = preload("res://scenes/combat/weapon_attack.gd")
 const EnemyAttack = preload("res://scenes/combat/enemy_attack.gd")
 const Enemy = preload("res://scenes/combat/enemy_health.gd")
+var arena: ArenaController
 var failures := 0
 
 
@@ -29,8 +31,16 @@ func _step(player: Player, delta: float, pressed := false, held := false, aim :=
 	player._resolve_swings(start, delta)
 
 
+func _primary(pressed: bool) -> void:
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.pressed = pressed
+	Input.parse_input_event(event)
+	Input.flush_buffered_events()
+
+
 func _run() -> void:
-	var arena := Arena.instantiate()
+	arena = Arena.instantiate()
 	var player: Player = arena.get_node("ArenaObjects/Player")
 	_check(player.aim_direction == Vector2.RIGHT, "Initial shared aim faces right")
 	player.position = Vector2(-180, 144)
@@ -38,14 +48,14 @@ func _run() -> void:
 	arena.get_node("ArenaObjects/Heavy").position = player.position + Vector2(47, 21)
 	root.add_child(arena)
 	player.set_physics_process(false)
-	for enemy in player.enemies:
+	for enemy in arena.enemies:
 		enemy.movement.set_physics_process(false)
 	await physics_frame
 	await physics_frame
 	await _style_selection(player)
 	await _style_boundaries(player)
 	await _style_dodge(player)
-	player._reset_encounter(true)
+	arena.reset_encounter(true)
 	await _encounter_selector(player)
 	await physics_frame
 
@@ -62,35 +72,35 @@ func _run() -> void:
 	_step(player, fsm.hitstop_remaining)
 	_check(fx._angles == angles and fx._bursts.size() == burst_count, "Paused blade held without replay")
 	_step(player, fsm.weapon.active - 0.020 + 0.001)
-	_check(player.enemies[0].health == 65 and player.enemies[1].health == 140, "Exactly one hit on each disk")
+	_check(arena.enemies[0].health == 65 and arena.enemies[1].health == 140, "Exactly one hit on each disk")
 	_check(fx._bursts.size() == 2 and fx._fade_left > 0.0, "Two bursts and a decaying trail")
 	_check(audio._primary.playing and audio._secondary.playing, "Separate primary and secondary voices")
 	var stale := fsm.active_intervals[0]
-	player._reset_encounter()
-	player._reset_encounter()
+	arena.reset_encounter()
+	arena.reset_encounter()
 	_check(fx._bursts.is_empty() and not fx._weapon and audio._last_swing == 0, "Repeated reset clears feedback")
 	_check(not audio._primary.playing and not audio._secondary.playing and not audio._swing.playing, "Reset stops voices")
 	_step(player, fsm.weapon.wind_up, true)
-	player._apply_contact(player.enemies[0], stale, Vector2.ZERO, Vector2.RIGHT)
-	_check(fx._bursts.is_empty() and player.enemies[0].health == 75, "Old interval rejected after ID reuse")
+	player._apply_contact(arena.enemies[0], stale, Vector2.ZERO, Vector2.RIGHT)
+	_check(fx._bursts.is_empty() and arena.enemies[0].health == 75, "Old interval rejected after ID reuse")
 
-	player._reset_encounter()
+	arena.reset_encounter()
 	_step(player, 0.47, true, true)
 	_check(fsm.active_intervals.size() == 2 and fsm.attack_count == 2, "Two active intervals in one tick")
 	_check(audio._last_swing == 2 and audio._last_impact == 2, "Both attacks reached swing and contact")
 	_check(fx._bursts.size() == 4 and fx._trail_id == 2, "Per-execution effects across recovery and repeat")
-	_check(player.enemies[0].health == 55 and player.enemies[1].health == 130, "Two hits per target")
+	_check(arena.enemies[0].health == 55 and arena.enemies[1].health == 130, "Two hits per target")
 	_moving_miss(player, Action.DAGGER, 0.035)
 	_moving_miss(player, Action.SWORD, 0.055)
 	_moving_miss(player, Action.GREATSWORD, 0.075)
 	_recovery_hitstop(player)
 	_interruptions(player)
-	player._reset_encounter()
-	for enemy in player.enemies:
+	arena.reset_encounter()
+	for enemy in arena.enemies:
 		_recoil_transitions(enemy)
-		player._reset_encounter()
+		arena.reset_encounter()
 		var coarse := _release_into_active(enemy, PackedFloat64Array([0.033]))
-		player._reset_encounter()
+		arena.reset_encounter()
 		var split := _release_into_active(enemy, PackedFloat64Array([0.011, 0.011, 0.011]))
 		_check(coarse.is_equal_approx(split), "%s release pose at 33 ms is independent of frame splits" % enemy.name)
 	arena.queue_free()
@@ -130,7 +140,7 @@ func _toggle_debug() -> void:
 
 func _style_selection(player: Player) -> void:
 	await _key_tick(player, KEY_4)
-	_check(player.active_style == Player.Style.PISTOL and player.style_label.text == "Style: Pistol", "4 selects Pistol with F3 closed")
+	_check(player.active_style == Player.Style.PISTOL and arena.style_label.text == "Style: Pistol", "4 selects Pistol with F3 closed")
 	player._sample_aim_direction(Vector2(3, 4))
 	var diagonal := Vector2(0.6, 0.8)
 	player._sample_aim_direction(Vector2.ZERO)
@@ -138,34 +148,34 @@ func _style_selection(player: Player) -> void:
 	player.global_position = player.get_global_mouse_position() - Vector2(4, 0)
 	player._update_facing()
 	_check(player.aim_direction.is_equal_approx(diagonal), "Pistol retains normalized aim on invalid, neutral and dead-zone samples")
-	Input.action_press("basic_attack")
+	_primary(true)
 	await physics_frame
 	player._physics_process(0.5)
 	_check(player.pistol.shots_fired == 2 and player.action_fsm.attack_count == 0 and player.combat_audio._last_swing == 0, "Held Pistol fires twice without a melee swing")
 	await _select(player, KEY_F5)
 	await _key_tick(player, KEY_2)
 	_check(player.action_fsm.weapon == Action.SWORD and player.action_fsm.attack_count == 0, "Held primary cannot transfer from Pistol to Sword")
-	Input.action_release("basic_attack")
+	_primary(false)
 	await physics_frame
-	Input.action_press("basic_attack")
+	_primary(true)
 	await physics_frame
 	player._physics_process(0.01)
 	_check(player.action_fsm.attack_count == 1, "Fresh press starts the selected sword")
 	await _key_tick(player, KEY_4)
-	_check(player.style_label.text.contains("Pending: Pistol"), "Committed sword queues Pistol")
+	_check(arena.style_label.text.contains("Pending: Pistol"), "Committed sword queues Pistol")
 	_toggle_debug()
-	_check(player.style_label.is_visible_in_tree() and player.style_label.text.contains("Pending: Pistol"), "Pending visible with F3 open")
+	_check(arena.style_label.is_visible_in_tree() and arena.style_label.text.contains("Pending: Pistol"), "Pending visible with F3 open")
 	await _select(player, KEY_F5)
-	_check(player.state_diagnostics.visible and player.style_label.text == "Style: Sword", "F5 preserves active sword and F3, discards pending Pistol")
+	_check(arena.state_diagnostics.visible and arena.style_label.text == "Style: Sword", "F5 preserves active sword and F3, discards pending Pistol")
 	await physics_frame
 	player._physics_process(0.5)
 	_check(player.action_fsm.attack_count == 0, "Held primary stays idle after F5")
-	Input.action_release("basic_attack")
+	_primary(false)
 	_toggle_debug()
 
 
 func _style_boundaries(player: Player) -> void:
-	player._reset_encounter(true)
+	arena.reset_encounter(true)
 	var fsm := player.action_fsm
 	# Two distinct samples in one physics tick: the later lower slot wins.
 	_send_key(KEY_4, true)
@@ -181,7 +191,7 @@ func _style_boundaries(player: Player) -> void:
 	_check(player.pending_style == Player.Style.SWORD, "Later request replaces pending style")
 	await _key_tick(player, KEY_3)
 	await _key_tick(player, KEY_3)
-	_check(player.pending_style == Player.Style.NONE and not player.style_label.text.contains("Pending"), "Active slot cancels pending and repeat selection stays clear")
+	_check(player.pending_style == Player.Style.NONE and not arena.style_label.text.contains("Pending"), "Active slot cancels pending and repeat selection stays clear")
 	player._step_actions(0.01, false, true)
 	await _key_tick(player, KEY_4)
 	# Cross wind-up, active and recovery in one step. Outgoing samples survive.
@@ -201,7 +211,7 @@ func _style_boundaries(player: Player) -> void:
 	var to_ready := Action.DAGGER.recovery - fsm._phase_elapsed
 	player._step_actions(to_ready, true, false)
 	_check(player.active_style == Player.Style.SWORD and fsm.state == Action.State.READY and fsm.attack_count == 2, "Exact tick-end switch wins over live late click")
-	_check(player.style_label.text == "Style: Sword", "Activation immediately clears pending HUD")
+	_check(arena.style_label.text == "Style: Sword", "Activation immediately clears pending HUD")
 	player._step_actions(1.0, false, false)
 	_check(fsm.attack_count == 2, "Outgoing click cannot start Sword")
 	player._step_actions(0.75, true, true)
@@ -209,7 +219,7 @@ func _style_boundaries(player: Player) -> void:
 
 
 func _style_dodge(player: Player) -> void:
-	player._reset_encounter(true)
+	arena.reset_encounter(true)
 	player._step_actions(0.01, true, true)
 	await _key_tick(player, KEY_3)
 	player._request_dodge(Vector2.UP, Vector2.RIGHT)
@@ -228,7 +238,7 @@ func _select(player: Player, key: Key, solo: Enemy = null) -> void:
 	await _key_tick(player, key)
 	_check(player.encounter_generation == generation + 1, "Exactly one fresh encounter per reset key")
 	var title := "%s only" % solo.name if solo else "Pursuer + Heavy"
-	_check(player.encounter_label.text == "Encounter: " + title and player.encounter_label.is_visible_in_tree(), "Persistent label for " + title)
+	_check(arena.encounter_label.text == "Encounter: " + title and arena.encounter_label.is_visible_in_tree(), "Persistent label for " + title)
 	_check(player.position == player.start_position and player.velocity == Vector2.ZERO, "Player spawn and velocity")
 	_check(player.player_health.health == player.player_health.max_health and player.player_health.history.is_empty(), "Fresh player HP")
 	_check(player.active_style == expected_style and player.pending_style == Player.Style.NONE, "Reset selects the expected style and clears pending")
@@ -238,11 +248,11 @@ func _select(player: Player, key: Key, solo: Enemy = null) -> void:
 	_check(player.action_fsm.hitstop_remaining == 0.0 and player.action_fsm.active_intervals.is_empty(), "No hitstop or attack samples")
 	_check(player.pistol.shots_fired == 0 and player.projectiles.bullets.is_empty() and player.projectiles.sparks.is_empty(), "Reset clears pistol and projectiles")
 	_check(player.movement_fsm.can_dodge() and not player.is_invulnerable(), "Fresh dodge availability")
-	_check(not player.death_message.visible and not player.completion.visible and player.facing_marker.visible, "Fresh HUD")
+	_check(not arena.death_message.visible and not arena.completion.visible and player.facing_marker.visible, "Fresh HUD")
 	_check(player.weapon_effects._bursts.is_empty() and player.weapon_effects._angles.is_empty(), "No previous impact or trail")
 	var audio := player.combat_audio
 	_check(not audio._primary.playing and not audio._secondary.playing and not audio._swing.playing, "No previous voices")
-	for enemy in player.enemies:
+	for enemy in arena.enemies:
 		var active := solo == null or solo == enemy
 		_check(enemy.visible == active and enemy.is_encounter_active() == active, "%s participation in %s" % [enemy.name, title])
 		_check(enemy.health == enemy.max_health and enemy.position == enemy._start_position, "%s HP and spawn" % enemy.name)
@@ -255,8 +265,8 @@ func _select(player: Player, key: Key, solo: Enemy = null) -> void:
 
 func _complete_with_swings(player: Player, solo: Enemy = null) -> void:
 	await physics_frame # Let physics synchronize the reset poses before querying the disks.
-	var pursuer := player.enemies[0]
-	var heavy := player.enemies[1]
+	var pursuer := arena.enemies[0]
+	var heavy := arena.enemies[1]
 	var other := heavy if solo == pursuer else pursuer
 	await _key_tick(player, KEY_3)
 	# Both disks are in this blade's path. Pursuer falls on the second swing and Heavy on the fourth.
@@ -269,10 +279,10 @@ func _complete_with_swings(player: Player, solo: Enemy = null) -> void:
 			_check((pursuer.health == 0) == (swing >= 2), "Pursuer defeat on second swing")
 		if solo != pursuer:
 			_check((heavy.health == 0) == (swing == 4), "Heavy defeat on fourth swing")
-		_check(player.completion.visible == (swing == last_swing), "Completion requires every selected enemy")
+		_check(arena.completion.visible == (swing == last_swing), "Completion requires every selected enemy")
 		_step(player, Action.GREATSWORD.recovery + Action.GREATSWORD.hitstop + 0.1)
 	var title := "%s only" % solo.name if solo else "Pursuer + Heavy"
-	_check(player.encounter_label.is_visible_in_tree() and player.encounter_label.text == "Encounter: " + title, "Label survives completion")
+	_check(arena.encounter_label.is_visible_in_tree() and arena.encounter_label.text == "Encounter: " + title, "Label survives completion")
 
 
 func _pursue_with_inactive_peer(player: Player, active: Enemy, inactive: Enemy) -> void:
@@ -283,7 +293,7 @@ func _pursue_with_inactive_peer(player: Player, active: Enemy, inactive: Enemy) 
 	var parked := inactive.position
 	_check(active.movement._passing_direction(Vector2.LEFT) == Vector2.LEFT, "Inactive peer contributes no steering bias")
 	_check(inactive.receive_hit(Action.DAGGER) == 0, "Inactive body rejects direct damage")
-	for enemy in player.enemies:
+	for enemy in arena.enemies:
 		enemy.movement.set_physics_process(true)
 	player.set_physics_process(true)
 	for tick in range(Engine.physics_ticks_per_second * 4):
@@ -291,7 +301,7 @@ func _pursue_with_inactive_peer(player: Player, active: Enemy, inactive: Enemy) 
 		if active.attack.phase == EnemyAttack.Phase.WIND_UP:
 			break
 	player.set_physics_process(false)
-	for enemy in player.enemies:
+	for enemy in arena.enemies:
 		enemy.movement.set_physics_process(false)
 	_check(active.position.distance_to(player.position) <= active.attack.initiation_radius and active.attack.execution > 0, "Active enemy navigates through peer and starts attack")
 	_check(inactive.position == parked and inactive.attack.execution == 0 and not inactive.attack.contacted, "Inactive peer stays parked and produces no strike")
@@ -299,12 +309,12 @@ func _pursue_with_inactive_peer(player: Player, active: Enemy, inactive: Enemy) 
 
 
 func _encounter_selector(player: Player) -> void:
-	var pursuer := player.enemies[0]
-	var heavy := player.enemies[1]
+	var pursuer := arena.enemies[0]
+	var heavy := arena.enemies[1]
 	_check(pursuer.is_visible_in_tree() and heavy.is_visible_in_tree() and pursuer.is_encounter_active() and heavy.is_encounter_active(), "Both original enemies start active")
-	_check(player.encounter_label.text == "Encounter: Pursuer + Heavy" and player.encounter_label.is_visible_in_tree(), "Default combined label")
+	_check(arena.encounter_label.text == "Encounter: Pursuer + Heavy" and arena.encounter_label.is_visible_in_tree(), "Default combined label")
 	_toggle_debug()
-	_check(player.state_diagnostics.visible and player.encounter_label.is_visible_in_tree(), "F3 opens independently")
+	_check(arena.state_diagnostics.visible and arena.encounter_label.is_visible_in_tree(), "F3 opens independently")
 
 	var injury := EnemyAttack.Contact.new()
 	injury.damage = 15
@@ -325,8 +335,8 @@ func _encounter_selector(player: Player) -> void:
 	_send_key(KEY_F5, false)
 	player._apply_contact(pursuer, stale, Vector2.ZERO, Vector2.RIGHT)
 	_check(pursuer.health == pursuer.max_health and player.weapon_effects._bursts.is_empty(), "Old swing cannot produce damage or effects")
-	player._update_state_diagnostics()
-	_check(player.state_diagnostics.visible and player.state_diagnostics.text.contains("Heavy: Inactive"), "F3 identifies the excluded enemy")
+	arena._update_state_diagnostics()
+	_check(arena.state_diagnostics.visible and arena.state_diagnostics.text.contains("Heavy: Inactive"), "F3 identifies the excluded enemy")
 	await physics_frame
 	player._physics_process(1.0 / Engine.physics_ticks_per_second)
 	injury.frame = Engine.get_physics_frames()
@@ -354,13 +364,13 @@ func _encounter_selector(player: Player) -> void:
 	var before_move := player.position
 	await _key_tick(player, KEY_A)
 	_check(player.position.x < before_move.x, "A moves left")
-	Input.action_press("basic_attack")
+	_primary(true)
 	await physics_frame
 	player._physics_process(1.0 / Engine.physics_ticks_per_second)
 	_check(player.action_fsm.state == Action.State.WIND_UP, "Basic attack starts a swing")
 	await _select(player, KEY_F7, pursuer)
 	await _key_tick(player, KEY_3)
-	Input.action_release("basic_attack")
+	_primary(false)
 	_check(player.action_fsm.state == Action.State.READY, "Held attack requires a fresh press after selection")
 	_step(player, Action.GREATSWORD.wind_up * 0.95, true)
 	await _key_tick(player, KEY_SPACE)
@@ -373,15 +383,15 @@ func _encounter_selector(player: Player) -> void:
 	await _select(player, KEY_F10, heavy)
 	injury.damage = player.player_health.max_health
 	player.player_health.resolve(injury)
-	_check(player.death_message.visible and player.encounter_label.is_visible_in_tree() and player.encounter_label.text == "Encounter: Heavy only", "Label survives death")
+	_check(arena.death_message.visible and arena.encounter_label.is_visible_in_tree() and arena.encounter_label.text == "Encounter: Heavy only", "Label survives death")
 	_check(not pursuer.is_encounter_active(), "Player death leaves excluded peer inactive")
 	_toggle_debug()
-	_check(not player.state_diagnostics.visible and player.encounter_label.is_visible_in_tree(), "F3 closes independently during death")
+	_check(not arena.state_diagnostics.visible and arena.encounter_label.is_visible_in_tree(), "F3 closes independently during death")
 	await _select(player, KEY_F9)
 
 
 func _moving_miss(player: Player, weapon: Weapon, fade: float) -> void:
-	player._reset_encounter()
+	arena.reset_encounter()
 	var fx := player.weapon_effects
 	player.action_fsm.select_weapon(weapon)
 	var aim := Vector2.LEFT
@@ -408,7 +418,7 @@ func _moving_miss(player: Player, weapon: Weapon, fade: float) -> void:
 
 
 func _recovery_hitstop(player: Player) -> void:
-	player._reset_encounter()
+	arena.reset_encounter()
 	var fsm := player.action_fsm
 	var fx := player.weapon_effects
 	_step(player, fsm.weapon.wind_up + fsm.weapon.active + 0.005, true)
@@ -424,7 +434,7 @@ func _interruptions(player: Player) -> void:
 	var fsm := player.action_fsm
 	var fx := player.weapon_effects
 	for elapsed: float in [0.040, 0.100, 0.154]:
-		player._reset_encounter()
+		arena.reset_encounter()
 		_step(player, elapsed, true)
 		_check((fx._trail_id != 0) == (elapsed >= fsm.weapon.wind_up), "Wind-up cancellation has no onset")
 		player._request_dodge(Vector2.UP, Vector2.RIGHT)
@@ -433,7 +443,7 @@ func _interruptions(player: Player) -> void:
 		player._resolve_swings(player.global_position, 0.016)
 		_check(fx._trail_id == 0, "Interrupted samples cannot recreate a trail")
 
-	player._reset_encounter()
+	arena.reset_encounter()
 	_step(player, 0.100, true)
 	var burst_count := fx._bursts.size()
 	var lethal := EnemyAttack.Contact.new()

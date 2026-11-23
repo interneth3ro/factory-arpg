@@ -1,6 +1,7 @@
 extends SceneTree
 
 ## Owner-run fixtures for boundaries that are hard to reproduce by hand.
+const ArenaController = preload("res://scenes/combat/combat_test_arena.gd")
 const Arena = preload("res://scenes/combat/combat_test_arena.tscn")
 const Player = preload("res://scenes/combat/combat_test_player.gd")
 const Attack = preload("res://scenes/combat/enemy_attack.gd")
@@ -38,7 +39,7 @@ func _run() -> void:
 ## Drive both real avoidance agents. Fractional wind-ups put distinct first
 ## contacts within a single tick regardless of the project's physics rate.
 func _two_strikes(hp: int, pursuer_delay: float, heavy_delay: float, first: String, expected_hp: int) -> void:
-	var arena := Arena.instantiate()
+	var arena: ArenaController = Arena.instantiate()
 	var player: Player = arena.get_node("ArenaObjects/Player")
 	player.position = Vector2(-180, 144)
 	player.get_node("Health").set("max_health", hp)
@@ -54,11 +55,11 @@ func _two_strikes(hp: int, pursuer_delay: float, heavy_delay: float, first: Stri
 	deaths = 0
 	player.player_health.died.connect(func() -> void: deaths += 1)
 	# Allow agent registration to synchronize before enabling both producers.
-	for enemy in player.enemies:
+	for enemy in arena.enemies:
 		enemy.movement.set_physics_process(false)
 	for i in 3:
 		await physics_frame
-	for enemy in player.enemies:
+	for enemy in arena.enemies:
 		enemy.movement.set_physics_process(true)
 	for i in 12:
 		await physics_frame
@@ -98,7 +99,7 @@ func _check_feedback(player: Player, attack: Attack) -> void:
 
 
 func _expiry_and_reset() -> void:
-	var arena := Arena.instantiate()
+	var arena: ArenaController = Arena.instantiate()
 	root.add_child(arena)
 	var player: Player = arena.get_node("ArenaObjects/Player")
 	player.set_physics_process(false)
@@ -127,10 +128,10 @@ func _expiry_and_reset() -> void:
 	if history.size() == 3:
 		_check(history[0].contains("BLOCKED (DODGE)"), "Pre-expiry decision")
 		_check(history[1].contains("APPLIED") and history[2].contains("APPLIED"), "Expiry and post-expiry decisions")
-	_check_shadow_contacts(player, frame, expiry)
+	_check_shadow_contacts(player, arena.enemies[0].attack, frame, expiry)
 	var stale := _contact(frame, player.encounter_generation, 0.015)
 	player._collect_contact(player, stale)
-	player._reset_encounter()
+	arena.reset_encounter()
 	_check(not movement.was_invulnerable_at(frame, 0.0), "Reset must invalidate dodge history")
 	# Open a replacement batch with the same frame and a different generation.
 	player._physics_process(0.016)
@@ -144,16 +145,15 @@ func _expiry_and_reset() -> void:
 	await process_frame
 
 
-func _check_shadow_contacts(player: Player, frame: int, expiry: float) -> void:
-	var attack: Attack = player.get_node("../Pursuer/Attack")
+func _check_shadow_contacts(player: Player, attack: Attack, frame: int, expiry: float) -> void:
 	var collider: CollisionShape2D = player.get_node("CollisionShape2D")
 	var original := collider.shape
 	var disk := CircleShape2D.new()
 	disk.radius = 0.1
 	collider.shape = disk
-	attack._sector._solids.assign([PackedVector2Array([
+	attack._sector.solids = [PackedVector2Array([
 		Vector2(10, -3), Vector2(12, -3), Vector2(12, 0), Vector2(10, 0),
-	])])
+	])]
 	attack.committed = Vector2.RIGHT
 	# Behind the block at t=0. Horizontal attacker travel keeps the upper
 	# shadow edge at y=0; the disk rising from -2 first touches at y=-0.1.

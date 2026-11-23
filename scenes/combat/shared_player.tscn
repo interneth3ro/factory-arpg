@@ -1,0 +1,85 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/combat/combat_test_player.gd" id="1_player"]
+[ext_resource type="Script" path="res://scenes/combat/player_movement_fsm.gd" id="2_movement"]
+[ext_resource type="Script" path="res://scenes/combat/player_action_fsm.gd" id="3_action"]
+[ext_resource type="Script" path="res://scenes/combat/melee_sweep.gd" id="4_sweep"]
+[ext_resource type="Script" path="res://scenes/combat/player_health.gd" id="11_health"]
+[ext_resource type="Script" path="res://scenes/combat/weapon_effects.gd" id="12_effects"]
+[ext_resource type="Script" path="res://scenes/combat/combat_audio.gd" id="13_audio"]
+[ext_resource type="Script" path="res://scenes/combat/pistol_projectiles.gd" id="14_bullets"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_player"]
+radius = 18.0
+
+[node name="Player" type="CharacterBody2D"]
+process_physics_priority = -1
+motion_mode = 1
+script = ExtResource("1_player")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_player")
+
+[node name="Body" type="Polygon2D" parent="."]
+color = Color(0.3, 0.82, 0.95, 1)
+polygon = PackedVector2Array(-10, -16, 10, -16, 17, -8, 17, 8, 10, 16, -10, 16, -17, 8, -17, -8)
+
+[node name="FacingMarker" type="Polygon2D" parent="."]
+color = Color(0.07, 0.21, 0.26, 1)
+polygon = PackedVector2Array(-7, 5, 10, 0, -7, -5, -4, 0)
+
+[node name="AttackMarker" type="Polygon2D" parent="."]
+visible = false
+color = Color(1, 0.83, 0.32, 1)
+polygon = PackedVector2Array(19, -4, 27, 0, 19, 4)
+
+[node name="NameLabel" type="Label" parent="."]
+offset_left = -60.0
+offset_top = -54.0
+offset_right = 60.0
+offset_bottom = -29.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.93, 0.96, 0.96, 1)
+theme_override_colors/font_outline_color = Color(0.055, 0.077, 0.092, 1)
+theme_override_constants/outline_size = 5
+text = "Player"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MovementFSM" type="Node" parent="."]
+script = ExtResource("2_movement")
+
+[node name="ActionFSM" type="Node" parent="."]
+script = ExtResource("3_action")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("11_health")
+
+[node name="MeleeSweep" type="Node2D" parent="."]
+visible = false
+top_level = true
+z_index = 2
+script = ExtResource("4_sweep")
+
+[node name="WeaponEffects" type="Node2D" parent="."]
+z_index = 1
+script = ExtResource("12_effects")
+
+[node name="PistolProjectiles" type="Node2D" parent="."]
+top_level = true
+z_index = 4
+script = ExtResource("14_bullets")
+
+[node name="CombatAudio" type="Node" parent="."]
+script = ExtResource("13_audio")
+
+[node name="Swing" type="AudioStreamPlayer" parent="CombatAudio"]
+volume_db = -12.0
+max_polyphony = 2
+
+[node name="Primary" type="AudioStreamPlayer" parent="CombatAudio"]
+volume_db = -8.0
+max_polyphony = 2
+
+[node name="Secondary" type="AudioStreamPlayer" parent="CombatAudio"]
+volume_db = -20.0

@@ -40,7 +40,8 @@ func start_session() -> void:
 	entry_screen.hide()
 	end_button.show()
 	_state = State.ACTIVE
-	end_button.grab_focus()
+	# Gameplay receives Space immediately. Tab can still focus End Session.
+	start_button.release_focus()
 
 
 func end_session() -> void:

@@ -1,5 +1,7 @@
 extends CharacterBody2D
 
+signal defeated
+
 const WeaponAttack = preload("res://scenes/combat/weapon_attack.gd")
 const EnemyMovement = preload("res://scenes/combat/enemy_movement.gd")
 const EnemyAttack = preload("res://scenes/combat/enemy_attack.gd")
@@ -165,6 +167,7 @@ func _take_damage(amount: int, flash_strength: float, flash_duration: float, hol
 		collision_layer = 0
 		collision_mask = 0
 		movement.defeat()
+		defeated.emit()
 	if _flash:
 		_flash.kill()
 	_flash_strength = flash_strength

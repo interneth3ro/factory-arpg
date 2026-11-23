@@ -6,6 +6,7 @@
 script = ExtResource("1_entry")
 
 [node name="EntryUI" type="CanvasLayer" parent="."]
+layer = 2
 
 [node name="EntryScreen" type="CenterContainer" parent="EntryUI"]
 anchor_right = 1.0

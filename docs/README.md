@@ -34,15 +34,19 @@ Implementation documentation describes how the current code works. Refactors tha
 
 ### Permanent game entry and session lifecycle
 
-Run Project (F5 in the editor) opens the permanent entry with **Start Session**. Starting displays the temporary F1 location. **End Session** returns to the entry screen. [Permanent game entry](../scenes/game/permanent_game_entry.tscn)
+Run Project (F5 in the editor) opens the permanent entry. **Start Session** opens the F1 placeholder with one combat-capable player. **End Session** returns to the entry screen. The F2 implementation on this branch is pending independent review, owner runtime acceptance and merge. [Permanent game entry](../scenes/game/permanent_game_entry.tscn)
 
-The entry builds a session off-tree. The session root instantiates the placeholder under its `ActiveLocation` child. Only after that succeeds does the entry attach the session and show **End Session**. A failed start frees the candidate, displays an error and enables another attempt. On end, the session frees its location and the entry frees the session before enabling **Start Session**. Each start creates both instances anew. [Entry lifecycle](../scenes/game/permanent_game_entry.gd) · [Session root](../scenes/game/game_session_root.gd) · [Placeholder scene](../scenes/game/f1_placeholder_location.tscn)
+The entry prepares each candidate session off-tree. The session validates its player and HUD references and instantiates the placeholder under `ActiveLocation`. A failed start frees the candidate and re-enables **Start Session**. After attachment, the session supplies empty combat targets and cover, binds its HUD to player health and style changes, and reads the initial values. The session camera follows the player. The backdrop sits behind the world and the session controls sit above the HUD. Ending frees the location and the session subtree, including its player, effects and HUD. [Entry lifecycle](../scenes/game/permanent_game_entry.gd) · [Session scene](../scenes/game/game_session_root.tscn) · [Session root](../scenes/game/game_session_root.gd)
+
+The session's `Player` and `ActiveLocation` are siblings. The same player scene supplies the body, FSMs, health, hit detection, projectiles, audio and world-space effects in both contexts. Primary attack, dodge and style presses reach combat after GUI input handling. The session HUD displays current and maximum HP, active and pending style, and death. [Shared player](../scenes/combat/shared_player.tscn)
 
 ### Standalone combat arena
 
 The [combat test arena](../scenes/combat/combat_test_arena.tscn) is a standalone scene. Open it in the Godot editor and press F6 to run it. The [player coordinator](../scenes/combat/combat_test_player.gd) samples screen-relative WASD with normalized diagonals and passes that intent to the Movement FSM each physics step. It also aims the facing marker independently of movement. Within 4 pixels of the player's center in world coordinates, the marker keeps its previous heading. The Player's exported `movement_speed` defaults to a provisional 220 pixels per second.
 
 The [Movement FSM](../scenes/combat/player_movement_fsm.gd) starts Idle and switches to Moving while it receives a nonzero movement vector, including when a collision blocks travel. It owns player velocity and native 2D collision movement.
+
+The arena root binds both enemies to the player, supplies the participating targets and static footprints, and owns the HUD and F3 overlays. It samples selection and reset at the start of the player's priority −1 physics tick. A reset advances the generation and consumes that tick. Each enemy still submits movement and reports contacts through its original direct avoidance callback. [Arena controller](../scenes/combat/combat_test_arena.gd)
 
 ### Encounter selection
 

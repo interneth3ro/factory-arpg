@@ -47,8 +47,8 @@ var _live := true
 var _next_id := 0
 
 
-func configure(enemies: Array[Enemy], damage: Callable) -> void:
-	_solids = Geometry.solid_footprints(get_tree())
+func configure(enemies: Array[Enemy], solids: Array[PackedVector2Array], damage: Callable) -> void:
+	_solids = solids
 	_enemies = enemies
 	_damage = damage
 

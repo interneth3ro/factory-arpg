@@ -22,6 +22,8 @@ The **permanent core game foundation** follows the completed combat foundation. 
 - [Gameplay](design/CORE_GAME_FOUNDATION_GAMEPLAY.md) defines the handcrafted region and home base, interaction, inventory and general storage, and manual mining.
 - [Implementation and acceptance](design/CORE_GAME_FOUNDATION_IMPLEMENTATION.md) sets the dependency order, evidence and owner runtime checks for each milestone. [Decision register](design/DECISION_LOG.md#core-foundation-decisions) · [Roadmap](DEVELOPMENT_ROADMAP.md#3-roadmap-at-a-glance)
 
+[Foundation F2 — Shared combat-capable player](design/FOUNDATION_F2_SHARED_PLAYER.md) records the approved player extraction, context-owned HUDs and regression checks for the next implementation milestone after F1.
+
 Frozen specifications describe approved behavior and its rationale. They guide implementation and acceptance checks. Proposed approaches, provisional tuning, and deferred features are labeled separately. Keep the approved baseline intact when implementation behavior differs.
 
 When implementation suggests a design change, identify the affected specification and decision, describe the proposed deviation, and obtain owner approval before changing approved behavior. After approval, update the specification and decision log together and preserve the history of any superseded decisions.

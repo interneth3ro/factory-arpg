@@ -419,6 +419,16 @@ These approvals define the permanent game foundation. CF15–CF16 settle the ini
 | F2-A | Option B — Focused Separation | Share the existing combat-capable player between the permanent session and standalone arena. The arena owns encounter orchestration. [F2 specification](FOUNDATION_F2_SHARED_PLAYER.md#decision-register-and-scope) |
 | F2-B | Option B — Context-Owned HUD | The player owns gameplay state. Each context owns the screen-space presentation of that state. [HUD state contract](FOUNDATION_F2_SHARED_PLAYER.md#hud-state-contract) |
 
+## Foundation F3 decisions
+
+| ID | Owner-approved selection | Scope |
+| --- | --- | --- |
+| F3-A | Option B — Typed Records with Central Registry | Each permanent session owns its typed, validated records. Records outlive their runtime instances. [Record ownership](FOUNDATION_F3_WORLD_STATE.md#f3-a--typed-records-with-central-registry) |
+| F3-B | Option B — Location-Scoped Persistent Object IDs | An authored location ID and object ID identify a location-owned record within its playthrough. Reserve session scope for entities such as future player state. [Identity](FOUNDATION_F3_WORLD_STATE.md#f3-b--location-scoped-persistent-object-ids) |
+| F3-C | Option B — Explicit Location-Managed Registration | The location coordinator prepares and validates the complete set before binding. Only the current binding may request changes or unbind. Unload preserves records for the next instance. [Registration lifecycle](FOUNDATION_F3_WORLD_STATE.md#f3-c--explicit-location-managed-registration) |
+| F3-D | Option B — Versioned Envelope and Independently Versioned Typed Records | Encode scoped identities, types, versions and persistent values. Validate the entire candidate before adoption. Failed decode preserves valid state. [Serialization contract](FOUNDATION_F3_WORLD_STATE.md#f3-d--versioned-envelope-and-independently-versioned-typed-records) |
+| F3-E | Option B — Visible Development-Only Persistent State Marker | An inspectable placeholder marker demonstrates registration, mutation, preservation through unload, restoration on rebind and fresh-session isolation. [Marker exercise](FOUNDATION_F3_WORLD_STATE.md#f3-e--visible-development-only-persistent-state-marker) |
+
 ## Recording future decisions
 
 Append decisions in approval order with a stable ID, descriptive title, approved selection, brief summary, and a link to the authoritative specification. Record dates only when supplied. When a decision changes, retain the earlier entry and link it to the approved replacement.

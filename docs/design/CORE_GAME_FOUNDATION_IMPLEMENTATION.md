@@ -12,7 +12,7 @@
 
 **CF30.** Permanent production begins with F1 after the completed combat foundation. Integrated factory gameplay follows F10, then a representative vertical slice and game expansion. This supersedes the earlier separate integrated-loop prototype prerequisite. [Development roadmap](../DEVELOPMENT_ROADMAP.md#3-roadmap-at-a-glance)
 
-The checks below apply to separately authorized implementation work. Engine execution, including headless tests, requires explicit owner authorization. The owner accepted F1 and merged PR #32. F2 implementation requires separate owner authorization in a fresh Codex session.
+The checks below apply to separately authorized implementation work. Engine execution, including headless tests, requires explicit owner authorization. F1 and F2 are accepted and merged in PRs #32 and #34. F3 implementation requires separate authorization after its specification merges. [Detailed F3 contracts](FOUNDATION_F3_WORLD_STATE.md)
 
 ## F1 — Permanent game entry and session lifecycle
 

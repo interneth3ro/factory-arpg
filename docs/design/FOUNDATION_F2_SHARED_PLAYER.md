@@ -1,6 +1,6 @@
 # Foundation F2 — Shared combat-capable player
 
-F2 brings the evaluated arena player into the permanent session. F1 shipped the entry and session lifecycle in PR #32. The decisions below are owner-approved design for the next milestone. Gameplay implementation and owner runtime acceptance are pending.
+F2 brought the evaluated arena player into the permanent session after F1 shipped the entry and session lifecycle in PR #32. The owner accepted F2 at `ba9f5b6f4586a3e323e48676442062d93a226ca8`, and PR #34 merged. The specification below preserves the pre-implementation baseline, approved extraction design and original acceptance checklist. [Merged session lifecycle](../README.md#permanent-game-entry-and-session-lifecycle)
 
 ## Decision register and scope
 

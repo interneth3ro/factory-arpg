@@ -155,7 +155,9 @@ Examples:
 
 PR #31 established CF1–CF31. The owner accepted the F1 permanent entry and session lifecycle at `fbed32b8b24f5cedbbc1e5787a4d3a046bc9dc37` and manually merged PR #32. [Launch and lifecycle](README.md#permanent-game-entry-and-session-lifecycle)
 
-The F2 feature branch implements the shared combat-capable player and context-owned HUDs in the permanent session and standalone arena. Independent static review and owner runtime acceptance passed for PR #34 at `ba9f5b6f4586a3e323e48676442062d93a226ca8`. Manual merge is pending. [F2 specification](design/FOUNDATION_F2_SHARED_PLAYER.md) · [F1–F10 plan](design/CORE_GAME_FOUNDATION_IMPLEMENTATION.md)
+F2 is complete. PR #34 delivered the shared combat-capable player and context-owned HUDs in the permanent session and standalone arena. Independent static review and owner runtime acceptance passed at `ba9f5b6f4586a3e323e48676442062d93a226ca8` before merge. [F2 specification](design/FOUNDATION_F2_SHARED_PLAYER.md)
+
+F3 is next. The owner approved F3-A through F3-E for world records, identity, registration, serialization and the development marker. Implementation requires separate authorization after the specification merges. [F3 specification](design/FOUNDATION_F3_WORLD_STATE.md) · [F1–F10 plan](design/CORE_GAME_FOUNDATION_IMPLEMENTATION.md)
 
 ## 12. Roadmap maintenance
 
